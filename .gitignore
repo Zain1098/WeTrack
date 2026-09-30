@@ -13,6 +13,15 @@
 migrate_working_dir/
 .playwright-mcp/
 
+# Design assets & Reference UI
+/UI/
+
+# Documentation, Prompts & Specifications
+*.pdf
+/docs/
+MASTER_ANTIGRAVITY_PROMPT.txt
+README.txt
+
 # IntelliJ related
 *.iml
 *.ipr
