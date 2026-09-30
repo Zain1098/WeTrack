@@ -177,8 +177,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           _devOtpNotice = 'Test Code: $devCode (Configure SMTP in Supabase for inbox delivery)';
         }
       });
+    } on AuthException catch (e) {
+      setState(() => _errorMessage = e.message);
     } catch (e) {
-      setState(() => _errorMessage = e.toString().replaceAll('Exception:', '').trim());
+      setState(() => _errorMessage = 'Could not resend code. Please try again.');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -229,9 +231,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             _devOtpNotice = 'Test Code: $devCode (Configure SMTP in Supabase for direct email)';
           }
         });
+      } on AuthException catch (e) {
+        if (e.message.toLowerCase().contains('rate limit')) {
+          setState(() => _errorMessage = 'Too many requests. Please wait a few moments before requesting a new code.');
+        } else {
+          setState(() => _errorMessage = e.message);
+        }
       } catch (e) {
         setState(() {
-          _errorMessage = e.toString().replaceAll('Exception:', '').trim();
+          _errorMessage = 'Unable to send recovery code. Please check your email address and connection.';
         });
       } finally {
         if (mounted) setState(() => _isLoading = false);
@@ -303,9 +311,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             _devOtpNotice = 'Test Code: $devCode (Configure SMTP in Supabase for direct email)';
           }
         });
+      } on AuthException catch (e) {
+        if (e.message.toLowerCase().contains('already registered') ||
+            e.statusCode == '422') {
+          setState(() => _errorMessage = 'This email is already registered. Please log in instead.');
+        } else if (e.message.toLowerCase().contains('rate limit')) {
+          setState(() => _errorMessage = 'Too many attempts. Please wait a moment before trying again.');
+        } else {
+          setState(() => _errorMessage = e.message);
+        }
       } catch (e) {
         setState(() {
-          _errorMessage = e.toString().replaceAll('Exception:', '').trim();
+          _errorMessage = 'Could not complete registration. Please check your details and connection.';
         });
       } finally {
         if (mounted) setState(() => _isLoading = false);
