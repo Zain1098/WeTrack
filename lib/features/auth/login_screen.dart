@@ -602,14 +602,47 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  Future<void> _handleFacebookSignIn() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+      _successMessage = null;
+    });
+
+    try {
+      final auth = ref.read(authServiceProvider);
+      await auth.signInWithFacebook();
+    } on AuthException catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.message;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Facebook sign-in could not be completed. Please try again.';
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   void _onSocialTap(String provider) {
     if (provider == 'Google') {
       _handleGoogleSignIn();
       return;
     }
+    if (provider == 'Facebook') {
+      _handleFacebookSignIn();
+      return;
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('$provider login is coming soon! Please use Google or Email.'),
+        content: Text('$provider login is coming soon! Please use Google, Facebook, or Email.'),
         backgroundColor: const Color(0xFF9E8CE7),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),

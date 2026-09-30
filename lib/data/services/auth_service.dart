@@ -140,6 +140,16 @@ class AuthService {
     return null;
   }
 
+  /// Direct Facebook Sign-In via Supabase OAuth
+  Future<void> signInWithFacebook() async {
+    await _prefs.setBool('is_guest_user', false);
+    await Supabase.instance.client.auth.signInWithOAuth(
+      OAuthProvider.facebook,
+      redirectTo: kIsWeb ? null : 'io.supabase.wetrack://login-callback',
+      authScreenLaunchMode: LaunchMode.inAppBrowserView,
+    );
+  }
+
   /// Sends Email OTP (via Supabase or fallback dev OTP if SMTP not configured)
   Future<void> sendEmailOtp({
     required String email,
