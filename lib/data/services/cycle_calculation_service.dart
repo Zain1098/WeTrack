@@ -1,0 +1,181 @@
+import '../models/cycle_record.dart';
+import '../../core/constants/medical_constants.dart';
+import '../../core/utils/date_helpers.dart';
+
+enum CyclePhase {
+  menstrual,
+  follicular,
+  fertileWindow,
+  ovulationDay,
+  luteal;
+
+  String get displayName {
+    switch (this) {
+      case CyclePhase.menstrual:
+        return 'Menstrual Phase';
+      case CyclePhase.follicular:
+        return 'Follicular Phase';
+      case CyclePhase.fertileWindow:
+        return 'Estimated Fertile Window';
+      case CyclePhase.ovulationDay:
+        return 'Estimated Ovulation Day';
+      case CyclePhase.luteal:
+        return 'Luteal Phase';
+    }
+  }
+
+  String get summary {
+    switch (this) {
+      case CyclePhase.menstrual:
+        return 'Rest and gentle nourishment. Energy tends to be lower.';
+      case CyclePhase.follicular:
+        return 'Estrogen levels rise. Rising energy and mental clarity.';
+      case CyclePhase.fertileWindow:
+        return 'Peak conception probability. High fecundability window.';
+      case CyclePhase.ovulationDay:
+        return 'Peak LH surge and egg release window. Estimated.';
+      case CyclePhase.luteal:
+        return 'Progesterone rises. Prepare for rest and listen to your body.';
+    }
+  }
+}
+
+class CycleCalculationResult {
+  final int currentCycleDay;
+  final int estimatedCycleLength;
+  final DateTime nextEstimatedPeriod;
+  final int daysUntilNextPeriod;
+  final DateTime estimatedOvulationDate;
+  final DateTime fertileWindowStart;
+  final DateTime fertileWindowEnd;
+  final CyclePhase currentPhase;
+  final bool isUsingFallbackEstimate;
+
+  const CycleCalculationResult({
+    required this.currentCycleDay,
+    required this.estimatedCycleLength,
+    required this.nextEstimatedPeriod,
+    required this.daysUntilNextPeriod,
+    required this.estimatedOvulationDate,
+    required this.fertileWindowStart,
+    required this.fertileWindowEnd,
+    required this.currentPhase,
+    required this.isUsingFallbackEstimate,
+  });
+}
+
+class CycleCalculationService {
+  /// Computes average cycle length from recent completed valid cycles (up to last 6)
+  static int calculateAverageCycleLength({
+    required List<CycleRecord> history,
+    int fallback = MedicalConstants.defaultCycleLengthDays,
+  }) {
+    final validLengths = history
+        .where((c) =>
+            c.isCompleted &&
+            !c.isAnomalous &&
+            c.cycleLengthDays != null &&
+            c.cycleLengthDays! >= MedicalConstants.minPlausibleCycleLengthDays &&
+            c.cycleLengthDays! <= MedicalConstants.maxPlausibleCycleLengthDays)
+        .map((c) => c.cycleLengthDays!)
+        .take(6)
+        .toList();
+
+    if (validLengths.length < 2) {
+      return fallback;
+    }
+
+    final sum = validLengths.reduce((a, b) => a + b);
+    return (sum / validLengths.length).round();
+  }
+
+  /// Calculates estimated next period start date
+  static DateTime calculateNextPeriod({
+    required DateTime lastPeriodStartDate,
+    required int cycleLength,
+  }) {
+    return DateHelpers.toDateOnly(
+      lastPeriodStartDate.add(Duration(days: cycleLength)),
+    );
+  }
+
+  /// Calculates estimated ovulation day (Cycle length minus luteal phase, typically 14 days)
+  static DateTime calculateEstimatedOvulation({
+    required DateTime lastPeriodStartDate,
+    required int cycleLength,
+    int lutealLength = MedicalConstants.defaultLutealPhaseDays,
+  }) {
+    final ovulationDayOffset = cycleLength - lutealLength;
+    return DateHelpers.toDateOnly(
+      lastPeriodStartDate.add(Duration(days: ovulationDayOffset)),
+    );
+  }
+
+  /// ASRM 6-day fertile window: 5 days prior to estimated ovulation plus ovulation day
+  static DateTime calculateFertileWindowStart(DateTime estimatedOvulation) {
+    return DateHelpers.toDateOnly(
+      estimatedOvulation.subtract(
+        const Duration(days: MedicalConstants.fertileWindowLeadingDays),
+      ),
+    );
+  }
+
+  /// Evaluates full cycle calculation status for a given reference date
+  static CycleCalculationResult calculate({
+    required DateTime lastPeriodStartDate,
+    required List<CycleRecord> history,
+    required int userFallbackCycleLength,
+    required int periodDuration,
+    DateTime? referenceDate,
+  }) {
+    final now = DateHelpers.toDateOnly(referenceDate ?? DateTime.now());
+    final lmp = DateHelpers.toDateOnly(lastPeriodStartDate);
+
+    final avgLength = calculateAverageCycleLength(
+      history: history,
+      fallback: userFallbackCycleLength,
+    );
+    final isFallback = history.where((c) => c.isCompleted).length < 2;
+
+    final nextPeriod = calculateNextPeriod(
+      lastPeriodStartDate: lmp,
+      cycleLength: avgLength,
+    );
+    final daysUntilNext = DateHelpers.daysBetween(now, nextPeriod);
+    final currentCycleDay = DateHelpers.daysBetween(lmp, now) + 1;
+
+    final ovulationDate = calculateEstimatedOvulation(
+      lastPeriodStartDate: lmp,
+      cycleLength: avgLength,
+    );
+    final fertileStart = calculateFertileWindowStart(ovulationDate);
+    final fertileEnd = ovulationDate;
+
+    // Determine current phase
+    CyclePhase phase;
+    if (now.isBefore(lmp.add(Duration(days: periodDuration)))) {
+      phase = CyclePhase.menstrual;
+    } else if (now.isBefore(fertileStart)) {
+      phase = CyclePhase.follicular;
+    } else if (DateHelpers.daysBetween(now, ovulationDate) == 0) {
+      phase = CyclePhase.ovulationDay;
+    } else if (now.isAfter(fertileStart.subtract(const Duration(days: 1))) &&
+        now.isBefore(fertileEnd.add(const Duration(days: 1)))) {
+      phase = CyclePhase.fertileWindow;
+    } else {
+      phase = CyclePhase.luteal;
+    }
+
+    return CycleCalculationResult(
+      currentCycleDay: currentCycleDay > 0 ? currentCycleDay : 1,
+      estimatedCycleLength: avgLength,
+      nextEstimatedPeriod: nextPeriod,
+      daysUntilNextPeriod: daysUntilNext,
+      estimatedOvulationDate: ovulationDate,
+      fertileWindowStart: fertileStart,
+      fertileWindowEnd: fertileEnd,
+      currentPhase: phase,
+      isUsingFallbackEstimate: isFallback,
+    );
+  }
+}
