@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/services/auth_service.dart';
 import '../app_providers.dart';
 
@@ -333,10 +334,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ref.invalidate(userProfileProvider);
         }
       }
-    } catch (e) {
-      final err = e.toString().replaceAll('Exception:', '').trim();
-      // If user is unconfirmed, guide them to OTP
-      if (err.toLowerCase().contains('email not confirmed')) {
+    } on AuthException catch (e) {
+      if (e.message.toLowerCase().contains('email not confirmed')) {
         final auth = ref.read(authServiceProvider);
         await auth.sendEmailOtp(email: email);
         _isRecoveryOtp = false;
@@ -348,9 +347,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             _devOtpNotice = 'Test Code: $devCode';
           }
         });
+      } else if (e.message.toLowerCase().contains('invalid login credentials') ||
+          e.statusCode == '400') {
+        setState(() => _errorMessage = 'Incorrect email or password. Please check your credentials.');
       } else {
-        setState(() => _errorMessage = err);
+        setState(() => _errorMessage = e.message);
       }
+    } catch (e) {
+      setState(() => _errorMessage = 'Unable to log in. Please check your credentials and internet connection.');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
