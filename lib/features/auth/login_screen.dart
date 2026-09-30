@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/services/auth_service.dart';
 import '../app_providers.dart';
+import '../main_navigation_shell.dart';
 
 enum AuthScreenMode {
   login,
@@ -64,11 +65,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _confirmPasswordController = TextEditingController();
   final _nameController = TextEditingController();
 
-  // 4-Digit OTP Controllers & Focus Nodes
+  // 6-Digit OTP Controllers & Focus Nodes (matching Supabase's 6-digit tokens)
   final List<TextEditingController> _otpControllers =
-      List.generate(4, (_) => TextEditingController());
+      List.generate(6, (_) => TextEditingController());
   final List<FocusNode> _otpFocusNodes =
-      List.generate(4, (_) => FocusNode());
+      List.generate(6, (_) => FocusNode());
 
   // Resend Countdown Timer
   Timer? _resendTimer;
@@ -84,15 +85,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   // Track if OTP verification is for recovery (forgot password) or signup
   bool _isRecoveryOtp = false;
+  StreamSubscription<AuthState>? _authSub;
 
   @override
   void initState() {
     super.initState();
     _mode = widget.initialMode;
+    try {
+      _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+        if (data.event == AuthChangeEvent.signedIn && mounted) {
+          ref.invalidate(userProfileProvider);
+          if (widget.onSuccess != null) {
+            widget.onSuccess!();
+          } else {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => const MainNavigationShell()),
+              (route) => false,
+            );
+          }
+        }
+      });
+    } catch (_) {}
   }
 
   @override
   void dispose() {
+    _authSub?.cancel();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -349,6 +367,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           widget.onSuccess!();
         } else {
           ref.invalidate(userProfileProvider);
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const MainNavigationShell()),
+            (route) => false,
+          );
         }
       }
     } on AuthException catch (e) {
@@ -381,8 +403,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final email = _emailController.text.trim();
     final otpCode = _otpControllers.map((c) => c.text.trim()).join();
 
-    if (otpCode.length < 4) {
-      setState(() => _errorMessage = 'Please enter the complete 4-digit code.');
+    if (otpCode.length < 6) {
+      setState(() => _errorMessage = 'Please enter the complete 6-digit code.');
       return;
     }
 
@@ -421,7 +443,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           if (widget.onSuccess != null) {
             widget.onSuccess!();
           } else {
+            if (_nameController.text.trim().isNotEmpty) {
+              await ref.read(userProfileProvider.notifier).updateProfile(
+                    name: _nameController.text.trim(),
+                  );
+            }
+            if (!mounted) return;
             ref.invalidate(userProfileProvider);
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => const MainNavigationShell()),
+              (route) => false,
+            );
           }
         }
       }
@@ -477,6 +509,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           widget.onSuccess!();
         } else {
           ref.invalidate(userProfileProvider);
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const MainNavigationShell()),
+            (route) => false,
+          );
         }
       }
     } catch (e) {
@@ -492,18 +528,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (value.length > 1) {
       // User pasted whole code or auto-fill triggered!
       final digits = value.replaceAll(RegExp(r'\D'), '');
-      for (int i = 0; i < 4 && i < digits.length; i++) {
+      for (int i = 0; i < 6 && i < digits.length; i++) {
         _otpControllers[i].text = digits[i];
       }
-      if (digits.length >= 4) {
-        _otpFocusNodes[3].unfocus();
+      if (digits.length >= 6) {
+        _otpFocusNodes[5].unfocus();
         _verifyOtp();
       }
       return;
     }
 
     if (value.isNotEmpty) {
-      if (index < 3) {
+      if (index < 5) {
         _otpFocusNodes[index + 1].requestFocus();
       } else {
         _otpFocusNodes[index].unfocus();
@@ -512,10 +548,51 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  Future<void> _handleGoogleSignIn() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+      _successMessage = null;
+    });
+
+    try {
+      final auth = ref.read(authServiceProvider);
+      final response = await auth.signInWithGoogle();
+
+      if (mounted) {
+        if (response?.user != null || auth.isAuthenticated) {
+          ref.invalidate(userProfileProvider);
+          if (widget.onSuccess != null) {
+            widget.onSuccess!();
+          } else {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => const MainNavigationShell()),
+              (route) => false,
+            );
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Google sign-in could not be completed. Please try again.';
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   void _onSocialTap(String provider) {
+    if (provider == 'Google') {
+      _handleGoogleSignIn();
+      return;
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('$provider login integration in progress...'),
+        content: Text('$provider login is coming soon! Please use Google or Email.'),
         backgroundColor: const Color(0xFF9E8CE7),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -705,7 +782,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       case AuthScreenMode.forgotPassword:
         return 'Enter your email to receive a recovery code';
       case AuthScreenMode.otpVerification:
-        return 'Enter the 4-digit code sent to\n${_emailController.text.trim()}';
+        return 'Enter the 6-digit code sent to\n${_emailController.text.trim()}';
       case AuthScreenMode.newPassword:
         return 'Create a secure new password for your account';
     }
@@ -1052,18 +1129,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  /// 4-Digit Pastel Clay OTP Input Boxes with Auto-Fill & Auto-Advance
+  /// 6-Digit Pastel Clay OTP Input Boxes with Auto-Fill & Auto-Advance
   Widget _buildOtpInputBoxes() {
     return AutofillGroup(
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: List.generate(4, (index) {
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: List.generate(6, (index) {
           return Container(
-            width: 56,
-            height: 58,
+            width: 44,
+            height: 52,
             decoration: BoxDecoration(
               color: const Color(0xFFF6F2F9),
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(15),
               border: Border.all(
                 color: _otpFocusNodes[index].hasFocus
                     ? const Color(0xFF9E8CE7)
@@ -1075,16 +1152,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   color: _otpFocusNodes[index].hasFocus
                       ? const Color(0xFF9E8CE7).withValues(alpha: 0.25)
                       : const Color(0xFF5A448E).withValues(alpha: 0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
             child: Center(
-              child: RawKeyboardListener(
+              child: KeyboardListener(
                 focusNode: FocusNode(),
-                onKey: (event) {
-                  if (event is RawKeyDownEvent &&
+                onKeyEvent: (event) {
+                  if (event is KeyDownEvent &&
                       event.logicalKey == LogicalKeyboardKey.backspace &&
                       _otpControllers[index].text.isEmpty &&
                       index > 0) {
@@ -1098,12 +1175,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   textAlign: TextAlign.center,
                   autofillHints: const [AutofillHints.oneTimeCode],
                   style: GoogleFonts.fredoka(
-                    fontSize: 22,
+                    fontSize: 20,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF5D4E96),
                   ),
                   inputFormatters: [
-                    LengthLimitingTextInputFormatter(4),
+                    LengthLimitingTextInputFormatter(6),
                     FilteringTextInputFormatter.digitsOnly,
                   ],
                   decoration: const InputDecoration(

@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -84,13 +85,62 @@ class AuthService {
     return response;
   }
 
+  /// Direct Google Sign-In: Native Google Account Picker with OAuth Fallback
+  Future<AuthResponse?> signInWithGoogle({String? webClientId}) async {
+    await _prefs.setBool('is_guest_user', false);
+
+    // 1. Try Native Google Sign-In (one-tap account selector)
+    try {
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        serverClientId: webClientId,
+        scopes: const ['email', 'profile'],
+      );
+
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      if (googleUser != null) {
+        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+        final String? idToken = googleAuth.idToken;
+        final String? accessToken = googleAuth.accessToken;
+
+        if (idToken != null) {
+          final response = await Supabase.instance.client.auth.signInWithIdToken(
+            provider: OAuthProvider.google,
+            idToken: idToken,
+            accessToken: accessToken,
+          );
+
+          if (response.user != null) {
+            await syncUserToDatabase(
+              userId: response.user!.id,
+              email: response.user!.email ?? googleUser.email,
+              name: response.user!.userMetadata?['full_name'] as String? ?? googleUser.displayName,
+            );
+          }
+          return response;
+        }
+      } else {
+        // User dismissed native sign-in dialog
+        return null;
+      }
+    } catch (e) {
+      debugPrint('Native Google Sign-In note: $e, launching OAuth fallback...');
+    }
+
+    // 2. OAuth Fallback (Opens browser / custom tab with deep link redirect)
+    await Supabase.instance.client.auth.signInWithOAuth(
+      OAuthProvider.google,
+      redirectTo: kIsWeb ? null : 'io.supabase.wetrack://login-callback',
+    );
+    return null;
+  }
+
   /// Sends Email OTP (via Supabase or fallback dev OTP if SMTP not configured)
   Future<void> sendEmailOtp({
     required String email,
     bool shouldCreateUser = true,
   }) async {
-    // Generate a 4-digit dev/fallback code in case SMTP is not yet set up
-    final randomCode = (1000 + Random().nextInt(9000)).toString();
+    // Generate a 6-digit dev/fallback code to match Supabase's 6-digit token length
+    final randomCode = (100000 + Random().nextInt(900000)).toString();
     _lastDevOtp = randomCode;
 
     try {
@@ -164,7 +214,7 @@ class AuthService {
   }
 
   Future<void> sendPasswordReset(String email) async {
-    final randomCode = (1000 + Random().nextInt(9000)).toString();
+    final randomCode = (100000 + Random().nextInt(900000)).toString();
     _lastDevOtp = randomCode;
 
     try {
