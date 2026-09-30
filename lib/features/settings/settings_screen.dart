@@ -6,6 +6,7 @@ import '../../core/widgets/clay_card.dart';
 import '../../core/constants/medical_constants.dart';
 import '../../data/services/auth_service.dart';
 import '../app_providers.dart';
+import '../profile/profile_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -341,43 +342,55 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               const SizedBox(height: 18),
 
               // Profile Card
-              ClayCard(
-                padding: const EdgeInsets.all(18),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: const BoxDecoration(
-                        color: ClayColors.primaryContainer,
-                        shape: BoxShape.circle,
+              GestureDetector(
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                  );
+                },
+                child: ClayCard(
+                  padding: const EdgeInsets.all(18),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: const BoxDecoration(
+                          color: ClayColors.primaryContainer,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.person, color: ClayColors.primary, size: 28),
                       ),
-                      child: const Icon(Icons.person, color: ClayColors.primary, size: 28),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            profile.name,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                              color: ClayColors.textPrimary,
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              profile.name.isNotEmpty ? profile.name : 'WeTrack Member',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                color: ClayColors.textPrimary,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Active: ${profile.goal.displayName} Mode',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: ClayColors.textSecondary,
+                            const SizedBox(height: 2),
+                            Text(
+                              'Active: ${profile.goal.displayName} Mode • Tap to edit',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: ClayColors.textSecondary,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                      const Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 16,
+                        color: ClayColors.primary,
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 20),

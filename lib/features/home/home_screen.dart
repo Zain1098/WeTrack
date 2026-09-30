@@ -14,6 +14,7 @@ import '../cycle/log_symptoms_modal.dart';
 import '../fertility/log_fertility_modal.dart';
 import '../pregnancy/positive_test_modal.dart';
 import '../ai/ai_assistant_sheet.dart';
+import '../profile/profile_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -114,53 +115,83 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   // Top Bar
   Widget _buildTopBar(BuildContext context, UserProfile profile) {
+    final initial = profile.name.isNotEmpty ? profile.name[0].toUpperCase() : 'W';
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: ClayColors.surfaceTint,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: ClayColors.primary.withValues(alpha: 0.2),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
+        GestureDetector(
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ProfileScreen()),
+            );
+          },
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFBCAAF6), Color(0xFF917CE8)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF917CE8).withValues(alpha: 0.35),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    initial,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'Hello, ${profile.name.isEmpty ? "Friend" : profile.name}',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: ClayColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(
+                        Icons.chevron_right_rounded,
+                        size: 18,
+                        color: ClayColors.primary,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    DateHelpers.formatFriendly(DateTime.now()),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: ClayColors.textSecondary,
+                    ),
                   ),
                 ],
               ),
-              child: const Center(
-                child: Icon(Icons.favorite_rounded, color: ClayColors.primary, size: 22),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Hello, ${profile.name.isEmpty ? "Friend" : profile.name} ✨',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: ClayColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  DateHelpers.formatFriendly(DateTime.now()),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: ClayColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
 
         // AI Companion Button
