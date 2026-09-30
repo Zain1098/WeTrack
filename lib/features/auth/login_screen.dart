@@ -65,11 +65,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _confirmPasswordController = TextEditingController();
   final _nameController = TextEditingController();
 
-  // 6-Digit OTP Controllers & Focus Nodes (matching Supabase's 6-digit tokens)
+  // 8-Digit OTP Controllers & Focus Nodes (matching Supabase's 8-digit tokens)
   final List<TextEditingController> _otpControllers =
-      List.generate(6, (_) => TextEditingController());
+      List.generate(8, (_) => TextEditingController());
   final List<FocusNode> _otpFocusNodes =
-      List.generate(6, (_) => FocusNode());
+      List.generate(8, (_) => FocusNode());
 
   // Resend Countdown Timer
   Timer? _resendTimer;
@@ -410,7 +410,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final otpCode = _otpControllers.map((c) => c.text.trim()).join();
 
     if (otpCode.length < 6) {
-      setState(() => _errorMessage = 'Please enter the complete 6-digit code.');
+      setState(() => _errorMessage = 'Please enter the complete verification code.');
       return;
     }
 
@@ -539,18 +539,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (value.length > 1) {
       // User pasted whole code or auto-fill triggered!
       final digits = value.replaceAll(RegExp(r'\D'), '');
-      for (int i = 0; i < 6 && i < digits.length; i++) {
+      for (int i = 0; i < 8 && i < digits.length; i++) {
         _otpControllers[i].text = digits[i];
       }
       if (digits.length >= 6) {
-        _otpFocusNodes[5].unfocus();
+        final lastIdx = digits.length <= 8 ? digits.length - 1 : 7;
+        _otpFocusNodes[lastIdx].unfocus();
         _verifyOtp();
       }
       return;
     }
 
     if (value.isNotEmpty) {
-      if (index < 5) {
+      if (index < 7) {
         _otpFocusNodes[index + 1].requestFocus();
       } else {
         _otpFocusNodes[index].unfocus();
@@ -1179,71 +1180,75 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  /// 6-Digit Pastel Clay OTP Input Boxes with Auto-Fill & Auto-Advance
+  /// 8-Digit Pastel Clay OTP Input Boxes with Auto-Fill & Auto-Advance
   Widget _buildOtpInputBoxes() {
     return AutofillGroup(
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: List.generate(6, (index) {
-          return Container(
-            width: 44,
-            height: 52,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF6F2F9),
-              borderRadius: BorderRadius.circular(15),
-              border: Border.all(
-                color: _otpFocusNodes[index].hasFocus
-                    ? const Color(0xFF9E8CE7)
-                    : const Color(0xFFEAE3F2),
-                width: _otpFocusNodes[index].hasFocus ? 2.0 : 1.2,
-              ),
-              boxShadow: [
-                BoxShadow(
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(8, (index) {
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              width: 34,
+              height: 48,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF6F2F9),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
                   color: _otpFocusNodes[index].hasFocus
-                      ? const Color(0xFF9E8CE7).withValues(alpha: 0.25)
-                      : const Color(0xFF5A448E).withValues(alpha: 0.04),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
+                      ? const Color(0xFF9E8CE7)
+                      : const Color(0xFFEAE3F2),
+                  width: _otpFocusNodes[index].hasFocus ? 2.0 : 1.2,
                 ),
-              ],
-            ),
-            child: Center(
-              child: KeyboardListener(
-                focusNode: FocusNode(),
-                onKeyEvent: (event) {
-                  if (event is KeyDownEvent &&
-                      event.logicalKey == LogicalKeyboardKey.backspace &&
-                      _otpControllers[index].text.isEmpty &&
-                      index > 0) {
-                    _otpFocusNodes[index - 1].requestFocus();
-                  }
-                },
-                child: TextField(
-                  controller: _otpControllers[index],
-                  focusNode: _otpFocusNodes[index],
-                  keyboardType: TextInputType.number,
-                  textAlign: TextAlign.center,
-                  autofillHints: const [AutofillHints.oneTimeCode],
-                  style: GoogleFonts.fredoka(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF5D4E96),
+                boxShadow: [
+                  BoxShadow(
+                    color: _otpFocusNodes[index].hasFocus
+                        ? const Color(0xFF9E8CE7).withValues(alpha: 0.25)
+                        : const Color(0xFF5A448E).withValues(alpha: 0.04),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
                   ),
-                  inputFormatters: [
-                    LengthLimitingTextInputFormatter(6),
-                    FilteringTextInputFormatter.digitsOnly,
-                  ],
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: EdgeInsets.zero,
+                ],
+              ),
+              child: Center(
+                child: KeyboardListener(
+                  focusNode: FocusNode(),
+                  onKeyEvent: (event) {
+                    if (event is KeyDownEvent &&
+                        event.logicalKey == LogicalKeyboardKey.backspace &&
+                        _otpControllers[index].text.isEmpty &&
+                        index > 0) {
+                      _otpFocusNodes[index - 1].requestFocus();
+                    }
+                  },
+                  child: TextField(
+                    controller: _otpControllers[index],
+                    focusNode: _otpFocusNodes[index],
+                    keyboardType: TextInputType.number,
+                    textAlign: TextAlign.center,
+                    autofillHints: const [AutofillHints.oneTimeCode],
+                    style: GoogleFonts.fredoka(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF5D4E96),
+                    ),
+                    inputFormatters: [
+                      LengthLimitingTextInputFormatter(8),
+                      FilteringTextInputFormatter.digitsOnly,
+                    ],
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      isDense: true,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    onChanged: (val) => _onOtpChanged(index, val),
                   ),
-                  onChanged: (val) => _onOtpChanged(index, val),
                 ),
               ),
-            ),
-          );
-        }),
+            );
+          }),
+        ),
       ),
     );
   }

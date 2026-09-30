@@ -155,7 +155,7 @@ class AuthService {
     required String email,
     bool shouldCreateUser = true,
   }) async {
-    final randomCode = (100000 + Random().nextInt(900000)).toString();
+    final randomCode = (10000000 + Random().nextInt(90000000)).toString();
     _lastDevOtp = randomCode;
 
     try {
@@ -261,7 +261,7 @@ class AuthService {
   }
 
   Future<void> sendPasswordReset(String email) async {
-    final randomCode = (100000 + Random().nextInt(900000)).toString();
+    final randomCode = (10000000 + Random().nextInt(90000000)).toString();
     _lastDevOtp = randomCode;
 
     try {
