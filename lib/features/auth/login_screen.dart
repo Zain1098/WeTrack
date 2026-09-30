@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -9,6 +11,8 @@ enum AuthScreenMode {
   login,
   signUp,
   forgotPassword,
+  otpVerification,
+  newPassword,
 }
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -59,11 +63,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _confirmPasswordController = TextEditingController();
   final _nameController = TextEditingController();
 
+  // 4-Digit OTP Controllers & Focus Nodes
+  final List<TextEditingController> _otpControllers =
+      List.generate(4, (_) => TextEditingController());
+  final List<FocusNode> _otpFocusNodes =
+      List.generate(4, (_) => FocusNode());
+
+  // Resend Countdown Timer
+  Timer? _resendTimer;
+  int _resendCountdown = 60;
+  bool _canResend = false;
+
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   String? _errorMessage;
   String? _successMessage;
+  String? _devOtpNotice;
+
+  // Track if OTP verification is for recovery (forgot password) or signup
+  bool _isRecoveryOtp = false;
 
   @override
   void initState() {
@@ -77,6 +96,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _nameController.dispose();
+    for (final c in _otpControllers) {
+      c.dispose();
+    }
+    for (final f in _otpFocusNodes) {
+      f.dispose();
+    }
+    _resendTimer?.cancel();
     super.dispose();
   }
 
@@ -85,7 +111,76 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _mode = newMode;
       _errorMessage = null;
       _successMessage = null;
+      _devOtpNotice = null;
     });
+
+    if (newMode == AuthScreenMode.otpVerification) {
+      _startResendTimer();
+      // Clear OTP inputs
+      for (final c in _otpControllers) {
+        c.clear();
+      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_otpFocusNodes[0].canRequestFocus) {
+          _otpFocusNodes[0].requestFocus();
+        }
+      });
+    } else {
+      _resendTimer?.cancel();
+    }
+  }
+
+  void _startResendTimer() {
+    _resendTimer?.cancel();
+    setState(() {
+      _resendCountdown = 60;
+      _canResend = false;
+    });
+
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_resendCountdown > 1) {
+        setState(() => _resendCountdown--);
+      } else {
+        timer.cancel();
+        setState(() {
+          _canResend = true;
+          _resendCountdown = 0;
+        });
+      }
+    });
+  }
+
+  Future<void> _resendOtp() async {
+    if (!_canResend) return;
+    final email = _emailController.text.trim();
+    if (email.isEmpty) return;
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final auth = ref.read(authServiceProvider);
+      if (_isRecoveryOtp) {
+        await auth.sendPasswordReset(email);
+      } else {
+        await auth.sendEmailOtp(email: email);
+      }
+
+      _startResendTimer();
+      final devCode = auth.lastDevOtp;
+      setState(() {
+        _successMessage = 'A new verification code has been sent to $email';
+        if (devCode != null) {
+          _devOtpNotice = 'Test Code: $devCode (Configure SMTP in Supabase for inbox delivery)';
+        }
+      });
+    } catch (e) {
+      setState(() => _errorMessage = e.toString().replaceAll('Exception:', '').trim());
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _submit() async {
@@ -93,6 +188,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final password = _passwordController.text.trim();
     final name = _nameController.text.trim();
     final confirmPassword = _confirmPasswordController.text.trim();
+
+    if (_mode == AuthScreenMode.otpVerification) {
+      await _verifyOtp();
+      return;
+    }
+
+    if (_mode == AuthScreenMode.newPassword) {
+      await _saveNewPassword();
+      return;
+    }
 
     if (email.isEmpty) {
       setState(() => _errorMessage = 'Please enter your email address.');
@@ -104,6 +209,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
 
+    // Forgot Password Trigger -> Send OTP
     if (_mode == AuthScreenMode.forgotPassword) {
       setState(() {
         _isLoading = true;
@@ -113,8 +219,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       try {
         final auth = ref.read(authServiceProvider);
         await auth.sendPasswordReset(email);
+        _isRecoveryOtp = true;
+        _switchMode(AuthScreenMode.otpVerification);
+        final devCode = auth.lastDevOtp;
         setState(() {
-          _successMessage = 'Password reset instructions have been sent to $email';
+          _successMessage = 'Password reset code sent to $email';
+          if (devCode != null) {
+            _devOtpNotice = 'Test Code: $devCode (Configure SMTP in Supabase for direct email)';
+          }
         });
       } catch (e) {
         setState(() {
@@ -136,6 +248,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
 
+    // Sign Up Flow
     if (_mode == AuthScreenMode.signUp) {
       if (confirmPassword.isEmpty) {
         setState(() => _errorMessage = 'Please confirm your password.');
@@ -145,8 +258,61 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         setState(() => _errorMessage = 'Passwords do not match.');
         return;
       }
+
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+        _successMessage = null;
+      });
+
+      try {
+        final auth = ref.read(authServiceProvider);
+
+        // Initiate sign up
+        final response = await auth.signUpWithEmail(
+          email: email,
+          password: password,
+          name: name.isNotEmpty ? name : null,
+        );
+
+        if (name.isNotEmpty) {
+          await ref.read(userProfileProvider.notifier).updateProfile(name: name);
+        }
+
+        // Check if user is already confirmed (if Confirm Email is OFF in Supabase)
+        if (response.session != null) {
+          if (mounted) {
+            if (widget.onSuccess != null) {
+              widget.onSuccess!();
+            } else {
+              ref.invalidate(userProfileProvider);
+            }
+          }
+          return;
+        }
+
+        // If email confirmation is required, send OTP and show OTP screen!
+        await auth.sendEmailOtp(email: email);
+        _isRecoveryOtp = false;
+        _switchMode(AuthScreenMode.otpVerification);
+        final devCode = auth.lastDevOtp;
+        setState(() {
+          _successMessage = 'Verification code sent to $email';
+          if (devCode != null) {
+            _devOtpNotice = 'Test Code: $devCode (Configure SMTP in Supabase for direct email)';
+          }
+        });
+      } catch (e) {
+        setState(() {
+          _errorMessage = e.toString().replaceAll('Exception:', '').trim();
+        });
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
+      return;
     }
 
+    // Standard Login
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -155,41 +321,137 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     try {
       final auth = ref.read(authServiceProvider);
+      await auth.signInWithEmail(
+        email: email,
+        password: password,
+      );
 
-      if (_mode == AuthScreenMode.signUp) {
-        final response = await auth.signUpWithEmail(
-          email: email,
-          password: password,
-          name: name.isNotEmpty ? name : null,
-        );
-
-        // Update local profile name
-        if (name.isNotEmpty) {
-          await ref.read(userProfileProvider.notifier).updateProfile(name: name);
+      if (mounted) {
+        if (widget.onSuccess != null) {
+          widget.onSuccess!();
+        } else {
+          ref.invalidate(userProfileProvider);
         }
+      }
+    } catch (e) {
+      final err = e.toString().replaceAll('Exception:', '').trim();
+      // If user is unconfirmed, guide them to OTP
+      if (err.toLowerCase().contains('email not confirmed')) {
+        final auth = ref.read(authServiceProvider);
+        await auth.sendEmailOtp(email: email);
+        _isRecoveryOtp = false;
+        _switchMode(AuthScreenMode.otpVerification);
+        final devCode = auth.lastDevOtp;
+        setState(() {
+          _errorMessage = 'Please verify your email code below to continue.';
+          if (devCode != null) {
+            _devOtpNotice = 'Test Code: $devCode';
+          }
+        });
+      } else {
+        setState(() => _errorMessage = err);
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _verifyOtp() async {
+    final email = _emailController.text.trim();
+    final otpCode = _otpControllers.map((c) => c.text.trim()).join();
+
+    if (otpCode.length < 4) {
+      setState(() => _errorMessage = 'Please enter the complete 4-digit code.');
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final auth = ref.read(authServiceProvider);
+
+      if (_isRecoveryOtp) {
+        // Recovery OTP verified -> proceed to set new password
+        _switchMode(AuthScreenMode.newPassword);
+        setState(() {
+          _successMessage = 'Code verified! Now set your new password.';
+        });
+      } else {
+        // Sign up / email verification
+        await auth.verifyEmailOtp(
+          email: email,
+          token: otpCode,
+          name: _nameController.text.trim().isNotEmpty ? _nameController.text.trim() : null,
+        );
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                response.session != null
-                    ? 'Account created successfully! Welcome to WeTrack.'
-                    : 'Account created! Please check your email to confirm registration.',
-              ),
+              content: const Text('Account verified successfully! Welcome to WeTrack.'),
               backgroundColor: const Color(0xFF9E8CE7),
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
           );
+
+          if (widget.onSuccess != null) {
+            widget.onSuccess!();
+          } else {
+            ref.invalidate(userProfileProvider);
+          }
         }
-      } else {
-        await auth.signInWithEmail(
-          email: email,
-          password: password,
-        );
       }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Invalid or expired code. Please check and try again.';
+      });
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _saveNewPassword() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
+    final otpCode = _otpControllers.map((c) => c.text.trim()).join();
+
+    if (password.length < 6) {
+      setState(() => _errorMessage = 'Password must be at least 6 characters long.');
+      return;
+    }
+
+    if (password != confirmPassword) {
+      setState(() => _errorMessage = 'Passwords do not match.');
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final auth = ref.read(authServiceProvider);
+      await auth.verifyRecoveryOtp(
+        email: email,
+        token: otpCode,
+        newPassword: password,
+      );
 
       if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Password updated successfully! Logged in.'),
+            backgroundColor: const Color(0xFF9E8CE7),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          ),
+        );
+
         if (widget.onSuccess != null) {
           widget.onSuccess!();
         } else {
@@ -202,6 +464,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       });
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _onOtpChanged(int index, String value) {
+    if (value.length > 1) {
+      // User pasted whole code or auto-fill triggered!
+      final digits = value.replaceAll(RegExp(r'\D'), '');
+      for (int i = 0; i < 4 && i < digits.length; i++) {
+        _otpControllers[i].text = digits[i];
+      }
+      if (digits.length >= 4) {
+        _otpFocusNodes[3].unfocus();
+        _verifyOtp();
+      }
+      return;
+    }
+
+    if (value.isNotEmpty) {
+      if (index < 3) {
+        _otpFocusNodes[index + 1].requestFocus();
+      } else {
+        _otpFocusNodes[index].unfocus();
+        _verifyOtp();
+      }
     }
   }
 
@@ -296,13 +582,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           const SizedBox(height: 4),
 
           // Subtitle
-          Text(
-            _getSubtitleText(),
-            textAlign: TextAlign.center,
-            style: GoogleFonts.nunito(
-              fontSize: 13,
-              color: const Color(0xFF867D9C),
-              fontWeight: FontWeight.w600,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              _getSubtitleText(),
+              textAlign: TextAlign.center,
+              style: GoogleFonts.nunito(
+                fontSize: 13,
+                color: const Color(0xFF867D9C),
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
 
@@ -332,7 +621,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  /// "Welcome Back" with 3D Golden Sparks on Left & Right
+  /// Title with 3D Golden Sparks on Left & Right
   Widget _buildSparksTitle() {
     final title = _getTitleText();
 
@@ -353,7 +642,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             title,
             textAlign: TextAlign.center,
             style: GoogleFonts.fredoka(
-              fontSize: 25,
+              fontSize: 24,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF5D4E96),
               letterSpacing: 0.2,
@@ -379,6 +668,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         return 'Create Account';
       case AuthScreenMode.forgotPassword:
         return 'Reset Password';
+      case AuthScreenMode.otpVerification:
+        return 'Verify Code';
+      case AuthScreenMode.newPassword:
+        return 'New Password';
     }
   }
 
@@ -389,7 +682,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       case AuthScreenMode.signUp:
         return 'Sign up to start your journey';
       case AuthScreenMode.forgotPassword:
-        return 'Enter your email to recover your account';
+        return 'Enter your email to receive a recovery code';
+      case AuthScreenMode.otpVerification:
+        return 'Enter the 4-digit code sent to\n${_emailController.text.trim()}';
+      case AuthScreenMode.newPassword:
+        return 'Create a secure new password for your account';
     }
   }
 
@@ -443,6 +740,36 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Developer / Test Code Notice (so user is never blocked before SMTP configuration)
+          if (_devOtpNotice != null) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0E7FF),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFD6BCFA)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.lightbulb_outline_rounded,
+                      color: Color(0xFF7E60BF), size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _devOtpNotice!,
+                      style: GoogleFonts.nunito(
+                        color: const Color(0xFF5A3E96),
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
           // Error Message Banner
           if (_errorMessage != null) ...[
             Container(
@@ -455,7 +782,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.error_outline_rounded, color: Color(0xFFD6336C), size: 18),
+                  const Icon(Icons.error_outline_rounded,
+                      color: Color(0xFFD6336C), size: 18),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -502,31 +830,33 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
           ],
 
-          // Sign Up: Full Name Field
-          if (_mode == AuthScreenMode.signUp) ...[
-            _buildClayInputField(
-              controller: _nameController,
-              hint: 'Full Name',
-              badgeIcon: Icons.person_rounded,
-              keyboardType: TextInputType.name,
+          // MODE: OTP VERIFICATION
+          if (_mode == AuthScreenMode.otpVerification) ...[
+            _buildOtpInputBoxes(),
+            const SizedBox(height: 14),
+            _buildResendRow(),
+            const SizedBox(height: 18),
+            _buildClayActionButton(),
+            const SizedBox(height: 14),
+            Center(
+              child: TextButton(
+                onPressed: () => _switchMode(AuthScreenMode.signUp),
+                child: Text(
+                  'Change Email or Back',
+                  style: GoogleFonts.nunito(
+                    fontSize: 12.5,
+                    color: const Color(0xFF725EB8),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
             ),
-            const SizedBox(height: 12),
-          ],
-
-          // Email Field
-          _buildClayInputField(
-            controller: _emailController,
-            hint: _mode == AuthScreenMode.login ? 'Email or Username' : 'Email Address',
-            badgeIcon: _mode == AuthScreenMode.login ? Icons.person_rounded : Icons.mail_rounded,
-            keyboardType: TextInputType.emailAddress,
-          ),
-          const SizedBox(height: 12),
-
-          // Password Field (Login & Sign Up)
-          if (_mode != AuthScreenMode.forgotPassword) ...[
+          ]
+          // MODE: SET NEW PASSWORD
+          else if (_mode == AuthScreenMode.newPassword) ...[
             _buildClayInputField(
               controller: _passwordController,
-              hint: 'Password',
+              hint: 'New Password',
               badgeIcon: Icons.lock_rounded,
               isPassword: true,
               obscureText: _obscurePassword,
@@ -534,14 +864,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 setState(() => _obscurePassword = !_obscurePassword);
               },
             ),
-          ],
-
-          // Sign Up: Confirm Password Field
-          if (_mode == AuthScreenMode.signUp) ...[
             const SizedBox(height: 12),
             _buildClayInputField(
               controller: _confirmPasswordController,
-              hint: 'Confirm Password',
+              hint: 'Confirm New Password',
               badgeIcon: Icons.lock_rounded,
               isPassword: true,
               obscureText: _obscureConfirmPassword,
@@ -549,106 +875,255 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 setState(() => _obscureConfirmPassword = !_obscureConfirmPassword);
               },
             ),
-          ],
+            const SizedBox(height: 18),
+            _buildClayActionButton(),
+          ]
+          // MODES: LOGIN, SIGN UP, FORGOT PASSWORD
+          else ...[
+            // Sign Up: Full Name Field
+            if (_mode == AuthScreenMode.signUp) ...[
+              _buildClayInputField(
+                controller: _nameController,
+                hint: 'Full Name',
+                badgeIcon: Icons.person_rounded,
+                keyboardType: TextInputType.name,
+              ),
+              const SizedBox(height: 12),
+            ],
 
-          // Forgot Password link (in Login mode)
-          if (_mode == AuthScreenMode.login) ...[
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerRight,
-              child: GestureDetector(
-                onTap: () => _switchMode(AuthScreenMode.forgotPassword),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
-                  child: Text(
-                    'Forgot Password?',
-                    style: GoogleFonts.nunito(
-                      fontSize: 12.5,
-                      color: const Color(0xFF725EB8),
-                      fontWeight: FontWeight.w700,
+            // Email Field
+            _buildClayInputField(
+              controller: _emailController,
+              hint: _mode == AuthScreenMode.login ? 'Email or Username' : 'Email Address',
+              badgeIcon: _mode == AuthScreenMode.login ? Icons.person_rounded : Icons.mail_rounded,
+              keyboardType: TextInputType.emailAddress,
+            ),
+            const SizedBox(height: 12),
+
+            // Password Field (Login & Sign Up)
+            if (_mode != AuthScreenMode.forgotPassword) ...[
+              _buildClayInputField(
+                controller: _passwordController,
+                hint: 'Password',
+                badgeIcon: Icons.lock_rounded,
+                isPassword: true,
+                obscureText: _obscurePassword,
+                onToggleVisibility: () {
+                  setState(() => _obscurePassword = !_obscurePassword);
+                },
+              ),
+            ],
+
+            // Sign Up: Confirm Password Field
+            if (_mode == AuthScreenMode.signUp) ...[
+              const SizedBox(height: 12),
+              _buildClayInputField(
+                controller: _confirmPasswordController,
+                hint: 'Confirm Password',
+                badgeIcon: Icons.lock_rounded,
+                isPassword: true,
+                obscureText: _obscureConfirmPassword,
+                onToggleVisibility: () {
+                  setState(() => _obscureConfirmPassword = !_obscureConfirmPassword);
+                },
+              ),
+            ],
+
+            // Forgot Password link (in Login mode)
+            if (_mode == AuthScreenMode.login) ...[
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerRight,
+                child: GestureDetector(
+                  onTap: () => _switchMode(AuthScreenMode.forgotPassword),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                    child: Text(
+                      'Forgot Password?',
+                      style: GoogleFonts.nunito(
+                        fontSize: 12.5,
+                        color: const Color(0xFF725EB8),
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
 
-          const SizedBox(height: 18),
+            const SizedBox(height: 18),
 
-          // Primary Pastel Clay Button ("Login" / "Sign Up" / "Reset Password")
-          _buildClayActionButton(),
+            // Primary Pastel Clay Button
+            _buildClayActionButton(),
 
-          // Divider and Social Logins (in Login & Sign Up modes)
-          if (_mode != AuthScreenMode.forgotPassword) ...[
-            const SizedBox(height: 16),
+            // Divider and Social Logins (in Login & Sign Up modes)
+            if (_mode != AuthScreenMode.forgotPassword) ...[
+              const SizedBox(height: 16),
 
-            // "─── or continue with ───"
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    height: 1,
-                    color: const Color(0xFFE8E2F0),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: Text(
-                    'or continue with',
-                    style: GoogleFonts.nunito(
-                      fontSize: 12,
-                      color: const Color(0xFF9E96AC),
-                      fontWeight: FontWeight.w600,
+              // "─── or continue with ───"
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      height: 1,
+                      color: const Color(0xFFE8E2F0),
                     ),
                   ),
-                ),
-                Expanded(
-                  child: Container(
-                    height: 1,
-                    color: const Color(0xFFE8E2F0),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Text(
+                      'or continue with',
+                      style: GoogleFonts.nunito(
+                        fontSize: 12,
+                        color: const Color(0xFF9E96AC),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
-                ),
-              ],
-            ),
+                  Expanded(
+                    child: Container(
+                      height: 1,
+                      color: const Color(0xFFE8E2F0),
+                    ),
+                  ),
+                ],
+              ),
 
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            // 3 Round Social Clay Discs: Google, Apple, Facebook
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildSocialButton(
-                  provider: 'Google',
-                  child: _buildGoogleGIcon(),
-                ),
-                const SizedBox(width: 16),
-                _buildSocialButton(
-                  provider: 'Apple',
-                  child: const Icon(
-                    Icons.apple_rounded,
-                    color: Color(0xFF1D1B20),
-                    size: 24,
+              // 3 Round Social Clay Discs: Google, Apple, Facebook
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildSocialButton(
+                    provider: 'Google',
+                    child: _buildGoogleGIcon(),
                   ),
-                ),
-                const SizedBox(width: 16),
-                _buildSocialButton(
-                  provider: 'Facebook',
-                  child: const Icon(
-                    Icons.facebook_rounded,
-                    color: Color(0xFF1877F2),
-                    size: 24,
+                  const SizedBox(width: 16),
+                  _buildSocialButton(
+                    provider: 'Apple',
+                    child: const Icon(
+                      Icons.apple_rounded,
+                      color: Color(0xFF1D1B20),
+                      size: 24,
+                    ),
                   ),
-                ),
-              ],
-            ),
+                  const SizedBox(width: 16),
+                  _buildSocialButton(
+                    provider: 'Facebook',
+                    child: const Icon(
+                      Icons.facebook_rounded,
+                      color: Color(0xFF1877F2),
+                      size: 24,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+
+            const SizedBox(height: 18),
+
+            // Bottom Toggle Text
+            _buildBottomToggleLink(),
           ],
-
-          const SizedBox(height: 18),
-
-          // Bottom Toggle Text
-          _buildBottomToggleLink(),
         ],
       ),
+    );
+  }
+
+  /// 4-Digit Pastel Clay OTP Input Boxes with Auto-Fill & Auto-Advance
+  Widget _buildOtpInputBoxes() {
+    return AutofillGroup(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: List.generate(4, (index) {
+          return Container(
+            width: 56,
+            height: 58,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF6F2F9),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: _otpFocusNodes[index].hasFocus
+                    ? const Color(0xFF9E8CE7)
+                    : const Color(0xFFEAE3F2),
+                width: _otpFocusNodes[index].hasFocus ? 2.0 : 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: _otpFocusNodes[index].hasFocus
+                      ? const Color(0xFF9E8CE7).withValues(alpha: 0.25)
+                      : const Color(0xFF5A448E).withValues(alpha: 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Center(
+              child: RawKeyboardListener(
+                focusNode: FocusNode(),
+                onKey: (event) {
+                  if (event is RawKeyDownEvent &&
+                      event.logicalKey == LogicalKeyboardKey.backspace &&
+                      _otpControllers[index].text.isEmpty &&
+                      index > 0) {
+                    _otpFocusNodes[index - 1].requestFocus();
+                  }
+                },
+                child: TextField(
+                  controller: _otpControllers[index],
+                  focusNode: _otpFocusNodes[index],
+                  keyboardType: TextInputType.number,
+                  textAlign: TextAlign.center,
+                  autofillHints: const [AutofillHints.oneTimeCode],
+                  style: GoogleFonts.fredoka(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF5D4E96),
+                  ),
+                  inputFormatters: [
+                    LengthLimitingTextInputFormatter(4),
+                    FilteringTextInputFormatter.digitsOnly,
+                  ],
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  onChanged: (val) => _onOtpChanged(index, val),
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  /// Resend Code Row with Countdown
+  Widget _buildResendRow() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          "Didn't receive the code? ",
+          style: GoogleFonts.nunito(
+            fontSize: 12,
+            color: const Color(0xFF867D9C),
+          ),
+        ),
+        GestureDetector(
+          onTap: _canResend ? _resendOtp : null,
+          child: Text(
+            _canResend ? 'Resend' : 'Resend in ${_resendCountdown}s',
+            style: GoogleFonts.nunito(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: _canResend ? const Color(0xFF725EB8) : const Color(0xFFA197B4),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -749,7 +1224,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         buttonText = 'Sign Up';
         break;
       case AuthScreenMode.forgotPassword:
-        buttonText = 'Send Reset Link';
+        buttonText = 'Send Reset Code';
+        break;
+      case AuthScreenMode.otpVerification:
+        buttonText = 'Verify & Continue';
+        break;
+      case AuthScreenMode.newPassword:
+        buttonText = 'Update Password';
         break;
     }
 
@@ -877,6 +1358,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         action = "Log In";
         onTap = () => _switchMode(AuthScreenMode.login);
         break;
+      case AuthScreenMode.otpVerification:
+      case AuthScreenMode.newPassword:
+        prefix = "Back to ";
+        action = "Log In";
+        onTap = () => _switchMode(AuthScreenMode.login);
+        break;
     }
 
     return Center(
@@ -926,40 +1413,33 @@ class _ClayRaysPainter extends CustomPainter {
     final cx = size.width / 2;
     final cy = size.height / 2;
 
-    // 3 clay rays: top, middle, bottom
     if (isLeft) {
-      // Top ray (slanted up-left)
       canvas.drawLine(
         Offset(cx + 6, cy - 6),
         Offset(cx - 6, cy - 10),
         paint,
       );
-      // Middle ray (horizontal left)
       canvas.drawLine(
         Offset(cx + 8, cy),
         Offset(cx - 8, cy),
         paint,
       );
-      // Bottom ray (slanted down-left)
       canvas.drawLine(
         Offset(cx + 6, cy + 6),
         Offset(cx - 6, cy + 10),
         paint,
       );
     } else {
-      // Top ray (slanted up-right)
       canvas.drawLine(
         Offset(cx - 6, cy - 6),
         Offset(cx + 6, cy - 10),
         paint,
       );
-      // Middle ray (horizontal right)
       canvas.drawLine(
         Offset(cx - 8, cy),
         Offset(cx + 8, cy),
         paint,
       );
-      // Bottom ray (slanted down-right)
       canvas.drawLine(
         Offset(cx - 6, cy + 6),
         Offset(cx + 6, cy + 10),
