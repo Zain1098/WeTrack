@@ -21,10 +21,10 @@ void main() async {
   try {
     await Supabase.initialize(
       url: supabaseUrl,
-      publishableKey: supabaseAnonKey,
+      anonKey: supabaseAnonKey,
     );
   } catch (e) {
-    debugPrint('Supabase init note: ');
+    debugPrint('Supabase init note: $e');
   }
 
   // Load existing profile or prepare initial default

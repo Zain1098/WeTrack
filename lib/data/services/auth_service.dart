@@ -4,9 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-const String supabaseUrl = 'https://xejhgfyeichkibepgjii.supabase.co';
-const String supabaseAnonKey =
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhlamhnZnllaWNoa2liZXBnamlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3OTEzNzQsImV4cCI6MjA5OTM2NzM3NH0.3uyqB2-1-W9rMmt5sovfbSzLB7sGtK0tlRgmZwspbH4';
+const String supabaseUrl = 'https://blqesxwxmytbuoenpuio.supabase.co';
+const String supabaseAnonKey = 'sb_publishable_Voc57bB0GGDvtAnTPpRi4A_HEeMIaWw';
 
 class AuthService {
   AuthService(this._prefs);
