@@ -85,6 +85,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   // Track if OTP verification is for recovery (forgot password) or signup
   bool _isRecoveryOtp = false;
+  bool _isSignUpOtp = false;
   StreamSubscription<AuthState>? _authSub;
 
   @override
@@ -183,6 +184,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       final auth = ref.read(authServiceProvider);
       if (_isRecoveryOtp) {
         await auth.sendPasswordReset(email);
+      } else if (_isSignUpOtp) {
+        await auth.resendSignupOtp(email);
       } else {
         await auth.sendEmailOtp(email: email);
       }
@@ -241,6 +244,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         final auth = ref.read(authServiceProvider);
         await auth.sendPasswordReset(email);
         _isRecoveryOtp = true;
+        _isSignUpOtp = false;
         _switchMode(AuthScreenMode.otpVerification);
         final devCode = auth.lastDevOtp;
         setState(() {
@@ -318,10 +322,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           return;
         }
 
-        // If email confirmation is required, send OTP and show OTP screen!
-        await auth.sendEmailOtp(email: email);
+        // If email confirmation is required, show OTP screen
+        // Note: Supabase signUpWithEmail already dispatches the Confirm Signup OTP!
+        _isSignUpOtp = true;
         _isRecoveryOtp = false;
         _switchMode(AuthScreenMode.otpVerification);
+        _startResendTimer();
         final devCode = auth.lastDevOtp;
         setState(() {
           _successMessage = 'Verification code sent to $email';
@@ -428,6 +434,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           email: email,
           token: otpCode,
           name: _nameController.text.trim().isNotEmpty ? _nameController.text.trim() : null,
+          isSignUp: _isSignUpOtp,
         );
 
         if (mounted) {
@@ -457,9 +464,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           }
         }
       }
+    } on AuthException catch (e) {
+      setState(() {
+        _errorMessage = e.message;
+      });
     } catch (e) {
       setState(() {
-        _errorMessage = 'Invalid or expired code. Please check and try again.';
+        _errorMessage = 'Invalid or expired code. Please enter the latest code received.';
       });
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -571,6 +582,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             );
           }
         }
+      }
+    } on AuthException catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.message;
+        });
       }
     } catch (e) {
       if (mounted) {

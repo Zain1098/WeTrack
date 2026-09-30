@@ -8,6 +8,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 const String supabaseUrl = 'https://blqesxwxmytbuoenpuio.supabase.co';
 const String supabaseAnonKey = 'sb_publishable_Voc57bB0GGDvtAnTPpRi4A_HEeMIaWw';
 
+/// Optional: Google Web Client ID from Google Cloud Console for Native 1-Tap Google Sign-In
+/// Example: '123456789-abcdef.apps.googleusercontent.com'
+const String? googleWebClientId = null;
+
 class AuthService {
   AuthService(this._prefs);
   final SharedPreferences _prefs;
@@ -85,14 +89,15 @@ class AuthService {
     return response;
   }
 
-  /// Direct Google Sign-In: Native Google Account Picker with OAuth Fallback
+  /// Direct Google Sign-In: Native Google Account Picker with In-App OAuth Fallback
   Future<AuthResponse?> signInWithGoogle({String? webClientId}) async {
     await _prefs.setBool('is_guest_user', false);
+    final effectiveClientId = webClientId ?? googleWebClientId;
 
     // 1. Try Native Google Sign-In (one-tap account selector)
     try {
       final GoogleSignIn googleSignIn = GoogleSignIn(
-        serverClientId: webClientId,
+        serverClientId: effectiveClientId,
         scopes: const ['email', 'profile'],
       );
 
@@ -123,13 +128,14 @@ class AuthService {
         return null;
       }
     } catch (e) {
-      debugPrint('Native Google Sign-In note: $e, launching OAuth fallback...');
+      debugPrint('Native Google Sign-In note: $e, launching in-app OAuth fallback...');
     }
 
-    // 2. OAuth Fallback (Opens browser / custom tab with deep link redirect)
+    // 2. OAuth Fallback: Uses inAppBrowserView for seamless deep link return to the app
     await Supabase.instance.client.auth.signInWithOAuth(
       OAuthProvider.google,
       redirectTo: kIsWeb ? null : 'io.supabase.wetrack://login-callback',
+      authScreenLaunchMode: LaunchMode.inAppBrowserView,
     );
     return null;
   }
@@ -139,7 +145,6 @@ class AuthService {
     required String email,
     bool shouldCreateUser = true,
   }) async {
-    // Generate a 6-digit dev/fallback code to match Supabase's 6-digit token length
     final randomCode = (100000 + Random().nextInt(900000)).toString();
     _lastDevOtp = randomCode;
 
@@ -150,8 +155,19 @@ class AuthService {
       );
     } catch (e) {
       debugPrint('Supabase signInWithOtp note: $e');
-      // If Supabase throws rate limit or SMTP not configured, we keep _lastDevOtp
-      // so testing can proceed smoothly without blocking the developer.
+    }
+  }
+
+  /// Resends Signup verification OTP
+  Future<void> resendSignupOtp(String email) async {
+    try {
+      await Supabase.instance.client.auth.resend(
+        type: OtpType.signup,
+        email: email.trim(),
+      );
+    } catch (e) {
+      debugPrint('Resend signup OTP error: $e, falling back to signInWithOtp');
+      await sendEmailOtp(email: email);
     }
   }
 
@@ -160,13 +176,13 @@ class AuthService {
     required String email,
     required String token,
     String? name,
+    bool isSignUp = false,
   }) async {
     await _prefs.setBool('is_guest_user', false);
     final cleanToken = token.trim();
 
     // Check if matching dev/fallback OTP
     if (_lastDevOtp != null && cleanToken == _lastDevOtp) {
-      // If dev OTP matched, ensure local state and user are created/authenticated
       final user = currentUser;
       if (user != null) {
         await syncUserToDatabase(
@@ -178,7 +194,28 @@ class AuthService {
       return AuthResponse(session: Supabase.instance.client.auth.currentSession, user: user);
     }
 
-    // Attempt Supabase OTP verification
+    // 1. If this was initiated from Sign Up, verify signup OTP first
+    if (isSignUp) {
+      try {
+        final response = await Supabase.instance.client.auth.verifyOTP(
+          email: email.trim(),
+          token: cleanToken,
+          type: OtpType.signup,
+        );
+        if (response.user != null) {
+          await syncUserToDatabase(
+            userId: response.user!.id,
+            email: email.trim(),
+            name: name ?? response.user!.userMetadata?['full_name'] as String?,
+          );
+        }
+        return response;
+      } on AuthException catch (e) {
+        debugPrint('verifyOTP signup failed (${e.message}), attempting OtpType.email fallback...');
+      }
+    }
+
+    // 2. Attempt OtpType.email verification
     try {
       final response = await Supabase.instance.client.auth.verifyOTP(
         email: email.trim(),
@@ -195,7 +232,7 @@ class AuthService {
       }
       return response;
     } catch (_) {
-      // Secondary check for signup OTP type
+      // 3. Fallback to OtpType.signup
       final response = await Supabase.instance.client.auth.verifyOTP(
         email: email.trim(),
         token: cleanToken,
