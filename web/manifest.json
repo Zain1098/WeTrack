@@ -1,11 +1,11 @@
 {
-    "name": "wetrack",
-    "short_name": "wetrack",
+    "name": "WeTrack",
+    "short_name": "WeTrack",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#DCCFEF",
+    "theme_color": "#9E8CE7",
+    "description": "WeTrack — Women's Cycle, Fertility & Pregnancy Companion.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

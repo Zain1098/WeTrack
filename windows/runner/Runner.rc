@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.wetrack.app" "\0"
-            VALUE "FileDescription", "wetrack" "\0"
+            VALUE "FileDescription", "WeTrack" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "wetrack" "\0"
+            VALUE "InternalName", "WeTrack" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 com.wetrack.app. All rights reserved." "\0"
             VALUE "OriginalFilename", "wetrack.exe" "\0"
-            VALUE "ProductName", "wetrack" "\0"
+            VALUE "ProductName", "WeTrack" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
