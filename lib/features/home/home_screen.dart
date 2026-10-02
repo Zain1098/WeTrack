@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/clay_colors.dart';
@@ -132,29 +133,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFBCAAF6), Color(0xFF917CE8)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
                   shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFF04E78), width: 1.5),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF917CE8).withValues(alpha: 0.35),
+                      color: const Color(0xFFF04E78).withValues(alpha: 0.2),
                       blurRadius: 10,
                       offset: const Offset(0, 3),
                     ),
                   ],
                 ),
-                child: Center(
-                  child: Text(
-                    initial,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
+                child: ClipOval(
+                  child: profile.profileImagePath != null &&
+                          File(profile.profileImagePath!).existsSync()
+                      ? Image.file(
+                          File(profile.profileImagePath!),
+                          width: 44,
+                          height: 44,
+                          fit: BoxFit.cover,
+                        )
+                      : Image.asset(
+                          'UI/Profile page character.png',
+                          width: 44,
+                          height: 44,
+                          fit: BoxFit.cover,
+                          alignment: Alignment.topCenter,
+                        ),
                 ),
               ),
               const SizedBox(width: 12),

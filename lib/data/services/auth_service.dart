@@ -307,12 +307,14 @@ class AuthService {
     required String userId,
     required String email,
     String? name,
+    String? avatarUrl,
   }) async {
     try {
       await Supabase.instance.client.from('profiles').upsert({
         'id': userId,
         'email': email,
         if (name != null && name.isNotEmpty) 'name': name,
+        if (avatarUrl != null) 'avatar_url': avatarUrl,
         'updated_at': DateTime.now().toIso8601String(),
       });
     } catch (e) {

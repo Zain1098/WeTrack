@@ -43,6 +43,7 @@ dependencies:
   supabase_flutter: ^2.9.0
   flutter_svg: ^2.3.0
   google_sign_in: ^6.2.2
+  image_picker: ^1.2.3
 
 dev_dependencies:
   flutter_test:

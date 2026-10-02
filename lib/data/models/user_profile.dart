@@ -38,6 +38,7 @@ class UserProfile {
   final String? pinCode;
   final bool isBiometricsEnabled;
   final bool hasCompletedOnboarding;
+  final String? profileImagePath;
   final DateTime createdAt;
 
   const UserProfile({
@@ -50,6 +51,7 @@ class UserProfile {
     this.pinCode,
     this.isBiometricsEnabled = false,
     this.hasCompletedOnboarding = false,
+    this.profileImagePath,
     required this.createdAt,
   });
 
@@ -63,6 +65,8 @@ class UserProfile {
     String? pinCode,
     bool? isBiometricsEnabled,
     bool? hasCompletedOnboarding,
+    String? profileImagePath,
+    bool clearProfileImage = false,
     DateTime? createdAt,
   }) {
     return UserProfile(
@@ -75,6 +79,7 @@ class UserProfile {
       pinCode: pinCode ?? this.pinCode,
       isBiometricsEnabled: isBiometricsEnabled ?? this.isBiometricsEnabled,
       hasCompletedOnboarding: hasCompletedOnboarding ?? this.hasCompletedOnboarding,
+      profileImagePath: clearProfileImage ? null : (profileImagePath ?? this.profileImagePath),
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -89,6 +94,7 @@ class UserProfile {
         'pinCode': pinCode,
         'isBiometricsEnabled': isBiometricsEnabled,
         'hasCompletedOnboarding': hasCompletedOnboarding,
+        'profileImagePath': profileImagePath,
         'createdAt': createdAt.toIso8601String(),
       };
 
@@ -104,6 +110,7 @@ class UserProfile {
         pinCode: json['pinCode'] as String?,
         isBiometricsEnabled: json['isBiometricsEnabled'] as bool? ?? false,
         hasCompletedOnboarding: json['hasCompletedOnboarding'] as bool? ?? false,
+        profileImagePath: json['profileImagePath'] as String?,
         createdAt: json['createdAt'] != null
             ? DateTime.parse(json['createdAt'] as String)
             : DateTime.now(),

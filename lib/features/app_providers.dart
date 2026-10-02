@@ -46,6 +46,8 @@ class UserProfileNotifier extends Notifier<UserProfile> {
     int? usualPeriodDuration,
     DateTime? lastPeriodDate,
     AppGoal? goal,
+    String? profileImagePath,
+    bool clearProfileImage = false,
   }) async {
     final updated = state.copyWith(
       name: name,
@@ -53,6 +55,8 @@ class UserProfileNotifier extends Notifier<UserProfile> {
       usualPeriodDuration: usualPeriodDuration,
       lastPeriodDate: lastPeriodDate,
       goal: goal,
+      profileImagePath: profileImagePath,
+      clearProfileImage: clearProfileImage,
     );
     state = updated;
     await ref.read(localStorageRepositoryProvider).saveUserProfile(updated);
