@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../core/theme/clay_colors.dart';
 import '../../core/widgets/clay_card.dart';
 import '../../core/widgets/clay_pill.dart';
-import '../../core/constants/medical_constants.dart';
 
 class LearnArticle {
   final String id;
@@ -32,130 +31,175 @@ class LearnScreen extends StatefulWidget {
 }
 
 class _LearnScreenState extends State<LearnScreen> {
-  String _selectedCategory = 'All';
+  String _selectedCategory = 'Sab (All)';
 
   static const List<String> _categories = [
-    'All',
-    'Fertility',
-    'Cycle Health',
-    'Pregnancy',
-    'Safety',
+    'Sab (All)',
+    'Desi Myths vs Facts',
+    'Fertility & Milap',
+    'Cycle & Hormones',
+    'Hamal (Pregnancy)',
+    'Safety & Emergency',
   ];
 
   static const List<LearnArticle> _articles = [
+    // 1. Desi Myths vs Facts (Top Priority)
+    LearnArticle(
+      id: 'myth_legs_up',
+      title: 'Myth: Intercourse Ke Baad Taangein Upar Rakhna Zaroori Hai?',
+      category: 'Desi Myths vs Facts',
+      summary: 'Khandani mashwaray ke mutabiq ghanto taangein upar rakhna zaroori samjha jata hai. Haqeeqat kya hai?',
+      content:
+          'Haqeeqat (ASRM Medical Facts):\n• Medical science aur ASRM guidelines ke mutabiq kisi aisi position ya taangein ghanto deewar ke sath lagane ka conception chance par koi asar sabit nahi hua.\n• Ejaculation ke chand seconds mein million sperm cervix ke raste uterus mein daakhil ho chuke hotay hain.\n• Intercourse ke baad sirf 5 se 10 minute aaram se seedha laitna kaafi hota hai. Extra fluid ka bahar nikalna bilkul normal hai, sperm andar ja chuka hota hai.',
+      source: 'American Society for Reproductive Medicine (ASRM) Practice Guidelines',
+      reviewDate: 'Updated 2026',
+    ),
+    LearnArticle(
+      id: 'myth_hot_foods',
+      title: 'Myth: Garam Cheezein (Anday, Machli) Khane Se Hamal Rukta Hai?',
+      category: 'Desi Myths vs Facts',
+      summary: 'Kya baby planning ya early pregnancy mein garam taseer wali ghizayein khatarnak hain?',
+      content:
+          'Haqeeqat (Clinical Nutritional Facts):\n• Medical science mein "garam" ya "thandi" taseer ka koi scientific tasawwur nahi hai.\n• Anday aur machli (fish) high-quality protein, choline aur Omega-3 fatty acids provide karte hain jo egg quality aur baby ke brain development ke liye behtareen hain.\n• Sirf kachi (uncooked) machli ya raw eggs se perhez karein taake infection na ho. Paka kar khana bilkul mehfooz aur mufeed hai.',
+      source: 'NHS UK & ACOG Maternal Nutrition Guidelines',
+      reviewDate: 'Updated 2026',
+    ),
+    LearnArticle(
+      id: 'myth_period_conception',
+      title: 'Myth: Period Khatam Hote Hi Conceive Nahi Ho Sakta?',
+      category: 'Desi Myths vs Facts',
+      summary: 'Kya period ke foran agle din milap se pregnancy ho sakti hai?',
+      content:
+          'Haqeeqat (Ovulation & Sperm Lifespan):\n• Agar kisi aurat ka cycle short ho (e.g. 21–24 din), to ovulation period khatam hone ke foran baad Day 8 ya 9 par ho sakti hai.\n• Sperm female body ke andar 3 se 5 din tak zinda reh sakta hai.\n• Is liye agar period ke aakhri din ya foran baad unprotected intercourse ho, to conception ke genuine chances hotay hain.',
+      source: 'Human Reproduction & Fertility Science Standards',
+      reviewDate: 'Updated 2026',
+    ),
+
+    // 2. Fertility & Milap
     LearnArticle(
       id: 'asrm_fertility',
-      title: 'Optimizing Natural Fertility',
-      category: 'Fertility',
-      summary:
-          'Understanding the 6-day fertile window and evidence-based timing for intercourse.',
+      title: 'Fertile Window Aur Milap Ka Sahi Waqt (ASRM Guidelines)',
+      category: 'Fertility & Milap',
+      summary: 'Cycle ke 6 sab se ahem din aur intercourse ka sahi schedule samajhein.',
       content:
-          'According to the American Society for Reproductive Medicine (ASRM), the fertile window is the 6-day interval ending on the day of ovulation.\n\nKey Findings:\n• Intercourse every 1–2 days during this window yields the highest fecundability rates.\n• Rigid schedules cause psychological distress; regular intimacy throughout the week is equally effective.\n• No sexual position or post-coital routine has been clinically proven to alter conception probability.',
-      source:
-          'American Society for Reproductive Medicine (ASRM), Practice Committee (2022)',
-      reviewDate: 'Reviewed March 2026',
+          'ASRM (American Society for Reproductive Medicine) ke mutabiq:\n\n• Fertile Window: Ovulation ke din se pehle ke 5 din aur ovulation ka din mil kar 6 din bante hain.\n• Intercourse Schedule: Fertile window ke dauran har 1–2 din intercourse karna conception ke chances ko maximum karta hai.\n• Stress Se Bachein: Rozana strict timing ka zehni dabao na lein, pur-sukoon mahol aur mutual comfort sab se ahem hai.',
+      source: 'ASRM Practice Committee Guidance',
+      reviewDate: 'Updated 2026',
     ),
     LearnArticle(
-      id: 'folic_acid',
-      title: 'Folic Acid Supplementation Guidance',
-      category: 'Fertility',
-      summary:
-          'Why 400 mcg daily folic acid is essential before and during early pregnancy.',
+      id: 'folic_acid_guide',
+      title: 'Folic Acid (400 mcg) Kyun Zaroori Hai?',
+      category: 'Fertility & Milap',
+      summary: 'Baby planning ke dauran rozana 400 mcg Folic Acid lene ki wajohaat.',
       content:
-          'Medical consensus strongly recommends daily supplementation with 400 micrograms (mcg) of folic acid for all women who are planning or capable of pregnancy.\n\nClinical Purpose:\n• Significant reduction in neural tube defect (NTD) incidence (such as spina bifida and anencephaly).\n• Should ideally begin at least 1 month prior to conception and continue throughout the first trimester.\n• Discuss individual dosage needs with your healthcare clinician if you have higher risk factors.',
-      source: 'ASRM & CDC Clinical Practice Guidelines',
-      reviewDate: 'Reviewed February 2026',
+          'Har aurat jo pregnancy plan kar rahi ho, usay conceiving se kam az kam 1 maah pehle rozana 400 mcg Folic Acid shuru karni chahiye.\n\nFaide:\n• Baby ke dimaagh (brain) aur reedh ki haddi (spine) ke congenital defects (Spina Bifida) se 70% tak hifazat.\n• Early cellular division mein madadgar.\n• Pehle 12 hafton tak rozana continue rakhna lazmi hai.',
+      source: 'WHO, CDC & NHS Preconception Protocol',
+      reviewDate: 'Updated 2026',
     ),
+
+    // 3. Cycle & Hormones
     LearnArticle(
-      id: 'infertility_timeline',
-      title: 'When to Seek a Medical Fertility Evaluation',
-      category: 'Fertility',
-      summary:
-          'Evidence-based clinical thresholds for seeking formal fertility assessment based on age.',
+      id: 'cycle_phases_roman',
+      title: 'Mahwari (Cycle) Ke 4 Ahem Marahil',
+      category: 'Cycle & Hormones',
+      summary: 'Menstrual, Follicular, Ovulation aur Luteal phases mein jism mein kya hota hai?',
       content:
-          'Infertility is defined clinically by ASRM as the inability to achieve pregnancy after regular unprotected intercourse over a defined time frame:\n\n• Female partner under 35 years: Evaluation is recommended after 12 months of trying.\n• Female partner 35 years or older: Evaluation is recommended after 6 months of trying.\n• Immediate evaluation: Indicated if there is a known history of irregular/absent cycles, endometriosis, or known male factor subfertility.',
-      source: 'ASRM Definition of Infertility Practice Committee (2023)',
-      reviewDate: 'Reviewed January 2026',
+          '1. Menstrual Phase (Day 1–5): Bleeding hoti hai, body cleanse hoti hai. Aaram aur hydration zaroori hai.\n2. Follicular Phase (Day 6–13): Estrogen hormone barhta hai, anday banna shuru hotay hain. Freshness mehsoos hoti hai.\n3. Ovulation Day (~Day 14): Egg release hota hai. Yeh pregnancy ke high chances ka din hai.\n4. Luteal Phase (Day 15–28): Progesterone barhta hai. Agar conceive na ho to PMS symptoms (mood swings, mild cramps) aam hain.',
+      source: 'ACOG Clinical Gynecological Endocrinology',
+      reviewDate: 'Updated 2026',
     ),
+
+    // 4. Hamal (Pregnancy)
     LearnArticle(
-      id: 'cycle_phases',
-      title: 'The Four Phases of the Menstrual Cycle',
-      category: 'Cycle Health',
-      summary:
-          'How hormonal shifts across Menstrual, Follicular, Ovulation, and Luteal phases impact the body.',
+      id: 'pregnancy_trimesters',
+      title: 'Hamal Ke 3 Trimesters Ki Tafseel',
+      category: 'Hamal (Pregnancy)',
+      summary: 'Hafte 1 se 40 tak baby aur maa ke jism mein hone wali tabdeeliyan.',
       content:
-          'The menstrual cycle is governed by intricate hormonal feedback loops:\n\n1. Menstrual Phase (Days 1–5): Low estrogen and progesterone trigger shedding of the uterine lining.\n2. Follicular Phase (Days 6–13): FSH stimulates follicle growth while estrogen rises, rebuilding the endometrium.\n3. Ovulation (Day ~14): A surge in Luteinizing Hormone (LH) triggers the release of a mature egg.\n4. Luteal Phase (Days 15–28): The corpus luteum secretes progesterone, preparing the uterus for potential implantation.',
-      source: 'ACOG & Clinical Gynecological Endocrinology',
-      reviewDate: 'Reviewed January 2026',
+          '• Trimester 1 (Week 1–12): Baby ke ahem organs bante hain. Nausea, thakawat aur breast tenderness aam hai. Folic acid zaroori hai.\n• Trimester 2 (Week 13–27): "Golden Period" — energy wapis aati hai. 18–20 hafton par baby ki movement (kicks) shuru hoti hai aur anomaly scan hota hai.\n• Trimester 3 (Week 28–40): Baby rapidly weight gain karta hai. 10 kicks in 2 hours track karein aur delivery bag tayyar rakhein.',
+      source: 'RCOG & NHS Maternity Care Standards',
+      reviewDate: 'Updated 2026',
     ),
+
+    // 5. Safety & Emergency
     LearnArticle(
-      id: 'pregnancy_red_flags',
-      title: 'Recognizing Urgent Pregnancy Red-Flag Symptoms',
-      category: 'Safety',
-      summary:
-          'Critical signs that require immediate in-person clinical assessment rather than home reassurance.',
+      id: 'emergency_red_flags_article',
+      title: '🚨 Emergency Red Flags: Kab Foran Doctor Ke Paas Jana Hai?',
+      category: 'Safety & Emergency',
+      summary: 'Aisi alamat jinhein kabhi nazar-andaz nahi karna chahiye.',
       content:
-          'While many bodily aches and nausea are common in pregnancy, certain symptoms demand urgent medical evaluation:\n\n• Heavy vaginal bleeding (soaking through a sanitary pad within an hour).\n• Sharp, severe unilateral pelvic pain.\n• Sudden severe swelling in the face or hands, paired with blurred vision or spots.\n• High fever with chills.\n• Fluid leakage before 37 weeks.\n• Noticeable reduction in fetal movements after 28 weeks.\n\nNever ignore these signs. Contact your maternity care provider or emergency room immediately.',
+          'Agar niche di gayi alamat mein se koi bhi ho to bina der kiye hospital jayein:\n\n1. 1 ghante mein sanitary pad khoon se bhar jana (Heavy Bleeding).\n2. Pait ke kisi aik taraf shadeed tez chubhny wala dard (Ectopic pregnancy risk).\n3. Aankhon ke aage dhundla-pan aur sar mein shadeed dard (High BP / Preeclampsia).\n4. 28 hafton ke baad baby ki movement / kicks bilkul na mehsoos hona.\n5. Tez bukhar (100.4°F+) aur kapkapi.\n\nGhar par gharelu totkay na aazmayein, foran doctor se checkup karwayein.',
       source: 'ACOG Urgent Obstetric Assessment Standards',
-      reviewDate: 'Reviewed April 2026',
+      reviewDate: 'Updated 2026',
     ),
   ];
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _selectedCategory == 'All'
+    final filtered = _selectedCategory == 'Sab (All)'
         ? _articles
         : _articles.where((a) => a.category == _selectedCategory).toList();
 
     return Scaffold(
       backgroundColor: ClayColors.canvas,
+      appBar: AppBar(
+        title: const Text(
+          'Health Guide & Maloomat 🌸',
+          style: TextStyle(fontWeight: FontWeight.w900, color: ClayColors.textPrimary, fontSize: 18),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: false,
+      ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              const Text(
-                'Health & Education',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                  color: ClayColors.textPrimary,
-                  letterSpacing: -0.5,
-                ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Category Filter Pills
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                children: _categories.map((cat) {
+                  final isSelected = _selectedCategory == cat;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ClayPill(
+                      label: cat,
+                      isSelected: isSelected,
+                      activeColor: cat == 'Desi Myths vs Facts'
+                          ? const Color(0xFFD97706)
+                          : (cat == 'Safety & Emergency'
+                              ? const Color(0xFFE53935)
+                              : ClayColors.primary),
+                      onTap: () => setState(() => _selectedCategory = cat),
+                    ),
+                  );
+                }).toList(),
               ),
-              const SizedBox(height: 4),
-              const Text(
-                'Peer-reviewed clinical guides grounded in ASRM standards.',
-                style: TextStyle(fontSize: 13, color: ClayColors.textSecondary),
-              ),
-              const SizedBox(height: 16),
+            ),
+            const SizedBox(height: 8),
 
-              // Categories Row
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: _categories.map((cat) {
-                    final isSelected = _selectedCategory == cat;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ClayPill(
-                        label: cat,
-                        isSelected: isSelected,
-                        onTap: () => setState(() => _selectedCategory = cat),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-              const SizedBox(height: 20),
+            // Articles List
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                physics: const BouncingScrollPhysics(),
+                itemCount: filtered.length,
+                itemBuilder: (context, index) {
+                  final article = filtered[index];
+                  final isMyth = article.category == 'Desi Myths vs Facts';
+                  final isDanger = article.category == 'Safety & Emergency';
 
-              // Articles List
-              ...filtered.map((article) => Padding(
+                  return Padding(
                     padding: const EdgeInsets.only(bottom: 14),
                     child: ClayCard(
-                      onTap: () => _showArticleDetail(context, article),
+                      borderRadius: 24,
+                      backgroundColor: isMyth
+                          ? const Color(0xFFFFFBEB)
+                          : (isDanger ? const Color(0xFFFFF5F5) : Colors.white),
+                      padding: const EdgeInsets.all(18),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -163,25 +207,29 @@ class _LearnScreenState extends State<LearnScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 3),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: ClayColors.surfaceTint,
-                                  borderRadius: BorderRadius.circular(9999),
+                                  color: isMyth
+                                      ? const Color(0xFFF59E0B)
+                                      : (isDanger
+                                          ? const Color(0xFFE53935)
+                                          : ClayColors.primary),
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
-                                  article.category,
+                                  article.category.toUpperCase(),
                                   style: const TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: ClayColors.primary,
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.white,
+                                    letterSpacing: 0.4,
                                   ),
                                 ),
                               ),
                               Text(
                                 article.reviewDate,
                                 style: const TextStyle(
-                                  fontSize: 10,
+                                  fontSize: 10.5,
                                   color: ClayColors.textTertiary,
                                 ),
                               ),
@@ -190,147 +238,58 @@ class _LearnScreenState extends State<LearnScreen> {
                           const SizedBox(height: 10),
                           Text(
                             article.title,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                              color: ClayColors.textPrimary,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w900,
+                              color: isDanger ? const Color(0xFFB71C1C) : ClayColors.textPrimary,
+                              height: 1.3,
                             ),
                           ),
                           const SizedBox(height: 6),
                           Text(
                             article.summary,
                             style: const TextStyle(
-                              fontSize: 13,
+                              fontSize: 12,
                               color: ClayColors.textSecondary,
                               height: 1.4,
                             ),
                           ),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 12),
+                          const Divider(height: 1, color: Color(0xFFF0EBF5)),
+                          const SizedBox(height: 12),
+                          Text(
+                            article.content,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF374151),
+                              height: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
                           Row(
                             children: [
-                              const Icon(
-                                Icons.verified_user_outlined,
-                                size: 13,
-                                color: ClayColors.mint,
-                              ),
+                              const Icon(Icons.verified_rounded, size: 13, color: Color(0xFF10B981)),
                               const SizedBox(width: 4),
                               Expanded(
                                 child: Text(
-                                  article.source,
+                                  'Source: ${article.source}',
                                   style: const TextStyle(
-                                    fontSize: 11,
-                                    color: ClayColors.textTertiary,
-                                    overflow: TextOverflow.ellipsis,
+                                    fontSize: 10,
+                                    color: Color(0xFF6B7280),
+                                    fontStyle: FontStyle.italic,
                                   ),
                                 ),
-                              ),
-                              const Icon(
-                                Icons.arrow_forward_ios,
-                                size: 12,
-                                color: ClayColors.textTertiary,
                               ),
                             ],
                           ),
                         ],
                       ),
                     ),
-                  )),
-
-              const SizedBox(height: 30),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showArticleDetail(BuildContext context, LearnArticle article) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.85,
-        maxChildSize: 0.95,
-        minChildSize: 0.5,
-        builder: (_, scrollController) => Container(
-          padding: const EdgeInsets.all(24),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-          ),
-          child: ListView(
-            controller: scrollController,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: ClayColors.surfaceTint,
-                      borderRadius: BorderRadius.circular(9999),
-                    ),
-                    child: Text(
-                      article.category,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: ClayColors.primary,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(ctx),
-                  ),
-                ],
+                  );
+                },
               ),
-              const SizedBox(height: 12),
-              Text(
-                article.title,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                  color: ClayColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                '${article.source} • ${article.reviewDate}',
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: ClayColors.textSecondary,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-              const Divider(height: 28, color: ClayColors.outline),
-              Text(
-                article.content,
-                style: const TextStyle(
-                  fontSize: 14,
-                  height: 1.6,
-                  color: ClayColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: ClayColors.canvas,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Text(
-                  MedicalConstants.standardDisclaimer,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: ClayColors.textTertiary,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

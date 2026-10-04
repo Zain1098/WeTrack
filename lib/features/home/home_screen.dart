@@ -20,6 +20,9 @@ import '../ai/ai_assistant_sheet.dart';
 import '../dictionary/health_dictionary_modal.dart';
 import '../profile/profile_screen.dart';
 import '../appointments/appointment_modal.dart';
+import '../safety/emergency_red_flags_modal.dart';
+import '../pregnancy/kick_counter_modal.dart';
+import '../partner/husband_care_card_modal.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -60,6 +63,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
               // Segmented Journey Switcher: [ 🌸 Mahwari ] [ 🤰 Hamal ]
               _buildJourneySwitcher(isPregnancyMode),
+              const SizedBox(height: 12),
+
+              // Quick Support Shortcuts: [ 🚨 Emergency Guide ] [ 🧔 Husband Care Guide ]
+              _buildSupportShortcutsRow(context, profile, cycleCalc, pregCalc),
               const SizedBox(height: 16),
 
               if (!isPregnancyMode) ...[
@@ -111,6 +118,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                 // 4b. Pre-conception Daily Folic Acid Tracker (400 mcg - ASRM/NHS)
                 _buildFolicAcidTracker(),
+                const SizedBox(height: 14),
+
+                // 4c. 21-Day Smart Conception & DPO Countdown Timeline Card
+                _buildSmartConceptionCountdownCard(context, cycleCalc),
                 const SizedBox(height: 16),
 
                 // 5. Quick Overview • Today (matching Period Tracker.jpg squircles)
@@ -1356,42 +1367,46 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           const SizedBox(height: 14),
           Row(
             children: [
-              // Kick Counter
+              // Kick Counter (3D Tactile NHS Counter)
               Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF0F3),
-                    borderRadius: BorderRadius.circular(18),
+                child: GestureDetector(
+                  onTap: () => KickCounterModal.show(
+                    context,
+                    initialKicks: _todayKicks,
+                    onSaveKicks: (val) => setState(() => _todayKicks = val),
                   ),
-                  child: Column(
-                    children: [
-                      const Text('👣', style: TextStyle(fontSize: 20)),
-                      const SizedBox(height: 4),
-                      Text(
-                        '$_todayKicks Kicks',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFFD81B60),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF0F3),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Column(
+                      children: [
+                        const Text('👣', style: TextStyle(fontSize: 20)),
+                        const SizedBox(height: 4),
+                        Text(
+                          '$_todayKicks Kicks',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFFD81B60),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 6),
-                      GestureDetector(
-                        onTap: () => setState(() => _todayKicks++),
-                        child: Container(
+                        const SizedBox(height: 6),
+                        Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
                             color: const Color(0xFFD81B60),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Text(
-                            '+ Harkat',
+                            '3D Counter',
                             style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -1957,6 +1972,248 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  // Quick Support Shortcuts Row: [ 🚨 Emergency Guide ] [ 🧔 Husband Care Guide ]
+  Widget _buildSupportShortcutsRow(
+    BuildContext context,
+    UserProfile profile,
+    CycleCalculationResult cycleCalc,
+    PregnancyCalculationResult? pregCalc,
+  ) {
+    return Row(
+      children: [
+        Expanded(
+          child: GestureDetector(
+            onTap: () => EmergencyRedFlagsModal.show(context),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF0F1),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFFFCDD2)),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x08E53935),
+                    blurRadius: 6,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('🚨', style: TextStyle(fontSize: 13)),
+                  SizedBox(width: 6),
+                  Text(
+                    'Emergency Guide',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFFC62828),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: GestureDetector(
+            onTap: () => HusbandCareCardModal.show(
+              context,
+              profile: profile,
+              cycleCalc: cycleCalc,
+              pregCalc: pregCalc,
+            ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF3E5F5),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFE1BEE7)),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x087B1FA2),
+                    blurRadius: 6,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('🧔', style: TextStyle(fontSize: 13)),
+                  SizedBox(width: 6),
+                  Text(
+                    'Husband Care Guide',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF6A1B9A),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // 21-Day Smart Conception & DPO Countdown Timeline Card
+  Widget _buildSmartConceptionCountdownCard(BuildContext context, CycleCalculationResult cycleCalc) {
+    final day = cycleCalc.currentCycleDay;
+    final int dpo = (day - 14).clamp(0, 21);
+    final isPostOvulation = day >= 14;
+
+    String phaseTitle;
+    String phaseDetail;
+    Color accentColor;
+    double progress;
+
+    if (!isPostOvulation) {
+      phaseTitle = 'Pre-Ovulation Phase 🌱 (Egg Banna)';
+      phaseDetail = 'Ovulation mein abhi ${14 - day} din baqi hain. Agle dino mein fertile window shuru hogi.';
+      accentColor = const Color(0xFF9E8CE7);
+      progress = (day / 14.0).clamp(0.1, 0.9);
+    } else if (dpo <= 6) {
+      phaseTitle = 'DPO $dpo: Fertilization Phase 🌱';
+      phaseDetail = 'Egg aur sperm mil chuke hon to cell division shuru hai. Heavy lifting ya shadeed stress se perhez karein.';
+      accentColor = const Color(0xFFE91E63);
+      progress = (dpo / 14.0).clamp(0.2, 0.5);
+    } else if (dpo <= 10) {
+      phaseTitle = 'DPO $dpo: Implantation Window ✨';
+      phaseDetail = 'Fertilized egg uterus ki deewar mein jud raha hai. Halka cramp ya brown spotting bilkul aam hai. Panic na karein!';
+      accentColor = const Color(0xFFFF9800);
+      progress = (dpo / 14.0).clamp(0.5, 0.75);
+    } else if (dpo <= 13) {
+      phaseTitle = 'DPO $dpo: Early Hormones Rising ⏳';
+      phaseDetail = 'Jism mein hCG hormone banna shuru ho raha hai. Early test lene se false negative ka khatra hota hai, thoda sabar karein.';
+      accentColor = const Color(0xFF8E24AA);
+      progress = 0.85;
+    } else {
+      phaseTitle = 'DPO $dpo: 🎉 Test Day / Missed Period!';
+      phaseDetail = 'Expected period ka din aa chuka hai! Subah ke pehle urine se pregnancy test karein taake 99% accurate result milay.';
+      accentColor = const Color(0xFF2E7D32);
+      progress = 1.0;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF9FA),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFFFD1DC)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A2E1065),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(7),
+                    decoration: BoxDecoration(
+                      color: accentColor.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text('⏳', style: TextStyle(fontSize: 14, color: accentColor)),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    '21-Day Conception Smart Timer',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF2E1A47),
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: accentColor,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  isPostOvulation ? 'DPO $dpo / 14' : 'Day $day',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+
+          // Linear Progress Bar
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 6,
+              backgroundColor: const Color(0xFFF0E5EB),
+              valueColor: AlwaysStoppedAnimation<Color>(accentColor),
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          Text(
+            phaseTitle,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: accentColor,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            phaseDetail,
+            style: const TextStyle(
+              fontSize: 11.5,
+              color: Color(0xFF5D4A72),
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          GestureDetector(
+            onTap: () => LogFertilityModal.show(context),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.favorite_border_rounded, size: 13, color: Color(0xFFE91E63)),
+                const SizedBox(width: 4),
+                const Text(
+                  'Milap / Intercourse Log Update Karein',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFE91E63),
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
