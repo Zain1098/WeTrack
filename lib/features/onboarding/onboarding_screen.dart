@@ -20,11 +20,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
+  // Audio 2 Profile Fields
   String _name = 'Sarah';
+  int _age = 23;
+  String _maritalStatus = 'unmarried'; // 'married' or 'unmarried'
+  double _heightCm = 160.0;
+  double _weightKg = 53.0;
   AppGoal _selectedGoal = AppGoal.trackCycle;
   DateTime _lastPeriodDate = DateTime.now().subtract(const Duration(days: 14));
   int _cycleLength = 28;
   int _periodDuration = 5;
+  String _todayMood = 'Khush (Happy)';
 
   void _nextPage() {
     if (_currentPage < 3) {
@@ -48,11 +54,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   Future<void> _finishOnboarding() async {
     await ref.read(userProfileProvider.notifier).completeOnboarding(
-          name: _name.trim().isEmpty ? 'Friend' : _name.trim(),
+          name: _name.trim().isEmpty ? 'Sarah' : _name.trim(),
           goal: _selectedGoal,
           lastPeriodDate: _lastPeriodDate,
           usualCycleLength: _cycleLength,
           usualPeriodDuration: _periodDuration,
+          age: _age,
+          maritalStatus: _maritalStatus,
+          heightCm: _heightCm,
+          weightKg: _weightKg,
+          todayMood: _todayMood,
         );
 
     // If goal is already pregnant, create initial pregnancy record
@@ -74,7 +85,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           children: [
             // Top Progress Indicator
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
               child: Row(
                 children: [
                   if (_currentPage > 0)
@@ -119,10 +130,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 physics: const NeverScrollableScrollPhysics(),
                 onPageChanged: (i) => setState(() => _currentPage = i),
                 children: [
-                  _buildWelcomePage(),
-                  _buildGoalSelectionPage(),
+                  _buildProfileBasicsPage(),
+                  _buildPhysicalAndGoalPage(),
                   _buildCycleBasicsPage(),
-                  _buildLastPeriodDatePage(),
+                  _buildTodayMoodPage(),
                 ],
               ),
             ),
@@ -131,7 +142,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             Padding(
               padding: const EdgeInsets.all(24),
               child: ClayButton(
-                text: _currentPage == 3 ? 'Get Started' : 'Continue',
+                text: _currentPage == 3 ? 'WeTrack Shuru Karein ✨' : 'Aage Barhein (Continue)',
                 onPressed: _nextPage,
               ),
             ),
@@ -141,18 +152,19 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
   }
 
-  // Step 1: Welcome & Privacy Commitment
-  Widget _buildWelcomePage() {
+  // Step 1: Name, Age & Marital Status
+  Widget _buildProfileBasicsPage() {
     return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 12),
           // 3D Companion preview card
           ClipRRect(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(24),
             child: Container(
-              height: 220,
+              height: 180,
               width: double.infinity,
               color: ClayColors.surfaceTint,
               child: Image.asset(
@@ -164,386 +176,284 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 18),
           const Text(
-            'Welcome to WeTrack',
+            'Khush Aamdeed! 🌸',
             style: TextStyle(
-              fontSize: 28,
+              fontSize: 26,
               fontWeight: FontWeight.w900,
               color: ClayColors.textPrimary,
               letterSpacing: -0.5,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 6),
           const Text(
-            'Your private, clinical-grade companion for menstrual cycles, fertility, and pregnancy.',
-            textAlign: TextAlign.center,
+            'Aapki personal health companion. Pehle aapka chhota sa ta\'aruf:',
             style: TextStyle(
-              fontSize: 15,
+              fontSize: 14,
               color: ClayColors.textSecondary,
-              height: 1.4,
+              height: 1.35,
             ),
           ),
-          // Name Input Card
+          const SizedBox(height: 16),
+
+          // Name Input
+          const Text(
+            'Aapka Pyara Naam:',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: ClayColors.textPrimary),
+          ),
+          const SizedBox(height: 6),
           ClayCard(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
             backgroundColor: Colors.white,
             child: TextField(
-              onChanged: (val) => setState(() => _name = val),
+              controller: TextEditingController(text: _name)..selection = TextSelection.collapsed(offset: _name.length),
+              onChanged: (val) => _name = val,
               decoration: const InputDecoration(
-                icon: Icon(Icons.person_outline, color: ClayColors.primary),
-                hintText: 'What should we call you? (e.g. Sarah)',
+                icon: Icon(Icons.person_outline_rounded, color: ClayColors.primary, size: 20),
+                hintText: 'Apna naam likhein (e.g. Ayesha, Fatima)',
                 hintStyle: TextStyle(fontSize: 13, color: ClayColors.textTertiary),
                 border: InputBorder.none,
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
-          // Privacy Card
-          ClayCard(
-            padding: const EdgeInsets.all(16),
-            backgroundColor: Colors.white,
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: const BoxDecoration(
-                    color: ClayColors.mintContainer,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.shield_outlined, color: ClayColors.mint),
+          // Age Selection
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Aapki Umar (Age):',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: ClayColors.textPrimary),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: ClayColors.primaryContainer,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(width: 14),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '100% Private & Offline-First',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          color: ClayColors.textPrimary,
-                        ),
-                      ),
-                      SizedBox(height: 2),
-                      Text(
-                        'Your health data stays safely on your device. No ads, no trackers.',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: ClayColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Step 2: Goal Selection
-  Widget _buildGoalSelectionPage() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'What is your primary goal?',
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.w900,
-              color: ClayColors.textPrimary,
-              letterSpacing: -0.5,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'We customize your daily experience based on your journey.',
-            style: TextStyle(fontSize: 14, color: ClayColors.textSecondary),
-          ),
-          const SizedBox(height: 24),
-
-          ...AppGoal.values.map((goal) {
-            final isSelected = _selectedGoal == goal;
-            IconData iconData;
-            Color iconBg;
-
-            switch (goal) {
-              case AppGoal.trackCycle:
-                iconData = Icons.calendar_month_rounded;
-                iconBg = ClayColors.secondaryContainer;
-                break;
-              case AppGoal.tryToConceive:
-                iconData = Icons.favorite_rounded;
-                iconBg = ClayColors.primaryContainer;
-                break;
-              case AppGoal.alreadyPregnant:
-                iconData = Icons.child_care_rounded;
-                iconBg = ClayColors.mintContainer;
-                break;
-            }
-
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 14),
-              child: ClayCard(
-                onTap: () => setState(() => _selectedGoal = goal),
-                backgroundColor: isSelected ? Colors.white : const Color(0xFFFBFBFE),
-                border: Border.all(
-                  color: isSelected ? ClayColors.primary : Colors.transparent,
-                  width: 2,
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: iconBg,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Icon(
-                        iconData,
-                        color: isSelected ? ClayColors.primary : ClayColors.textPrimary,
-                        size: 26,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            goal.displayName,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                              color: isSelected
-                                  ? ClayColors.primary
-                                  : ClayColors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            goal.description,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: ClayColors.textSecondary,
-                              height: 1.3,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (isSelected)
-                      const Icon(Icons.check_circle_rounded, color: ClayColors.primary)
-                  ],
+                child: Text(
+                  '$_age Saal',
+                  style: const TextStyle(fontWeight: FontWeight.bold, color: ClayColors.primary),
                 ),
               ),
-            );
-          }),
+            ],
+          ),
+          Slider(
+            value: _age.toDouble(),
+            min: 14,
+            max: 55,
+            divisions: 41,
+            activeColor: ClayColors.primary,
+            inactiveColor: ClayColors.primaryContainer,
+            onChanged: (val) => setState(() => _age = val.round()),
+          ),
+          const SizedBox(height: 12),
+
+          // Marital Status (Audio 2: Married ya Unmarried)
+          const Text(
+            'Shadi Shuda Hain ya Ghair Shadi Shuda?',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: ClayColors.textPrimary),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _buildChoiceCard(
+                  title: '💍 Shadi Shuda\n(Married)',
+                  isSelected: _maritalStatus == 'married',
+                  onTap: () => setState(() => _maritalStatus = 'married'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildChoiceCard(
+                  title: '🌸 Ghair Shadi\n(Unmarried)',
+                  isSelected: _maritalStatus == 'unmarried',
+                  onTap: () => setState(() => _maritalStatus = 'unmarried'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
         ],
       ),
     );
   }
 
-  // Step 3: Cycle Length & Period Duration
-  Widget _buildCycleBasicsPage() {
-    return Padding(
+  // Step 2: Physical Stats & Primary Goal
+  Widget _buildPhysicalAndGoalPage() {
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Your typical cycle',
+            'Qad aur Wazan (Body Stats)',
             style: TextStyle(
-              fontSize: 26,
+              fontSize: 24,
               fontWeight: FontWeight.w900,
               color: ClayColors.textPrimary,
               letterSpacing: -0.5,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           const Text(
-            'Used for initial estimates. WeTrack automatically refines this as you log.',
-            style: TextStyle(fontSize: 14, color: ClayColors.textSecondary),
+            'Is se aapke cycle aur health ki behtar calculation hoti hai.',
+            style: TextStyle(fontSize: 13, color: ClayColors.textSecondary),
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 18),
 
-          // Cycle length slider card
+          // Height Slider
           ClayCard(
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Average Cycle Length',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: ClayColors.textPrimary,
-                      ),
-                    ),
+                    const Text('Qad (Height):', style: TextStyle(fontWeight: FontWeight.bold)),
                     Text(
-                      '$_cycleLength days',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                        color: ClayColors.primary,
-                      ),
+                      '${_heightCm.round()} cm (${(_heightCm / 30.48).toStringAsFixed(1)} ft)',
+                      style: const TextStyle(fontWeight: FontWeight.w900, color: ClayColors.primary),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
                 Slider(
-                  value: _cycleLength.toDouble(),
-                  min: 20,
-                  max: 45,
-                  divisions: 25,
+                  value: _heightCm,
+                  min: 130,
+                  max: 200,
+                  divisions: 70,
                   activeColor: ClayColors.primary,
                   inactiveColor: ClayColors.primaryContainer,
-                  onChanged: (val) => setState(() => _cycleLength = val.round()),
+                  onChanged: (v) => setState(() => _heightCm = v),
                 ),
-                const Text(
-                  'Typically 28 days (measured from first day of one period to the next).',
-                  style: TextStyle(fontSize: 12, color: ClayColors.textTertiary),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Weight Slider
+          ClayCard(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Wazan (Weight):', style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text(
+                      '${_weightKg.round()} kg',
+                      style: const TextStyle(fontWeight: FontWeight.w900, color: ClayColors.secondary),
+                    ),
+                  ],
+                ),
+                Slider(
+                  value: _weightKg,
+                  min: 35,
+                  max: 120,
+                  divisions: 85,
+                  activeColor: ClayColors.secondary,
+                  inactiveColor: ClayColors.secondaryContainer,
+                  onChanged: (v) => setState(() => _weightKg = v),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 18),
 
-          // Period duration slider card
-          ClayCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Period Bleeding Duration',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: ClayColors.textPrimary,
-                      ),
-                    ),
-                    Text(
-                      '$_periodDuration days',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                        color: ClayColors.secondary,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Slider(
-                  value: _periodDuration.toDouble(),
-                  min: 2,
-                  max: 10,
-                  divisions: 8,
-                  activeColor: ClayColors.secondary,
-                  inactiveColor: ClayColors.secondaryContainer,
-                  onChanged: (val) => setState(() => _periodDuration = val.round()),
-                ),
-                const Text(
-                  'Number of days menstrual bleeding usually lasts (typically 4–7 days).',
-                  style: TextStyle(fontSize: 12, color: ClayColors.textTertiary),
-                ),
-              ],
-            ),
+          // App Goal
+          const Text(
+            'Aapka Main Maqsad (Goal) Kya Hai?',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: ClayColors.textPrimary),
+          ),
+          const SizedBox(height: 10),
+
+          _buildGoalCard(
+            goal: AppGoal.trackCycle,
+            emoji: '🌸',
+            title: 'Mahwari (Period) Track Karna',
+            subtitle: 'Agla period kab aayega aur dates yaad rakhne ke liye',
+          ),
+          _buildGoalCard(
+            goal: AppGoal.tryToConceive,
+            emoji: '🌿',
+            title: 'Hamal Theharne Ki Koshish (Baby Plan)',
+            subtitle: 'Fertile days aur ovulation ke dino ki guidance',
+          ),
+          _buildGoalCard(
+            goal: AppGoal.alreadyPregnant,
+            emoji: '🤰',
+            title: 'Hamal Thehar Chuka Hai (Pregnant)',
+            subtitle: 'Hafte-ba-hafte baby ki growth aur delivery date',
           ),
         ],
       ),
     );
   }
 
-  // Step 4: Last Period Date
-  Widget _buildLastPeriodDatePage() {
-    return Padding(
+  // Step 3: Cycle Basics & Last Period Date
+  Widget _buildCycleBasicsPage() {
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'When did your last period start?',
+            'Aakhri Period aur Cycle',
             style: TextStyle(
-              fontSize: 26,
+              fontSize: 24,
               fontWeight: FontWeight.w900,
               color: ClayColors.textPrimary,
               letterSpacing: -0.5,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           const Text(
-            'Day 1 of your cycle is the first day of menstrual bleeding.',
-            style: TextStyle(fontSize: 14, color: ClayColors.textSecondary),
+            'Aakhri period kis tareekh ko shuru hua tha?',
+            style: TextStyle(fontSize: 13, color: ClayColors.textSecondary),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 16),
 
+          // Last Period Date Picker Card
           ClayCard(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(18),
             child: Column(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(14),
                   decoration: const BoxDecoration(
                     color: ClayColors.secondaryContainer,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
-                    Icons.water_drop_rounded,
-                    color: ClayColors.secondary,
-                    size: 36,
-                  ),
+                  child: const Icon(Icons.calendar_month_rounded, color: ClayColors.secondary, size: 30),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 Text(
                   DateHelpers.formatFriendly(_lastPeriodDate),
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    color: ClayColors.textPrimary,
-                  ),
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: ClayColors.textPrimary),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 Text(
-                  '${DateHelpers.daysBetween(_lastPeriodDate, DateTime.now())} days ago',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: ClayColors.textSecondary,
-                  ),
+                  '${DateHelpers.daysBetween(_lastPeriodDate, DateTime.now())} din pehle shuru hua tha',
+                  style: const TextStyle(fontSize: 13, color: ClayColors.textSecondary),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 14),
                 ClayButton(
-                  text: 'Select Date',
+                  text: 'Tareekh Badlein (Pick Date)',
                   variant: ClayButtonVariant.subtle,
-                  height: 44,
+                  height: 40,
                   onPressed: () async {
                     final picked = await showDatePicker(
                       context: context,
                       initialDate: _lastPeriodDate,
                       firstDate: DateTime.now().subtract(const Duration(days: 90)),
                       lastDate: DateTime.now(),
-                      builder: (ctx, child) => Theme(
-                        data: Theme.of(context).copyWith(
-                          colorScheme: const ColorScheme.light(
-                            primary: ClayColors.primary,
-                            onPrimary: Colors.white,
-                            onSurface: ClayColors.textPrimary,
-                          ),
-                        ),
-                        child: child!,
-                      ),
                     );
                     if (picked != null) {
                       setState(() => _lastPeriodDate = picked);
@@ -553,7 +463,274 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               ],
             ),
           ),
+          const SizedBox(height: 16),
+
+          // Cycle length
+          ClayCard(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Cycle kitne din ki hoti hai?', style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text('$_cycleLength Din', style: const TextStyle(fontWeight: FontWeight.w900, color: ClayColors.primary)),
+                  ],
+                ),
+                Slider(
+                  value: _cycleLength.toDouble(),
+                  min: 21,
+                  max: 42,
+                  divisions: 21,
+                  activeColor: ClayColors.primary,
+                  inactiveColor: ClayColors.primaryContainer,
+                  onChanged: (v) => setState(() => _cycleLength = v.round()),
+                ),
+                const Text('Aam tor par larkiyon me 28 din ki hoti hai.', style: TextStyle(fontSize: 11, color: ClayColors.textTertiary)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Bleeding duration
+          ClayCard(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Bleeding kitne din chalti hai?', style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text('$_periodDuration Din', style: const TextStyle(fontWeight: FontWeight.w900, color: ClayColors.secondary)),
+                  ],
+                ),
+                Slider(
+                  value: _periodDuration.toDouble(),
+                  min: 2,
+                  max: 9,
+                  divisions: 7,
+                  activeColor: ClayColors.secondary,
+                  inactiveColor: ClayColors.secondaryContainer,
+                  onChanged: (v) => setState(() => _periodDuration = v.round()),
+                ),
+              ],
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  // Step 4: Today Mood Check-in (Audio 2)
+  Widget _buildTodayMoodPage() {
+    final moods = [
+      {'emoji': '😊', 'title': 'Khush (Happy)', 'desc': 'Mood bilkul acha aur fresh hai'},
+      {'emoji': '😌', 'title': 'Pur Sukoon (Calm)', 'desc': 'Normal routine, koi pareshani nahi'},
+      {'emoji': '😴', 'title': 'Thakan (Tired)', 'desc': 'Thakan mehsoos ho rahi hai, aaram chahiye'},
+      {'emoji': '😤', 'title': 'Chidchida-pan (Moody)', 'desc': 'Bina wajah ghussa ya chirh aa rahi hai'},
+      {'emoji': '🤕', 'title': 'Pet / Kamar Dard (Cramps)', 'desc': 'Period ya PMS ki wajah se dard hai'},
+    ];
+
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Aaj Ka Mood Kaisa Hai? ✨',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+              color: ClayColors.textPrimary,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Rozana sirf ek tap me batayein taake WeTrack aapki body ko samajh sakey.',
+            style: TextStyle(fontSize: 13, color: ClayColors.textSecondary),
+          ),
+          const SizedBox(height: 20),
+
+          ...moods.map((m) {
+            final isSelected = _todayMood == m['title'];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: GestureDetector(
+                onTap: () => setState(() => _todayMood = m['title']!),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: isSelected ? Colors.white : const Color(0xFFFBFBFE),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: isSelected ? ClayColors.primary : const Color(0xFFECE7F6),
+                      width: isSelected ? 2 : 1,
+                    ),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: ClayColors.primary.withValues(alpha: 0.15),
+                              blurRadius: 10,
+                              offset: const Offset(0, 3),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: isSelected ? ClayColors.surfaceTint : const Color(0xFFF3EEFA),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Center(
+                          child: Text(m['emoji']!, style: const TextStyle(fontSize: 22)),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              m['title']!,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: isSelected ? ClayColors.primary : ClayColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              m['desc']!,
+                              style: const TextStyle(fontSize: 11.5, color: ClayColors.textSecondary),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (isSelected)
+                        const Icon(Icons.check_circle_rounded, color: ClayColors.primary, size: 22),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChoiceCard({
+    required String title,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.white : const Color(0xFFF8F5FC),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? ClayColors.primary : const Color(0xFFE8DEF8),
+            width: isSelected ? 2 : 1,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: ClayColors.primary.withValues(alpha: 0.15),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Center(
+          child: Text(
+            title,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+              color: isSelected ? ClayColors.primary : ClayColors.textPrimary,
+              height: 1.3,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGoalCard({
+    required AppGoal goal,
+    required String emoji,
+    required String title,
+    required String subtitle,
+  }) {
+    final isSelected = _selectedGoal == goal;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: GestureDetector(
+        onTap: () => setState(() => _selectedGoal = goal),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.white : const Color(0xFFFBFBFE),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isSelected ? ClayColors.primary : const Color(0xFFECE7F6),
+              width: isSelected ? 2 : 1,
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: ClayColors.primary.withValues(alpha: 0.12),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Row(
+            children: [
+              Text(emoji, style: const TextStyle(fontSize: 24)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.bold,
+                        color: isSelected ? ClayColors.primary : ClayColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(fontSize: 11, color: ClayColors.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+              if (isSelected)
+                const Icon(Icons.check_circle_rounded, color: ClayColors.primary, size: 20),
+            ],
+          ),
+        ),
       ),
     );
   }

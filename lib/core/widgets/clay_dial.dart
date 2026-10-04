@@ -15,6 +15,8 @@ class ClayCycleDial extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isFertile = calculation.currentPhase == CyclePhase.fertileWindow ||
+        calculation.currentPhase == CyclePhase.ovulationDay;
     return GestureDetector(
       onTap: onTap,
       child: Center(
@@ -94,61 +96,87 @@ class ClayCycleDial extends StatelessWidget {
                       ),
                       child: Text(
                         'Day ${calculation.currentCycleDay}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w800,
-                          color: ClayColors.primary,
+                          color: _getPhaseColor(calculation.currentPhase),
                           letterSpacing: 0.5,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 8),
-
-                    // Big Countdown Headline
-                    Text(
-                      calculation.daysUntilNextPeriod > 0
-                          ? '${calculation.daysUntilNextPeriod} Days'
-                          : 'Period Due',
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w900,
-                        color: ClayColors.textPrimary,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    Text(
-                      calculation.daysUntilNextPeriod > 0
-                          ? 'until next period'
-                          : 'expected today',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: ClayColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-
-                    // Phase Descriptor
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        calculation.currentPhase.displayName,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
+                      // Today's Formatted Date (like SEP 26 in Period Tracker.jpg)
+                      Text(
+                        _formatShortDate(DateTime.now()).toUpperCase(),
+                        style: const TextStyle(
                           fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: _getPhaseColor(calculation.currentPhase),
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF9E8EAD),
+                          letterSpacing: 1.2,
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 6),
+
+                      // Big Countdown Headline (Roman English)
+                      Text(
+                        calculation.daysUntilNextPeriod > 0
+                            ? '${calculation.daysUntilNextPeriod} Din Baqi'
+                            : calculation.daysUntilNextPeriod == 0
+                                ? 'Aaj Period Ka Din'
+                                : '${calculation.daysUntilNextPeriod.abs()} Din Upar',
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                          color: ClayColors.textPrimary,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      Text(
+                        calculation.daysUntilNextPeriod > 0
+                            ? 'Agle Period Me'
+                            : 'Expected Date',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: ClayColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+
+                      // Pregnancy Probability Tag (Matching Period Tracker.jpg: Low/High chances of getting pregnant)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: isFertile ? const Color(0xFFFFF3CD) : const Color(0xFFF3EEFA),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isFertile ? const Color(0xFFFFD56B) : const Color(0xFFE5DDF5),
+                          ),
+                        ),
+                        child: Text(
+                          isFertile
+                              ? '⚡ Pregnancy ke zyada chance'
+                              : '🌱 Hamal ke kam chance',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w800,
+                            color: isFertile ? const Color(0xFFB45309) : const Color(0xFF6B5B80),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
-      ),
-    );
+      );
+  }
+
+  String _formatShortDate(DateTime date) {
+    const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+    return '${months[date.month - 1]} ${date.day.toString().padLeft(2, '0')}';
   }
 
   Color _getPhaseColor(CyclePhase phase) {

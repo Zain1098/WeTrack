@@ -40,6 +40,14 @@ class UserProfile {
   final bool hasCompletedOnboarding;
   final String? profileImagePath;
   final DateTime createdAt;
+  
+  // New personalization fields (Audio 2 & 3)
+  final int? age;
+  final String? maritalStatus; // 'married' or 'unmarried'
+  final double? heightCm;
+  final double? weightKg;
+  final String? todayMood;
+  final DateTime? pregnancyConfirmedDate;
 
   const UserProfile({
     required this.id,
@@ -53,7 +61,15 @@ class UserProfile {
     this.hasCompletedOnboarding = false,
     this.profileImagePath,
     required this.createdAt,
+    this.age,
+    this.maritalStatus,
+    this.heightCm,
+    this.weightKg,
+    this.todayMood,
+    this.pregnancyConfirmedDate,
   });
+
+  bool get isMarried => maritalStatus == 'married';
 
   UserProfile copyWith({
     String? id,
@@ -68,6 +84,12 @@ class UserProfile {
     String? profileImagePath,
     bool clearProfileImage = false,
     DateTime? createdAt,
+    int? age,
+    String? maritalStatus,
+    double? heightCm,
+    double? weightKg,
+    String? todayMood,
+    DateTime? pregnancyConfirmedDate,
   }) {
     return UserProfile(
       id: id ?? this.id,
@@ -81,6 +103,12 @@ class UserProfile {
       hasCompletedOnboarding: hasCompletedOnboarding ?? this.hasCompletedOnboarding,
       profileImagePath: clearProfileImage ? null : (profileImagePath ?? this.profileImagePath),
       createdAt: createdAt ?? this.createdAt,
+      age: age ?? this.age,
+      maritalStatus: maritalStatus ?? this.maritalStatus,
+      heightCm: heightCm ?? this.heightCm,
+      weightKg: weightKg ?? this.weightKg,
+      todayMood: todayMood ?? this.todayMood,
+      pregnancyConfirmedDate: pregnancyConfirmedDate ?? this.pregnancyConfirmedDate,
     );
   }
 
@@ -96,6 +124,12 @@ class UserProfile {
         'hasCompletedOnboarding': hasCompletedOnboarding,
         'profileImagePath': profileImagePath,
         'createdAt': createdAt.toIso8601String(),
+        'age': age,
+        'maritalStatus': maritalStatus,
+        'heightCm': heightCm,
+        'weightKg': weightKg,
+        'todayMood': todayMood,
+        'pregnancyConfirmedDate': pregnancyConfirmedDate?.toIso8601String(),
       };
 
   factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
@@ -114,6 +148,14 @@ class UserProfile {
         createdAt: json['createdAt'] != null
             ? DateTime.parse(json['createdAt'] as String)
             : DateTime.now(),
+        age: json['age'] as int?,
+        maritalStatus: json['maritalStatus'] as String?,
+        heightCm: (json['heightCm'] as num?)?.toDouble(),
+        weightKg: (json['weightKg'] as num?)?.toDouble(),
+        todayMood: json['todayMood'] as String?,
+        pregnancyConfirmedDate: json['pregnancyConfirmedDate'] != null
+            ? DateTime.tryParse(json['pregnancyConfirmedDate'] as String)
+            : null,
       );
 
   static UserProfile defaultProfile() => UserProfile(
@@ -124,5 +166,10 @@ class UserProfile {
         usualPeriodDuration: 5,
         lastPeriodDate: DateTime.now().subtract(const Duration(days: 12)),
         createdAt: DateTime.now(),
+        age: 24,
+        maritalStatus: 'unmarried',
+        heightCm: 162.0,
+        weightKg: 54.0,
+        todayMood: 'Khush (Happy)',
       );
 }

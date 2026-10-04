@@ -22,6 +22,18 @@ migrate_working_dir/
 MASTER_ANTIGRAVITY_PROMPT.txt
 README.txt
 
+# Antigravity & Agent tools
+.agent/
+.agents/
+.gemini/
+.gsd/
+GSD-STYLE.md
+PROJECT_RULES.md
+VERSION
+adapters/
+model_capabilities.yaml
+scripts/
+
 # IntelliJ related
 *.iml
 *.ipr

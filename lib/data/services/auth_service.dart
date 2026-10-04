@@ -308,15 +308,27 @@ class AuthService {
     required String email,
     String? name,
     String? avatarUrl,
+    int? age,
+    String? maritalStatus,
+    double? heightCm,
+    double? weightKg,
+    String? goal,
   }) async {
     try {
-      await Supabase.instance.client.from('profiles').upsert({
+      final payload = <String, dynamic>{
         'id': userId,
         'email': email,
         if (name != null && name.isNotEmpty) 'name': name,
-        if (avatarUrl != null) 'avatar_url': avatarUrl,
         'updated_at': DateTime.now().toIso8601String(),
-      });
+      };
+      if (avatarUrl != null) payload['avatar_url'] = avatarUrl;
+      if (age != null) payload['age'] = age;
+      if (maritalStatus != null) payload['marital_status'] = maritalStatus;
+      if (heightCm != null) payload['height_cm'] = heightCm;
+      if (weightKg != null) payload['weight_kg'] = weightKg;
+      if (goal != null) payload['goal'] = goal;
+
+      await Supabase.instance.client.from('profiles').upsert(payload);
     } catch (e) {
       debugPrint('Note: Supabase profiles sync skipped ($e)');
     }

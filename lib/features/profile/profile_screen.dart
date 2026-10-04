@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../core/theme/clay_colors.dart';
 import '../../data/models/user_profile.dart';
 import '../../data/services/auth_service.dart';
 import '../app_providers.dart';
 import '../auth/login_screen.dart';
+import '../dictionary/health_dictionary_modal.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -581,21 +581,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 onChanged: (val) {},
                 title: Text('Period Predictions (2 days before)', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14)),
                 subtitle: const Text('Get notified ahead of your predicted cycle day', style: TextStyle(fontSize: 12)),
-                activeColor: const Color(0xFFF04E78),
+                activeThumbColor: const Color(0xFFF04E78),
               ),
               SwitchListTile(
                 value: true,
                 onChanged: (val) {},
                 title: Text('Fertile Window Alerts', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14)),
                 subtitle: const Text('Estimated ovulation & peak probability days', style: TextStyle(fontSize: 12)),
-                activeColor: const Color(0xFFF04E78),
+                activeThumbColor: const Color(0xFFF04E78),
               ),
               SwitchListTile(
                 value: false,
                 onChanged: (val) {},
                 title: Text('Daily Hydration & Vitamins', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14)),
                 subtitle: const Text('Gentle daily nudges for wellness', style: TextStyle(fontSize: 12)),
-                activeColor: const Color(0xFFF04E78),
+                activeThumbColor: const Color(0xFFF04E78),
               ),
               const SizedBox(height: 10),
             ],
@@ -1059,7 +1059,39 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
             ),
           ),
+          const SizedBox(height: 16),
+
+          // Personal Health Metric Badges (Audio 2)
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildMetricPill('🎂 Umar', '${profile.age ?? 23} Saal'),
+              _buildMetricPill('💍 Status', profile.maritalStatus == 'married' ? 'Shadi Shuda' : 'Ghair Shadi'),
+              _buildMetricPill('📏 Qad', '${profile.heightCm?.round() ?? 160} cm'),
+              _buildMetricPill('⚖️ Wazan', '${profile.weightKg?.round() ?? 54} kg'),
+            ],
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMetricPill(String label, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F5FC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFEDE8F6)),
+      ),
+      child: Text(
+        '$label: $value',
+        style: GoogleFonts.plusJakartaSans(
+          fontSize: 11.5,
+          fontWeight: FontWeight.w700,
+          color: const Color(0xFF4A3B60),
+        ),
       ),
     );
   }
@@ -1232,6 +1264,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           icon: Icons.notifications_none_rounded,
           title: 'Notifications & Reminders',
           onTap: () => _showNotificationsSheet(context),
+        ),
+        const SizedBox(height: 10),
+
+        // 5. Aasan Roman Lughat (Dictionary)
+        _buildSettingTile(
+          icon: Icons.menu_book_rounded,
+          title: 'Aasan Roman Lughat (Dictionary)',
+          onTap: () => HealthDictionaryModal.show(context),
         ),
         const SizedBox(height: 10),
 

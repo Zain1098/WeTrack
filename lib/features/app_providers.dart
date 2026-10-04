@@ -48,6 +48,12 @@ class UserProfileNotifier extends Notifier<UserProfile> {
     AppGoal? goal,
     String? profileImagePath,
     bool clearProfileImage = false,
+    int? age,
+    String? maritalStatus,
+    double? heightCm,
+    double? weightKg,
+    String? todayMood,
+    DateTime? pregnancyConfirmedDate,
   }) async {
     final updated = state.copyWith(
       name: name,
@@ -57,6 +63,12 @@ class UserProfileNotifier extends Notifier<UserProfile> {
       goal: goal,
       profileImagePath: profileImagePath,
       clearProfileImage: clearProfileImage,
+      age: age,
+      maritalStatus: maritalStatus,
+      heightCm: heightCm,
+      weightKg: weightKg,
+      todayMood: todayMood,
+      pregnancyConfirmedDate: pregnancyConfirmedDate,
     );
     state = updated;
     await ref.read(localStorageRepositoryProvider).saveUserProfile(updated);
@@ -68,6 +80,11 @@ class UserProfileNotifier extends Notifier<UserProfile> {
     required DateTime lastPeriodDate,
     required int usualCycleLength,
     required int usualPeriodDuration,
+    int? age,
+    String? maritalStatus,
+    double? heightCm,
+    double? weightKg,
+    String? todayMood,
   }) async {
     final updated = state.copyWith(
       name: name,
@@ -76,6 +93,11 @@ class UserProfileNotifier extends Notifier<UserProfile> {
       usualCycleLength: usualCycleLength,
       usualPeriodDuration: usualPeriodDuration,
       hasCompletedOnboarding: true,
+      age: age,
+      maritalStatus: maritalStatus,
+      heightCm: heightCm,
+      weightKg: weightKg,
+      todayMood: todayMood,
     );
     state = updated;
     await ref.read(localStorageRepositoryProvider).saveUserProfile(updated);
