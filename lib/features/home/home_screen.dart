@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/clay_colors.dart';
 import '../../core/widgets/clay_card.dart';
 import '../../core/widgets/clay_dial.dart';
+import '../../core/widgets/living_3d_mascot.dart';
+import '../../core/widgets/squishy_3d_button.dart';
 import '../../core/widgets/period_mascot_alert_modal.dart';
 import '../../core/utils/date_helpers.dart';
 import '../../data/models/user_profile.dart';
@@ -64,8 +66,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 _buildMiniCalendarStrip(),
                 const SizedBox(height: 14),
 
-                // 2. Mascot Alert Card (download.jpg Character)
-                _buildMascotAlertCard(context, cycleCalc),
+                // 2. Living 3D Animated Mascot (Breathing, 3D Perspective Tilt & Dialogues)
+                Living3DMascot(
+                  phase: cycleCalc.currentPhase,
+                  onTap: () {
+                    final days = cycleCalc.daysUntilNextPeriod;
+                    final message = days == 0
+                        ? 'Aaj mahwari (period) expected hai!'
+                        : days > 0
+                            ? '$days Din Baqi Hain Agle Period Me'
+                            : '${days.abs()} Din Upar Ho Chukay Hain';
+                    PeriodMascotAlertModal.show(
+                      context: context,
+                      title: 'Mahwari (Period) Update',
+                      daysMessage: message,
+                      tips: const [
+                        'Halka garam paani ya chamomile chai piyein.',
+                        'Heating pad ya garam kapra aaram ke liye paas rakhein.',
+                        'Bag me pads advance me rakh lein taake pareshani na ho.',
+                        'Aaj ka mood aur dard ek tap me log karein.',
+                      ],
+                      onLogTap: () => LogPeriodModal.show(context),
+                    );
+                  },
+                ),
                 const SizedBox(height: 16),
 
                 // 3. Circular 28-Day Segmented Dial (matching Period Tracker.jpg)
@@ -459,105 +483,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // 2. Mascot Alert Card (download.jpg Character)
-  Widget _buildMascotAlertCard(BuildContext context, CycleCalculationResult cycleCalc) {
-    final days = cycleCalc.daysUntilNextPeriod;
-    final message = days == 0
-        ? 'Aaj mahwari (period) expected hai!'
-        : days > 0
-            ? '$days Din Baqi Hain Agle Period Me'
-            : '${days.abs()} Din Upar Ho Chukay Hain';
 
-    return GestureDetector(
-      onTap: () {
-        PeriodMascotAlertModal.show(
-          context: context,
-          title: 'Mahwari (Period) Update',
-          daysMessage: message,
-          tips: const [
-            'Halka garam paani ya chamomile chai piyein.',
-            'Heating pad ya garam kapra aaram ke liye paas rakhein.',
-            'Bag me pads advance me rakh lein taake pareshani na ho.',
-            'Aaj ka mood aur dard ek tap me log karein.',
-          ],
-          onLogTap: () => LogPeriodModal.show(context),
-        );
-      },
-      child: ClayCard(
-        backgroundColor: const Color(0xFFFFF0F3),
-        borderRadius: 22,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            Container(
-              width: 54,
-              height: 54,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: ClayColors.secondary, width: 2),
-                boxShadow: [
-                  BoxShadow(
-                    color: ClayColors.secondary.withValues(alpha: 0.25),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: ClipOval(
-                child: Image.asset(
-                  'UI/download.jpg',
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => const Icon(
-                    Icons.calendar_today_rounded,
-                    color: ClayColors.secondary,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: ClayColors.secondary,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Text(
-                      'MAHWARI REMINDER',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 8.5,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    message,
-                    style: const TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF880E4F),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  const Text(
-                    'Tips dekhne ke liye yahan tap karein',
-                    style: TextStyle(fontSize: 11, color: Color(0xFFAD1457)),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Color(0xFFD81B60)),
-          ],
-        ),
-      ),
-    );
-  }
 
   // 4. Automated Guidance Banner (Audio 3 & Audio 1)
   Widget _buildAutomatedGuidanceCard(BuildContext context, CycleCalculationResult cycleCalc) {
@@ -669,7 +595,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // 5. Quick Overview • Today (matching Period Tracker.jpg squircles)
+  // 5. Quick Overview • Today (Tactile 3D Squishy Buttons)
   Widget _buildQuickOverviewRow(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -682,92 +608,50 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             color: ClayColors.textPrimary,
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           physics: const BouncingScrollPhysics(),
           child: Row(
             children: [
-              _buildSquircleAction(
+              Squishy3DButton(
                 emoji: '😊',
                 label: 'Khush',
-                color: const Color(0xFFFF9800),
+                primaryColor: const Color(0xFFFF9800),
                 onTap: () => LogSymptomsModal.show(context),
               ),
-              const SizedBox(width: 10),
-              _buildSquircleAction(
+              const SizedBox(width: 12),
+              Squishy3DButton(
                 emoji: '🔒',
                 label: 'Milap/Sex',
-                color: const Color(0xFF03A9F4),
+                primaryColor: const Color(0xFF03A9F4),
                 onTap: () => LogFertilityModal.show(context),
               ),
-              const SizedBox(width: 10),
-              _buildSquircleAction(
+              const SizedBox(width: 12),
+              Squishy3DButton(
                 emoji: '🛋️',
                 label: 'Aaram',
-                color: const Color(0xFFE91E63),
+                primaryColor: const Color(0xFFE91E63),
                 onTap: () => LogSymptomsModal.show(context),
               ),
-              const SizedBox(width: 10),
-              _buildSquircleAction(
+              const SizedBox(width: 12),
+              Squishy3DButton(
                 emoji: '💧',
                 label: 'Sab Theek',
-                color: const Color(0xFF00BFA5),
+                primaryColor: const Color(0xFF00BFA5),
                 onTap: () => LogSymptomsModal.show(context),
               ),
-              const SizedBox(width: 10),
-              _buildSquircleAction(
+              const SizedBox(width: 12),
+              Squishy3DButton(
                 emoji: '⚡',
                 label: 'Dard/Cramp',
-                color: const Color(0xFF9C27B0),
+                primaryColor: const Color(0xFF9C27B0),
                 onTap: () => LogSymptomsModal.show(context),
               ),
             ],
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildSquircleAction({
-    required String emoji,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Container(
-            width: 58,
-            height: 58,
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [
-                BoxShadow(
-                  color: color.withValues(alpha: 0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Center(
-              child: Text(emoji, style: const TextStyle(fontSize: 24)),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF5D4A72),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -1158,106 +1042,72 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Central 3D Baby Visual with Floating Milestone Tags (baby_3d_milestone.png)
-          Stack(
-            alignment: Alignment.center,
+          // Central Living 3D Baby Visual with Interactive Float, Breathing, Tilt & Speech Bubble
+          Living3DMascot(
+            isPregnancyMode: true,
+            pregnancyWeek: pregCalc.completedWeeks,
+          ),
+          const SizedBox(height: 12),
+
+          // Floating Milestone Tags Row: Weeks Completed & Weeks Left
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Circular Glow Backdrop
               Container(
-                width: 220,
-                height: 220,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: const Color(0xFFFFF0F5),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFF3E5F5)),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFFFB6C1).withValues(alpha: 0.3),
-                      blurRadius: 24,
-                      offset: const Offset(0, 8),
+                      color: Colors.black.withValues(alpha: 0.06),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    const Text('✨ ', style: TextStyle(fontSize: 11)),
+                    Text(
+                      '$completed Hafte Done',
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF8E24AA),
+                      ),
                     ),
                   ],
                 ),
               ),
-
-              // 3D Baby Milestone Image
-              ClipRRect(
-                borderRadius: BorderRadius.circular(24),
-                child: Image.asset(
-                  'UI/baby_3d_milestone.png',
-                  width: 190,
-                  height: 190,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) => const Icon(
-                    Icons.child_care_rounded,
-                    size: 90,
-                    color: Color(0xFFE91E63),
-                  ),
+              const SizedBox(width: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFFCE4EC)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.06),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
-              ),
-
-              // Floating Tag Left: Weeks Completed
-              Positioned(
-                top: 14,
-                left: 0,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
+                child: Row(
+                  children: [
+                    const Text('⏳ ', style: TextStyle(fontSize: 11)),
+                    Text(
+                      '$remaining Hafte Baqi',
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFE91E63),
                       ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      const Text('✨ ', style: TextStyle(fontSize: 10)),
-                      Text(
-                        '$completed Hafte Done',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF8E24AA),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Floating Tag Right: Weeks Left
-              Positioned(
-                bottom: 14,
-                right: 0,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      const Text('⏳ ', style: TextStyle(fontSize: 10)),
-                      Text(
-                        '$remaining Hafte Baqi',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFFE91E63),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ],

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../theme/clay_colors.dart';
 
-/// Reusable Tactile Claymorphic Card
-/// Features soft diffuse shadow diffusion and white specular top rim
-class ClayCard extends StatelessWidget {
+/// Reusable Tactile 3D Claymorphic Card
+/// Features soft diffuse shadow diffusion, white specular highlights, and spring press feedback
+class ClayCard extends StatefulWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
   final EdgeInsetsGeometry? margin;
@@ -12,6 +12,7 @@ class ClayCard extends StatelessWidget {
   final VoidCallback? onTap;
   final Border? border;
   final List<BoxShadow>? customShadow;
+  final bool enableBounce;
 
   const ClayCard({
     super.key,
@@ -23,50 +24,95 @@ class ClayCard extends StatelessWidget {
     this.onTap,
     this.border,
     this.customShadow,
+    this.enableBounce = true,
   });
 
   @override
+  State<ClayCard> createState() => _ClayCardState();
+}
+
+class _ClayCardState extends State<ClayCard> {
+  bool _isPressed = false;
+
+  @override
   Widget build(BuildContext context) {
-    final cardContent = Container(
-      margin: margin,
-      padding: padding,
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(borderRadius),
-        border: border ??
-            Border.all(
-              color: Colors.white.withValues(alpha: 0.9),
-              width: 1.2,
+    final hasTap = widget.onTap != null;
+
+    final defaultShadows = _isPressed
+        ? [
+            const BoxShadow(
+              color: Color(0x0E8B5CF6),
+              offset: Offset(0, 4),
+              blurRadius: 10,
             ),
-        boxShadow: customShadow ??
-            [
-              const BoxShadow(
-                color: Color(0x108B5CF6),
-                offset: Offset(0, 10),
-                blurRadius: 24,
-                spreadRadius: -2,
-              ),
-              const BoxShadow(
-                color: Color(0x062E1065),
-                offset: Offset(0, 3),
-                blurRadius: 8,
-                spreadRadius: 0,
-              ),
-            ],
+          ]
+        : [
+            // Soft bottom-right ambient shadow
+            const BoxShadow(
+              color: Color(0x127C3AED),
+              offset: Offset(0, 10),
+              blurRadius: 24,
+              spreadRadius: -2,
+            ),
+            // Subtler micro-shadow
+            const BoxShadow(
+              color: Color(0x082E1065),
+              offset: Offset(0, 3),
+              blurRadius: 8,
+            ),
+            // Top-left specular ambient shine
+            const BoxShadow(
+              color: Colors.white,
+              offset: Offset(-3, -3),
+              blurRadius: 10,
+              spreadRadius: 1,
+            ),
+          ];
+
+    final cardContent = AnimatedContainer(
+      duration: const Duration(milliseconds: 160),
+      margin: widget.margin,
+      padding: widget.padding,
+      decoration: BoxDecoration(
+        color: widget.backgroundColor,
+        borderRadius: BorderRadius.circular(widget.borderRadius),
+        border: widget.border ??
+            Border.all(
+              color: Colors.white.withValues(alpha: 0.95),
+              width: 1.5,
+            ),
+        boxShadow: widget.customShadow ?? defaultShadows,
       ),
       child: Material(
         color: Colors.transparent,
-        child: child,
+        child: widget.child,
       ),
     );
 
-    if (onTap != null) {
+    if (hasTap && widget.enableBounce) {
       return GestureDetector(
-        onTap: onTap,
+        onTapDown: (_) => setState(() => _isPressed = true),
+        onTapUp: (_) {
+          setState(() => _isPressed = false);
+          widget.onTap!();
+        },
+        onTapCancel: () => setState(() => _isPressed = false),
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedScale(
+          scale: _isPressed ? 0.97 : 1.0,
+          duration: const Duration(milliseconds: 140),
+          curve: Curves.easeOutCubic,
+          child: cardContent,
+        ),
+      );
+    } else if (hasTap) {
+      return GestureDetector(
+        onTap: widget.onTap,
         behavior: HitTestBehavior.opaque,
         child: cardContent,
       );
     }
+
     return cardContent;
   }
 }
