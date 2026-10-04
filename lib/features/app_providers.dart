@@ -217,6 +217,8 @@ class FertilityObservationsNotifier
     CervicalMucusType mucus = CervicalMucusType.none,
     double? bbt,
     bool hadIntimacy = false,
+    IntimacyType intimacyType = IntimacyType.none,
+    IntimacyTiming? intimacyTiming,
   }) async {
     final repo = ref.read(localStorageRepositoryProvider);
     final obs = FertilityObservation(
@@ -225,7 +227,11 @@ class FertilityObservationsNotifier
       lhTest: lhTest,
       mucus: mucus,
       basalBodyTemp: bbt,
-      hadIntimacy: hadIntimacy,
+      hadIntimacy: hadIntimacy || intimacyType != IntimacyType.none,
+      intimacyType: intimacyType != IntimacyType.none
+          ? intimacyType
+          : (hadIntimacy ? IntimacyType.unprotectedInside : IntimacyType.none),
+      intimacyTiming: intimacyTiming,
     );
     await repo.saveFertilityObservation(obs);
     state = repo.getFertilityObservations();
