@@ -19,6 +19,7 @@ import '../pregnancy/positive_test_modal.dart';
 import '../ai/ai_assistant_sheet.dart';
 import '../dictionary/health_dictionary_modal.dart';
 import '../profile/profile_screen.dart';
+import '../appointments/appointment_modal.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -31,6 +32,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _todayKicks = 0;
   int _waterGlasses = 4;
   bool _vitaminsTaken = false;
+  bool _folicAcidTaken = false;
 
   @override
   Widget build(BuildContext context) {
@@ -62,6 +64,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
               if (!isPregnancyMode) ...[
                 // --- CYCLE & PERIOD MODE ---
+                // 0. Contextual Daily Briefing (Good morning! Cycle Day X · Trying to Conceive)
+                _buildDailyBriefingCard(profile, cycleCalc),
+                const SizedBox(height: 14),
+
                 // 1. Horizontal Mini Calendar Strip (matching Period Tracker.jpg)
                 _buildMiniCalendarStrip(),
                 const SizedBox(height: 14),
@@ -101,6 +107,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                 // 4. Automated Guidance Banner (Audio 3 & Audio 1)
                 _buildAutomatedGuidanceCard(context, cycleCalc),
+                const SizedBox(height: 14),
+
+                // 4b. Pre-conception Daily Folic Acid Tracker (400 mcg - ASRM/NHS)
+                _buildFolicAcidTracker(),
                 const SizedBox(height: 16),
 
                 // 5. Quick Overview • Today (matching Period Tracker.jpg squircles)
@@ -115,8 +125,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 _buildTodayStatusCard(context, todaySymptoms.isNotEmpty ? todaySymptoms.first : null),
                 const SizedBox(height: 16),
 
-                // 8. Doctor Pregnancy Confirmation Switch Banner (Audio 3)
+                // 8a. Pregnancy Test Timing & Guidance Card (NHS & ASRM Rules)
+                _buildPregnancyTestTimingCard(context, cycleCalc),
+                const SizedBox(height: 16),
+
+                // 8b. Doctor Pregnancy Confirmation Switch Banner (Audio 3)
                 _buildDoctorPregnancyBanner(context),
+                const SizedBox(height: 16),
+
+                // 8c. Doctor Appointments & Ultrasound Card
+                _buildDoctorAppointmentsCard(context),
                 const SizedBox(height: 16),
 
                 // 9. Cycle Phase Insight Card in Roman English
@@ -136,6 +154,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                   // 3. Trimester Progress Slider
                   _buildTrimesterProgressBar(pregCalc),
+                  const SizedBox(height: 16),
+
+                  // 3b. Doctor Appointments & Ultrasound Scan Card
+                  _buildDoctorAppointmentsCard(context),
                   const SizedBox(height: 16),
 
                   // 4. Mother & Baby Daily Tracker (Kicks, Water, Vitamins)
@@ -1503,6 +1525,438 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               height: 1.45,
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  // Contextual Daily Briefing (Good morning! Cycle Day X · Trying to Conceive)
+  Widget _buildDailyBriefingCard(UserProfile profile, CycleCalculationResult cycleCalc) {
+    final hour = DateTime.now().hour;
+    final greeting = hour < 12 ? 'Good morning! ❤️' : (hour < 17 ? 'Good afternoon! 🌸' : 'Good evening! 🌙');
+    final isFertile = cycleCalc.currentPhase == CyclePhase.fertileWindow ||
+        cycleCalc.currentPhase == CyclePhase.ovulationDay;
+    final days = cycleCalc.daysUntilNextPeriod;
+    final nextPeriodText = days == 0
+        ? 'Aaj expected hai'
+        : (days > 0 ? 'Expected in $days days' : '${days.abs()} din upar ho chuke hain');
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isFertile
+              ? [const Color(0xFFFFF8E1), const Color(0xFFFFECB3)]
+              : [const Color(0xFFF3E5F5), const Color(0xFFEDE7F6)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: isFertile ? const Color(0xFFFFD54F) : const Color(0xFFD1C4E9),
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A2E1065),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                greeting,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF2E1A47),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                decoration: BoxDecoration(
+                  color: isFertile ? const Color(0xFFFFA000) : const Color(0xFF9E8CE7),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'Cycle Day ${cycleCalc.currentCycleDay} · ${profile.maritalStatus == 'Married' ? 'Trying to Conceive' : 'Cycle Tracking'}',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            isFertile
+                ? '⚡ Aaj Ka Update: Estimated Fertile Window'
+                : '🌸 Aaj Ka Update: ${cycleCalc.currentPhase.displayName}',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              color: isFertile ? const Color(0xFFB45309) : const Color(0xFF4A148C),
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            isFertile
+                ? 'Tumhare recorded cycle ke mutabiq yeh pregnancy ke high chances wale din ho sakte hain. Yeh scientific prediction hai, medical confirmation nahi.'
+                : 'Cycle record ke mutabiq body natural cycle ke mutabiq proceed kar rahi hai.',
+            style: const TextStyle(
+              fontSize: 11.5,
+              color: Color(0xFF5D4A72),
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.7),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.event_repeat_rounded, size: 13, color: Color(0xFFE91E63)),
+                const SizedBox(width: 6),
+                Text(
+                  'Next Period: $nextPeriodText',
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF880E4F),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Trying-to-Conceive Folic Acid (400 mcg) Daily Check (ASRM & NHS Guidelines)
+  Widget _buildFolicAcidTracker() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: _folicAcidTaken ? const Color(0xFFE8F5E9) : const Color(0xFFFFF8E1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: _folicAcidTaken ? const Color(0xFFA5D6A7) : const Color(0xFFFFE082),
+        ),
+      ),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () {
+              setState(() => _folicAcidTaken = !_folicAcidTaken);
+            },
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: _folicAcidTaken ? const Color(0xFF4CAF50) : Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: _folicAcidTaken ? const Color(0xFF4CAF50) : const Color(0xFFFFB300),
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: (_folicAcidTaken ? Colors.green : Colors.amber).withValues(alpha: 0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Icon(
+                  _folicAcidTaken ? Icons.check_rounded : Icons.medication_rounded,
+                  color: _folicAcidTaken ? Colors.white : const Color(0xFFF57F17),
+                  size: 24,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _folicAcidTaken
+                      ? 'Folic Acid Done! ✨ (400 mcg)'
+                      : 'Daily Folic Acid (400 mcg) Check 💊',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: _folicAcidTaken ? const Color(0xFF2E7D32) : const Color(0xFFE65100),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                const Text(
+                  'ASRM & NHS ke mutabiq pregnancy plan karne ke dauran rozana 400 mcg Folic Acid lena baby ke brain aur spine ki hifazat ke liye intehai zaroori hai.',
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    color: Color(0xFF5D4A72),
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: Icon(
+              _folicAcidTaken ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+              color: _folicAcidTaken ? const Color(0xFF2E7D32) : const Color(0xFFFFB300),
+            ),
+            onPressed: () => setState(() => _folicAcidTaken = !_folicAcidTaken),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Pregnancy Test Guidance & Timing Card (NHS & ASRM Rules)
+  Widget _buildPregnancyTestTimingCard(BuildContext context, CycleCalculationResult cycleCalc) {
+    final days = cycleCalc.daysUntilNextPeriod;
+    final isPeriodDelayed = days <= 0;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isPeriodDelayed ? const Color(0xFFFCE4EC) : const Color(0xFFF7F2FA),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: isPeriodDelayed ? const Color(0xFFF48FB1) : const Color(0xFFE1BEE7),
+          width: 1.2,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: isPeriodDelayed ? const Color(0xFFE91E63) : const Color(0xFF9E8CE7),
+                  shape: BoxShape.circle,
+                ),
+                child: const Text('🧪', style: TextStyle(fontSize: 15)),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'PREGNANCY TEST GUIDANCE (NHS / ASRM)',
+                      style: TextStyle(
+                        fontSize: 8.5,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF7A6A8D),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    Text(
+                      isPeriodDelayed
+                          ? 'Period Miss Ho Gaya? Ab Test Karein! ✨'
+                          : 'Pregnancy Test Kab Karna Chahiye?',
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w900,
+                        color: isPeriodDelayed ? const Color(0xFF880E4F) : const Color(0xFF2E1A47),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            '• Missed Period: Aam home test missed period ke pehle din se sab se zyada reliable aur accurate hota hai.\n• Irregular Cycle: Agar cycle ki date confirm na ho, to aakhri unprotected intercourse ke kam az kam 21 din baad test karein.',
+            style: TextStyle(
+              fontSize: 11.5,
+              height: 1.45,
+              color: Color(0xFF4A3B60),
+            ),
+          ),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: () => PositivePregnancyTestModal.show(context),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              decoration: BoxDecoration(
+                color: isPeriodDelayed ? const Color(0xFFE91E63) : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isPeriodDelayed ? const Color(0xFFC2185B) : const Color(0xFF9E8CE7),
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  isPeriodDelayed
+                      ? '⚡ Test Positive Aaya? Hamal Confirm Karein'
+                      : 'Pregnancy Test Result Log / Confirm Karein',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: isPeriodDelayed ? Colors.white : const Color(0xFF6A1B9A),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Doctor Appointments & Ultrasound Card
+  Widget _buildDoctorAppointmentsCard(BuildContext context) {
+    final appointments = ref.watch(appointmentsProvider);
+    final upcoming = appointments
+        .where((a) => a.dateTime.isAfter(DateTime.now().subtract(const Duration(hours: 3))))
+        .toList();
+    final nextApt = upcoming.isNotEmpty ? upcoming.first : null;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFEDE7F6)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A2E1065),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Row(
+                children: [
+                  Text('🏥', style: TextStyle(fontSize: 16)),
+                  SizedBox(width: 8),
+                  Text(
+                    'Doctor Appointments & Scans',
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF2E1A47),
+                    ),
+                  ),
+                ],
+              ),
+              GestureDetector(
+                onTap: () => AppointmentModal.show(context),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3E5F5),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text(
+                    '+ Add / Dekhein',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF8E24AA),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          if (nextApt != null) ...[
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF0F5),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFFFD1DC)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.alarm_on_rounded, color: Color(0xFFE91E63), size: 22),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          nextApt.title,
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF880E4F),
+                          ),
+                        ),
+                        Text(
+                          '${DateHelpers.formatFriendly(nextApt.dateTime)} • ${nextApt.clinicianName != null ? 'Dr. ${nextApt.clinicianName}' : 'Clinic Visit'}',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFFAD1457),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.arrow_forward_ios_rounded, size: 13, color: Color(0xFFE91E63)),
+                ],
+              ),
+            ),
+          ] else ...[
+            GestureDetector(
+              onTap: () => AppointmentModal.show(context),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFBF8FE),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFEDE7F6)),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.calendar_month_outlined, color: Color(0xFF9E8CE7), size: 20),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Agla checkup, ultrasound ya blood test schedule karein',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: Color(0xFF7A6A8D),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    Icon(Icons.add_circle_outline_rounded, size: 18, color: Color(0xFF9E8CE7)),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
