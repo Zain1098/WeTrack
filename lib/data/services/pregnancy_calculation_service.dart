@@ -9,6 +9,7 @@ class PregnancyCalculationResult {
   final String formattedGestationalAge; // e.g. "16 weeks 2 days"
   final int currentTrimester; // 1, 2, or 3
   final int daysUntilDueDate;
+  final DateTime estimatedDueDate;
   final String dueDateCountdownText;
   final double progressFraction; // 0.0 to 1.0
   final String babyFruitComparison;
@@ -18,6 +19,8 @@ class PregnancyCalculationResult {
   final String weeklyMilestoneSummaryUrdu;
   final String babyStageAsset;
 
+  int get trimester => currentTrimester;
+
   const PregnancyCalculationResult({
     required this.totalDaysPregnant,
     required this.completedWeeks,
@@ -25,6 +28,7 @@ class PregnancyCalculationResult {
     required this.formattedGestationalAge,
     required this.currentTrimester,
     required this.daysUntilDueDate,
+    required this.estimatedDueDate,
     required this.dueDateCountdownText,
     required this.progressFraction,
     required this.babyFruitComparison,
@@ -92,6 +96,7 @@ class PregnancyCalculationService {
       formattedGestationalAge: formattedAge,
       currentTrimester: trimester,
       daysUntilDueDate: daysToEdd,
+      estimatedDueDate: effectiveEdd,
       dueDateCountdownText: countdownText,
       progressFraction: progress,
       babyFruitComparison: milestoneInfo['fruit']!,

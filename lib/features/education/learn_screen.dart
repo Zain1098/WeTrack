@@ -91,6 +91,20 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
       source: 'Human Reproduction & Fertility Science Standards',
       reviewDate: 'Updated 2026',
     ),
+    LearnArticle(
+      id: 'myth_period_during_pregnancy',
+      categoryKey: 'myths',
+      titleUrdu: 'Myth: Kya Hamal (Pregnancy) Mein Period Aa Sakta Hai?',
+      titleEnglish: 'Myth: Can You Have a Menstrual Period While Pregnant?',
+      summaryUrdu: 'Hamal mein 24 din baki period me bolna ya period aana kyu namumkin hai? Medical science ki wazahat.',
+      summaryEnglish: 'Why true menstruation cannot physiologically occur during pregnancy.',
+      contentUrdu:
+          'Haqeeqat (ACOG & NHS Medical Biology):\n• Medical Science ke mutabiq HAMAL MEIN PERIOD AANA 100% NAMUMKIN HAI (Amenorrhea of Pregnancy).\n• Wajah (Hormones): Mahwari tab aati hai jab andey ko sperm na mile aur Progesterone hormone gir jaye, jis se bache dani ki deewar (uterine lining) toot kar khoon ki soorat mein nikal jati hai.\n• Magar jab aap pregnant hoti hain, to Placenta aur Corpus Luteum "hCG" aur "Progesterone" ko bohot high level par rakhte hain taake lining mazboot rahe aur baby mehfooz rahe.\n• Bleeding vs Period: Hamal ke dauran agar halki spotting ya khoon aaye, to wo PERIOD NAHI hota! Yeh implantation bleeding, cervical changes, placenta previa, ya kisi complication ki alamat ho sakti hai.\n• Warning: Agar hamal mein khoon (bleeding) aaye ya pet mein shadeed dard ho, to kabhi agle period ka intezar na karein, balki foran apni Gynecologist ya emergency se ruju karein.',
+      contentEnglish:
+          'Clinical Reality (ACOG & NHS Guidelines):\n• True menstruation is physiologically impossible during pregnancy.\n• Hormonal Mechanism: Menstruation occurs when an egg remains unfertilized, causing progesterone levels to plummet and shedding the endometrial lining. During pregnancy, sustained elevated hCG and progesterone maintain the uterine wall to support the embryo.\n• Any bleeding occurring in pregnancy is NOT a period. It may represent implantation bleeding, cervical sensitivity, subchorionic hematoma, or potential obstetric concerns.\n• Clinical Action: Always consult your obstetrician/gynecologist immediately if you experience bleeding during pregnancy.',
+      source: 'ACOG (American College of Obstetricians and Gynecologists) & NHS Standards',
+      reviewDate: 'Updated 2026',
+    ),
 
     // 2. Fertility & Milap
     LearnArticle(

@@ -11,6 +11,8 @@ import 'cycle/log_period_modal.dart';
 import 'cycle/log_symptoms_modal.dart';
 import 'fertility/log_fertility_modal.dart';
 import 'pregnancy/positive_test_modal.dart';
+import 'pregnancy/kick_counter_modal.dart';
+import 'appointments/appointment_modal.dart';
 import 'ai/ai_assistant_sheet.dart';
 import '../data/models/user_profile.dart';
 import 'app_providers.dart';
@@ -76,44 +78,80 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                _build3DQuickTile(
-                  icon: Icons.water_drop_rounded,
-                  iconColor: const Color(0xFFE91E63),
-                  bgColor: const Color(0xFFFCE4EC),
-                  title: s.logPeriodTitle,
-                  subtitle: s.logPeriodSubtitle,
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    LogPeriodModal.show(context);
-                  },
-                ),
-                const SizedBox(height: 10),
-                _build3DQuickTile(
-                  icon: Icons.healing_rounded,
-                  iconColor: const Color(0xFFAB47BC),
-                  bgColor: const Color(0xFFF3E5F5),
-                  title: s.logSymptomsTitle,
-                  subtitle: s.logSymptomsSubtitle,
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    LogSymptomsModal.show(context);
-                  },
-                ),
-                if (goal == AppGoal.tryToConceive) ...[
-                  const SizedBox(height: 10),
+                if (goal == AppGoal.alreadyPregnant) ...[
                   _build3DQuickTile(
-                    icon: Icons.favorite_rounded,
-                    iconColor: const Color(0xFFF57C00),
-                    bgColor: const Color(0xFFFFF3E0),
-                    title: s.logOvulationTitle,
-                    subtitle: s.logOvulationSubtitle,
+                    icon: Icons.baby_changing_station_rounded,
+                    iconColor: const Color(0xFFD81B60),
+                    bgColor: const Color(0xFFFFF0F5),
+                    title: 'Baby Kicks Count Karein 👣',
+                    subtitle: 'Baby ki harkat aur halchal note karein',
                     onTap: () {
                       Navigator.pop(ctx);
-                      LogFertilityModal.show(context);
+                      KickCounterModal.show(context);
                     },
                   ),
-                ],
-                if (goal != AppGoal.alreadyPregnant) ...[
+                  const SizedBox(height: 10),
+                  _build3DQuickTile(
+                    icon: Icons.calendar_month_rounded,
+                    iconColor: const Color(0xFF7B1FA2),
+                    bgColor: const Color(0xFFF3E5F5),
+                    title: 'Doctor Appointment & Scan 🩺',
+                    subtitle: 'Agla ultrasound ya checkup schedule karein',
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      AppointmentModal.show(context);
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  _build3DQuickTile(
+                    icon: Icons.healing_rounded,
+                    iconColor: const Color(0xFF00897B),
+                    bgColor: const Color(0xFFE0F2F1),
+                    title: 'Hamal Ke Symptoms Log Karein 🩹',
+                    subtitle: 'Matli, thakan, kamar dard aur mood',
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      LogSymptomsModal.show(context);
+                    },
+                  ),
+                ] else ...[
+                  _build3DQuickTile(
+                    icon: Icons.water_drop_rounded,
+                    iconColor: const Color(0xFFE91E63),
+                    bgColor: const Color(0xFFFCE4EC),
+                    title: s.logPeriodTitle,
+                    subtitle: s.logPeriodSubtitle,
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      LogPeriodModal.show(context);
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  _build3DQuickTile(
+                    icon: Icons.healing_rounded,
+                    iconColor: const Color(0xFFAB47BC),
+                    bgColor: const Color(0xFFF3E5F5),
+                    title: s.logSymptomsTitle,
+                    subtitle: s.logSymptomsSubtitle,
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      LogSymptomsModal.show(context);
+                    },
+                  ),
+                  if (goal == AppGoal.tryToConceive) ...[
+                    const SizedBox(height: 10),
+                    _build3DQuickTile(
+                      icon: Icons.favorite_rounded,
+                      iconColor: const Color(0xFFF57C00),
+                      bgColor: const Color(0xFFFFF3E0),
+                      title: s.logOvulationTitle,
+                      subtitle: s.logOvulationSubtitle,
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        LogFertilityModal.show(context);
+                      },
+                    ),
+                  ],
                   const SizedBox(height: 10),
                   _build3DQuickTile(
                     icon: Icons.child_care_rounded,

@@ -90,7 +90,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 if (_selectedSection == 0) ...[
                   // --- TAB 0: AAJ KA DIN (Daily Core) ---
                   // 0. Contextual Daily Briefing
-                  _buildDailyBriefingCard(profile, cycleCalc),
+                  _buildDailyBriefingCard(
+                    profile,
+                    cycleCalc,
+                    isPregnancyMode: isPregnancyMode,
+                    pregCalc: pregCalc,
+                  ),
                   const SizedBox(height: 12),
 
                   // 1. Horizontal Mini Calendar Strip
@@ -2647,10 +2652,116 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // Contextual Daily Briefing (Good morning! Cycle Day X · Trying to Conceive)
-  Widget _buildDailyBriefingCard(UserProfile profile, CycleCalculationResult cycleCalc) {
+  // Contextual Daily Briefing (Good morning! Cycle Day X or Pregnancy Week X)
+  Widget _buildDailyBriefingCard(
+    UserProfile profile,
+    CycleCalculationResult cycleCalc, {
+    bool isPregnancyMode = false,
+    PregnancyCalculationResult? pregCalc,
+  }) {
     final hour = DateTime.now().hour;
     final greeting = hour < 12 ? 'Good morning! ❤️' : (hour < 17 ? 'Good afternoon! 🌸' : 'Good evening! 🌙');
+
+    if (isPregnancyMode && pregCalc != null) {
+      final weeks = pregCalc.completedWeeks;
+      final daysToEdd = pregCalc.daysUntilDueDate;
+
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFFFF0F5), Color(0xFFFFE4EE)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: const Color(0xFFFFB6C1)),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x0A2E1065),
+              blurRadius: 10,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  greeting,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF2E1A47),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFC2185B),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'Hamal Hafta $weeks · Trimester ${pregCalc.trimester}',
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '🍼 Baby Update: Size ~${pregCalc.babyFruitComparison}',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF880E4F),
+              ),
+            ),
+            const SizedBox(height: 2),
+            const Text(
+              'Hamal ke dauran mahwari (period) nahi aati. Baby ki hifazat ke liye rest karein aur hydration ka khayal rakhein.',
+              style: TextStyle(
+                fontSize: 11.5,
+                color: Color(0xFF5D4A72),
+                height: 1.35,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.7),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.favorite_rounded, size: 13, color: Color(0xFFE91E63)),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Delivery Tak: $daysToEdd Din Baqi (EDD: ${DateHelpers.formatFriendly(pregCalc.estimatedDueDate)})',
+                    style: const TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF880E4F),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     final isFertile = cycleCalc.currentPhase == CyclePhase.fertileWindow ||
         cycleCalc.currentPhase == CyclePhase.ovulationDay;
     final days = cycleCalc.daysUntilNextPeriod;

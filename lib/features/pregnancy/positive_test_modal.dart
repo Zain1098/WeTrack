@@ -26,18 +26,32 @@ class PositivePregnancyTestModal extends ConsumerStatefulWidget {
 
 class _PositivePregnancyTestModalState
     extends ConsumerState<PositivePregnancyTestModal> {
-  bool _hasUltrasoundDate = false;
+  // Dating mode: 0 = LMP, 1 = Gestational Weeks directly, 2 = Ultrasound EDD
+  int _datingMode = 1; // Default to direct gestational weeks for flexibility
+  int _selectedWeek = 24; // Default to 24 weeks as user preferred
+  DateTime? _customLmpDate;
   DateTime? _ultrasoundDueDate;
 
   Future<void> _confirmPregnancy() async {
     final profile = ref.read(userProfileProvider);
-    final lmp = profile.lastPeriodDate;
+    DateTime lmp;
+
+    if (_datingMode == 1) {
+      // Direct gestational week
+      lmp = DateTime.now().subtract(Duration(days: _selectedWeek * 7));
+    } else if (_datingMode == 0) {
+      lmp = _customLmpDate ?? profile.lastPeriodDate;
+    } else {
+      // From Ultrasound due date (EDD - 280 days = LMP)
+      final edd = _ultrasoundDueDate ?? DateTime.now().add(const Duration(days: 140));
+      lmp = edd.subtract(const Duration(days: 280));
+    }
 
     // Start pregnancy with LMP
     await ref.read(pregnancyRecordProvider.notifier).startPregnancyFromLmp(lmp);
 
     // If ultrasound due date provided, override
-    if (_hasUltrasoundDate && _ultrasoundDueDate != null) {
+    if (_datingMode == 2 && _ultrasoundDueDate != null) {
       await ref
           .read(pregnancyRecordProvider.notifier)
           .setClinicianDueDate(_ultrasoundDueDate!);
@@ -51,11 +65,11 @@ class _PositivePregnancyTestModalState
     if (mounted) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          backgroundColor: ClayColors.mint,
+        SnackBar(
+          backgroundColor: const Color(0xFFC2185B),
           content: Text(
-            'Warmest congratulations! WeTrack is now in Pregnancy Journey Mode.',
-            style: TextStyle(fontWeight: FontWeight.w700),
+            'Mubarak! WeTrack ab $_selectedWeek Hafton ke Hamal Mode mein active ho gaya hai 🍼✨',
+            style: const TextStyle(fontWeight: FontWeight.w700),
           ),
         ),
       );
@@ -65,8 +79,10 @@ class _PositivePregnancyTestModalState
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(userProfileProvider);
-    final lmp = profile.lastPeriodDate;
-    final estimatedEdd = lmp.add(const Duration(days: 280));
+    final lmp = _customLmpDate ?? profile.lastPeriodDate;
+    final estimatedEdd = _datingMode == 1
+        ? DateTime.now().subtract(Duration(days: _selectedWeek * 7)).add(const Duration(days: 280))
+        : lmp.add(const Duration(days: 280));
 
     return Material(
       color: Colors.white,
@@ -75,203 +91,338 @@ class _PositivePregnancyTestModalState
       child: Padding(
         padding: EdgeInsets.only(
           top: 24,
-          left: 24,
-          right: 24,
+          left: 20,
+          right: 20,
           bottom: MediaQuery.of(context).viewInsets.bottom + 24,
         ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header with celebration icon
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: const BoxDecoration(
-                    color: ClayColors.mintContainer,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.child_care_rounded,
-                    color: ClayColors.mint,
-                    size: 28,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Positive Test!',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w900,
-                          color: ClayColors.textPrimary,
-                        ),
-                      ),
-                      Text(
-                        'Start your pregnancy tracking journey',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: ClayColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close, color: ClayColors.textSecondary),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-
-            // LMP Derivation Card
-            ClayCard(
-              padding: const EdgeInsets.all(16),
-              backgroundColor: ClayColors.canvas,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header with celebration icon
+              Row(
                 children: [
-                  const Text(
-                    'Dating from your logged Last Period (LMP):',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: ClayColors.textSecondary,
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFFCE4EC),
+                      shape: BoxShape.circle,
                     ),
+                    child: const Text('🍼', style: TextStyle(fontSize: 24)),
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    DateHelpers.formatFriendly(lmp),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: ClayColors.textPrimary,
-                    ),
-                  ),
-                  const Divider(height: 20, color: ClayColors.outline),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Estimated Due Date (40 weeks):',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: ClayColors.textSecondary,
-                        ),
-                      ),
-                      Text(
-                        DateHelpers.formatFriendly(estimatedEdd),
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: ClayColors.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 18),
-
-            // Clinician Ultrasound Override Toggle
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: ClayColors.outline),
-              ),
-              child: Row(
-                children: [
+                  const SizedBox(width: 14),
                   const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Have a doctor or ultrasound date?',
+                          'Hamal (Pregnancy) Confirm Karein',
                           style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
                             color: ClayColors.textPrimary,
                           ),
                         ),
                         Text(
-                          'Clinician dating will override standard LMP estimate.',
+                          'Bache ki sahi growth aur safar track karein',
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: 12,
                             color: ClayColors.textSecondary,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  Switch.adaptive(
-                    value: _hasUltrasoundDate,
-                    activeTrackColor: ClayColors.primary,
-                    onChanged: (val) => setState(() => _hasUltrasoundDate = val),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: ClayColors.textSecondary),
+                    onPressed: () => Navigator.pop(context),
                   ),
                 ],
               ),
-            ),
+              const SizedBox(height: 18),
 
-            if (_hasUltrasoundDate) ...[
-              const SizedBox(height: 14),
-              GestureDetector(
-                onTap: () async {
-                  final picked = await showDatePicker(
-                    context: context,
-                    initialDate: _ultrasoundDueDate ?? estimatedEdd,
-                    firstDate: DateTime.now(),
-                    lastDate: DateTime.now().add(const Duration(days: 300)),
-                  );
-                  if (picked != null) {
-                    setState(() => _ultrasoundDueDate = picked);
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: ClayColors.surfaceTint,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              // Dating Method Tabs
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF0F5),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFFFD2E2)),
+                ),
+                child: Row(
+                  children: [
+                    _buildModeTab(1, 'Hafte Chunein\n(Weeks)'),
+                    _buildModeTab(0, 'Aakhri Period\n(LMP)'),
+                    _buildModeTab(2, 'Doctor EDD\n(Delivery)'),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              if (_datingMode == 1) ...[
+                // Option 1: Direct Gestational Weeks Selector
+                ClayCard(
+                  padding: const EdgeInsets.all(16),
+                  backgroundColor: const Color(0xFFFFF7F9),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        _ultrasoundDueDate != null
-                            ? DateHelpers.formatFriendly(_ultrasoundDueDate!)
-                            : 'Tap to select confirmed Due Date',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: ClayColors.primary,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Maujuda Hamal Ka Hafta:',
+                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: ClayColors.textPrimary),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFC2185B),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              'Hafta $_selectedWeek',
+                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Colors.white),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Slider(
+                        value: _selectedWeek.toDouble(),
+                        min: 4,
+                        max: 40,
+                        divisions: 36,
+                        activeColor: const Color(0xFFC2185B),
+                        inactiveColor: const Color(0xFFFFD2E2),
+                        label: '$_selectedWeek Weeks',
+                        onChanged: (val) => setState(() => _selectedWeek = val.round()),
+                      ),
+                      // Quick selection chips
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        physics: const BouncingScrollPhysics(),
+                        child: Row(
+                          children: [4, 8, 12, 16, 20, 24, 28, 32, 36, 40].map((w) {
+                            final isSel = _selectedWeek == w;
+                            return GestureDetector(
+                              onTap: () => setState(() => _selectedWeek = w),
+                              child: Container(
+                                margin: const EdgeInsets.only(right: 6),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: isSel ? const Color(0xFFC2185B) : Colors.white,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: isSel ? const Color(0xFF880E4F) : const Color(0xFFFFD2E2),
+                                  ),
+                                ),
+                                child: Text(
+                                  'W$w',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: isSel ? Colors.white : const Color(0xFFC2185B),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
                         ),
                       ),
-                      const Icon(Icons.edit_calendar, color: ClayColors.primary, size: 20),
                     ],
                   ),
                 ),
+              ] else if (_datingMode == 0) ...[
+                // Option 0: LMP Date Picker
+                ClayCard(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Aakhri Mahwari Ka Pehla Din (LMP):',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: ClayColors.textSecondary),
+                      ),
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onTap: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate: lmp,
+                            firstDate: DateTime.now().subtract(const Duration(days: 300)),
+                            lastDate: DateTime.now(),
+                          );
+                          if (picked != null) {
+                            setState(() => _customLmpDate = picked);
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: ClayColors.surfaceTint,
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                DateHelpers.formatFriendly(lmp),
+                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: ClayColors.textPrimary),
+                              ),
+                              const Icon(Icons.edit_calendar, color: ClayColors.primary, size: 20),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ] else ...[
+                // Option 2: Ultrasound EDD
+                ClayCard(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Doctor / Ultrasound Ki Di Hui Delivery Date:',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: ClayColors.textSecondary),
+                      ),
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onTap: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate: _ultrasoundDueDate ?? estimatedEdd,
+                            firstDate: DateTime.now(),
+                            lastDate: DateTime.now().add(const Duration(days: 300)),
+                          );
+                          if (picked != null) {
+                            setState(() => _ultrasoundDueDate = picked);
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE0F2F1),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                _ultrasoundDueDate != null
+                                    ? DateHelpers.formatFriendly(_ultrasoundDueDate!)
+                                    : 'Delivery Date Select Karein',
+                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF00796B)),
+                              ),
+                              const Icon(Icons.edit_calendar, color: Color(0xFF00796B), size: 20),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
+              const SizedBox(height: 14),
+
+              // Estimated EDD Summary Card
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3E5F5),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Mutawaqqa Delivery Tareekh (EDD):',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF4A148C)),
+                    ),
+                    Text(
+                      DateHelpers.formatFriendly(_ultrasoundDueDate ?? estimatedEdd),
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFFC2185B)),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 14),
+
+              // Clinical Fact Note
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF8E1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFFFE082)),
+                ),
+                child: const Row(
+                  children: [
+                    Text('💡', style: TextStyle(fontSize: 14)),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Hamal activate hone ke baad mahwari (period) countdowns band ho jayenge aur sirf delivery & baby health track hogi.',
+                        style: TextStyle(fontSize: 11, color: Color(0xFFE65100), fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Confirm Button
+              ClayButton(
+                text: 'Hamal Safar Shuru Karein',
+                variant: ClayButtonVariant.primary,
+                onPressed: _confirmPregnancy,
               ),
             ],
-            const SizedBox(height: 24),
-
-            // Confirm Button
-            ClayButton(
-              text: 'Start Pregnancy Journey',
-              variant: ClayButtonVariant.primary,
-              onPressed: _confirmPregnancy,
-            ),
-          ],
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
+
+  Widget _buildModeTab(int mode, String title) {
+    final isSel = _datingMode == mode;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _datingMode = mode),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: isSel ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: isSel
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFFC2185B).withValues(alpha: 0.12),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Text(
+            title,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: isSel ? const Color(0xFFC2185B) : ClayColors.textSecondary,
+              height: 1.2,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
