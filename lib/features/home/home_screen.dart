@@ -40,7 +40,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _waterGlasses = 4;
   bool _vitaminsTaken = false;
   bool _folicAcidTaken = false;
-  int _selectedSection = 0; // 0: Aaj Ka Din, 1: Sehat & Plan, 2: Shohar & Madad
+  int _selectedSection = 0; // 0: Aaj Ka Din / Baby Care, 1: Sehat & Plan / Doctor Scan, 2: Shohar & Madad
+  int? _previewGestationWeek; // Interactive time-machine preview week
 
   @override
   Widget build(BuildContext context) {
@@ -170,12 +171,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   _buildPregnancySetupCard(context),
                 ] else ...[
                   if (_selectedSection == 0) ...[
-                    // 1. Hero 3D Baby Milestone Card with Completed/Remaining tags
+                    // 1. Hero 3D Baby Milestone Card with Completed/Remaining tags & Time-Machine
                     _buildBabyHeroCard(context, pregCalc),
                     const SizedBox(height: 14),
 
                     // 4. Mother & Baby Daily Tracker (Kicks, Water, Vitamins)
                     _buildMotherTrackRecordCard(),
+                    const SizedBox(height: 14),
+
+                    // 5. Weekly Baby Development Card in Roman Urdu with Sensory Badges
+                    _buildBabyWeeklyInsightCard(pregCalc),
                   ] else if (_selectedSection == 1) ...[
                     // 2. Mother's Health Monitor Timeline Banner
                     _buildMotherTimelineBanner(pregCalc),
@@ -1315,10 +1320,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // 1. Hero 3D Baby Milestone Card with Completed/Remaining tags
+  // 1. Hero 3D Baby Milestone Card with Completed/Remaining tags & Time-Machine
   Widget _buildBabyHeroCard(BuildContext context, PregnancyCalculationResult pregCalc) {
-    final completed = pregCalc.completedWeeks;
-    final remaining = (40 - completed).clamp(0, 40);
+    final activeWeek = _previewGestationWeek ?? pregCalc.completedWeeks;
+    final isPreviewing = _previewGestationWeek != null && _previewGestationWeek != pregCalc.completedWeeks;
+    final remaining = (40 - activeWeek).clamp(0, 40);
+    final milestone = PregnancyCalculationService.getMilestoneForWeek(activeWeek);
+    final fruit = milestone['fruit'] ?? pregCalc.babyFruitComparison;
+    final length = milestone['length'] ?? pregCalc.babyApproximateLength;
+    final weight = milestone['weight'] ?? pregCalc.babyApproximateWeight;
 
     return ClayCard(
       padding: const EdgeInsets.all(20),
@@ -1330,14 +1340,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Row(
+              Row(
                 children: [
-                  Text('🍼', style: TextStyle(fontSize: 20)),
-                  SizedBox(width: 8),
+                  const Text('🍼', style: TextStyle(fontSize: 20)),
+                  const SizedBox(width: 8),
                   Text(
-                    'Hello Mummy! 🌸',
-                    style: TextStyle(
-                      fontSize: 18,
+                    isPreviewing ? 'Preview Week $activeWeek' : 'Hello Mummy! 🌸',
+                    style: const TextStyle(
+                      fontSize: 17,
                       fontWeight: FontWeight.w900,
                       color: ClayColors.textPrimary,
                     ),
@@ -1352,7 +1362,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   border: Border.all(color: const Color(0xFFF8BBD0)),
                 ),
                 child: Text(
-                  'Trimester ${pregCalc.currentTrimester}',
+                  'Trimester ${activeWeek <= 12 ? 1 : (activeWeek <= 27 ? 2 : 3)}',
                   style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
@@ -1367,7 +1377,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           // Central Living 3D Baby Visual with Interactive Float, Breathing, Tilt & Speech Bubble
           Living3DMascot(
             isPregnancyMode: true,
-            pregnancyWeek: pregCalc.completedWeeks,
+            pregnancyWeek: activeWeek,
+            onTap: () {
+              setState(() {
+                _todayKicks++;
+              });
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  backgroundColor: const Color(0xFFC2185B),
+                  duration: const Duration(seconds: 2),
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  content: Row(
+                    children: [
+                      const Text('👣 ', style: TextStyle(fontSize: 18)),
+                      Expanded(
+                        child: Text(
+                          'Mubarak! Baby kick note ho gayi (Total: $_todayKicks kicks) ✨',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
           const SizedBox(height: 12),
 
@@ -1393,7 +1428,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   children: [
                     const Text('✨ ', style: TextStyle(fontSize: 11)),
                     Text(
-                      '$completed Hafte Done',
+                      '$activeWeek Hafte Done',
                       style: const TextStyle(
                         fontSize: 11.5,
                         fontWeight: FontWeight.bold,
@@ -1438,7 +1473,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
           // Gestational Age & Due Date Countdown
           Text(
-            '${pregCalc.completedWeeks} hafte ${pregCalc.remainingDays} din',
+            '$activeWeek hafte ${pregCalc.remainingDays} din',
             style: const TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w900,
@@ -1447,7 +1482,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            pregCalc.dueDateCountdownText,
+            isPreviewing
+                ? 'Baby is hafte aisi shape aur size mein hota hai'
+                : pregCalc.dueDateCountdownText,
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
@@ -1480,16 +1517,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Baby size: ${pregCalc.babyFruitComparison}',
+                        'Baby size: $fruit',
                         style: const TextStyle(
-                          fontSize: 14,
+                          fontSize: 13.5,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFFE65100),
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Length: ${pregCalc.babyApproximateLength} • Wazan: ${pregCalc.babyApproximateWeight}',
+                        'Lambai: $length • Wazan: $weight',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -1497,6 +1534,96 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                       ),
                     ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Interactive 3D Baby Growth Time-Machine Selector
+          Container(
+            margin: const EdgeInsets.only(top: 14),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF2F6),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFFFFD1DC)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Row(
+                      children: [
+                        Text('🌱', style: TextStyle(fontSize: 15)),
+                        SizedBox(width: 6),
+                        Text(
+                          'Baby Growth Time-Machine',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF880E4F),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (isPreviewing)
+                      GestureDetector(
+                        onTap: () => setState(() => _previewGestationWeek = null),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFC2185B),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Text(
+                            'Asal Hafta Reset ↺',
+                            style: TextStyle(fontSize: 9.5, color: Colors.white, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  child: Row(
+                    children: [4, 8, 12, 16, 20, 24, 28, 32, 36, 40].map((w) {
+                      final isSelected = activeWeek == w;
+                      return GestureDetector(
+                        onTap: () => setState(() => _previewGestationWeek = w),
+                        child: Container(
+                          margin: const EdgeInsets.only(right: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: isSelected ? const Color(0xFFC2185B) : Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: isSelected ? const Color(0xFF880E4F) : const Color(0xFFFFD1DC),
+                            ),
+                            boxShadow: [
+                              if (isSelected)
+                                BoxShadow(
+                                  color: const Color(0xFFC2185B).withValues(alpha: 0.25),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                            ],
+                          ),
+                          child: Text(
+                            'Week $w',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: isSelected ? Colors.white : const Color(0xFF4A148C),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
                   ),
                 ),
               ],
@@ -1790,11 +1917,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // 5. Weekly Baby Development Cartoon Card
+  // 5. Weekly Baby Development Card in Roman Urdu with Sensory Badges
   Widget _buildBabyWeeklyInsightCard(PregnancyCalculationResult pregCalc) {
+    final activeWeek = _previewGestationWeek ?? pregCalc.completedWeeks;
+    final milestone = PregnancyCalculationService.getMilestoneForWeek(activeWeek);
+    final summaryUrdu = (milestone['summaryUrdu']?.isNotEmpty ?? false)
+        ? milestone['summaryUrdu']!
+        : (pregCalc.weeklyMilestoneSummaryUrdu.isNotEmpty
+            ? pregCalc.weeklyMilestoneSummaryUrdu
+            : pregCalc.weeklyMilestoneSummary);
+
     return ClayCard(
       padding: const EdgeInsets.all(18),
-      borderRadius: 22,
+      borderRadius: 24,
       backgroundColor: const Color(0xFFFFF9FA),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1807,29 +1942,89 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   color: Color(0xFFFFD1DC),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.auto_stories_rounded, color: Color(0xFFC2185B), size: 18),
+                child: const Text('📖', style: TextStyle(fontSize: 16)),
               ),
               const SizedBox(width: 10),
-              Text(
-                'Week ${pregCalc.completedWeeks} Baby Ki Growth',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: ClayColors.textPrimary,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Week $activeWeek: Baby Ki Taraqqi & Hawaas',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                        color: ClayColors.textPrimary,
+                      ),
+                    ),
+                    const Text(
+                      'Sensory development aur naye marhale',
+                      style: TextStyle(fontSize: 11, color: ClayColors.textSecondary),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          Text(
-            pregCalc.weeklyMilestoneSummary,
-            style: const TextStyle(
-              fontSize: 12,
-              color: ClayColors.textSecondary,
-              height: 1.45,
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFFFE4EC)),
+            ),
+            child: Text(
+              summaryUrdu,
+              style: const TextStyle(
+                fontSize: 12.5,
+                color: Color(0xFF2E1A47),
+                height: 1.45,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
+          const SizedBox(height: 12),
+          // 4 Sensory Badges
+          Row(
+            children: [
+              _buildSensoryBadge('👂', 'Aawaz Sunna'),
+              const SizedBox(width: 6),
+              _buildSensoryBadge('👁️', 'Palkein'),
+              const SizedBox(width: 6),
+              _buildSensoryBadge('🍼', 'Reflexes'),
+              const SizedBox(width: 6),
+              _buildSensoryBadge('👣', 'Kicks'),
+            ],
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSensoryBadge(String emoji, String title) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFCE4EC),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 14)),
+            const SizedBox(height: 2),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 9.5,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFFC2185B),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
