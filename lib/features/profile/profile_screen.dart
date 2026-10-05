@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models/user_profile.dart';
 import '../../data/models/notification_preferences.dart';
@@ -163,9 +164,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       );
 
       if (pickedFile != null) {
-        // Save locally in user profile
+        // Copy to permanent application documents directory so Android/iOS cache never purges it
+        final appDir = await getApplicationDocumentsDirectory();
+        final avatarDir = Directory('${appDir.path}/avatars');
+        if (!avatarDir.existsSync()) {
+          avatarDir.createSync(recursive: true);
+        }
+
+        // Clean up previous avatar file if exists
+        final currentProfile = ref.read(userProfileProvider);
+        if (currentProfile.profileImagePath != null) {
+          try {
+            final oldFile = File(currentProfile.profileImagePath!);
+            if (oldFile.existsSync()) {
+              oldFile.deleteSync();
+            }
+          } catch (_) {}
+        }
+
+        final permanentPath =
+            '${avatarDir.path}/avatar_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        final savedFile = await File(pickedFile.path).copy(permanentPath);
+
+        // Save permanently in local user profile (persisted in SharedPreferences)
         await ref.read(userProfileProvider.notifier).updateProfile(
-              profileImagePath: pickedFile.path,
+              profileImagePath: savedFile.path,
             );
 
         // Sync with Supabase profiles table
@@ -174,15 +197,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           await ref.read(authServiceProvider).syncUserToDatabase(
                 userId: user.id,
                 email: user.email ?? '',
-                avatarUrl: pickedFile.path,
+                avatarUrl: savedFile.path,
               );
         }
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('Profile picture updated successfully! ✨'),
-              backgroundColor: const Color(0xFF9E8CE7),
+              content: const Text('Profile picture permanently saved! ✨'),
+              backgroundColor: const Color(0xFF2E7D32),
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
@@ -204,6 +227,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _deleteProfileImage() async {
+    final currentProfile = ref.read(userProfileProvider);
+    if (currentProfile.profileImagePath != null) {
+      try {
+        final oldFile = File(currentProfile.profileImagePath!);
+        if (oldFile.existsSync()) {
+          oldFile.deleteSync();
+        }
+      } catch (_) {}
+    }
+
     await ref.read(userProfileProvider.notifier).updateProfile(
           clearProfileImage: true,
         );
