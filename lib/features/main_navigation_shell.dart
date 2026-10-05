@@ -219,26 +219,35 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
       floatingActionButton: GestureDetector(
         onTap: () => _showQuickLogMenu(context),
         child: Container(
-          width: 56,
-          height: 56,
+          width: 58,
+          height: 58,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: const LinearGradient(
-              colors: [Color(0xFFFF5252), Color(0xFFE91E63), Color(0xFF9E8CE7)],
+              colors: [
+                Color(0xFFFF85A1), // Cool soothing rose-petal
+                Color(0xFFF04E78), // Tranquil signature pink
+                Color(0xFFD84A78), // Calming deep rose
+              ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFFE91E63).withValues(alpha: 0.38),
+                color: const Color(0xFFF04E78).withValues(alpha: 0.40),
                 blurRadius: 18,
                 offset: const Offset(0, 6),
               ),
+              BoxShadow(
+                color: const Color(0xFFFF85A1).withValues(alpha: 0.25),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
             ],
-            border: Border.all(color: Colors.white, width: 3),
+            border: Border.all(color: Colors.white, width: 3.5),
           ),
           child: const Center(
-            child: Icon(Icons.add_rounded, size: 30, color: Colors.white),
+            child: Icon(Icons.add_rounded, size: 32, color: Colors.white),
           ),
         ),
       ),
@@ -246,26 +255,38 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
       bottomNavigationBar: Container(
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: const [
+          gradient: const LinearGradient(
+            colors: [
+              Color(0xFFFFF7FA), // Cool peaceful rose milk
+              Color(0xFFFFEFF5), // Soothing fresh petal blush
+              Color(0xFFFDE8F1), // Tranquil calm pink
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+          borderRadius: BorderRadius.circular(32),
+          border: Border.all(
+            color: const Color(0xFFFFD2E2),
+            width: 1.2,
+          ),
+          boxShadow: [
             BoxShadow(
-              color: Color(0x187B1FA2),
+              color: const Color(0xFFF04E78).withValues(alpha: 0.16),
               blurRadius: 24,
-              offset: Offset(0, 4),
+              offset: const Offset(0, 6),
             ),
-            BoxShadow(
-              color: Color(0x0A000000),
-              blurRadius: 8,
+            const BoxShadow(
+              color: Color(0x082E1065),
+              blurRadius: 10,
               offset: Offset(0, 2),
             ),
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(32),
           child: BottomAppBar(
             elevation: 0,
-            color: Colors.white,
+            color: Colors.transparent, // Let tranquil pink gradient shine
             notchMargin: 8,
             shape: const CircularNotchedRectangle(),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -274,7 +295,7 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
               children: [
                 _buildNavItem(0, Icons.spa_outlined, Icons.spa_rounded, s.navHome),
                 _buildNavItem(1, Icons.calendar_month_outlined, Icons.calendar_month_rounded, s.navCalendar),
-                const SizedBox(width: 44), // Space for notched FAB
+                const SizedBox(width: 48), // Space for notched FAB
                 _buildNavItem(2, Icons.auto_graph_outlined, Icons.auto_graph_rounded, s.navInsights),
                 _buildNavItem(3, Icons.menu_book_outlined, Icons.menu_book_rounded, s.navLearn),
               ],
@@ -292,15 +313,37 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
       onTap: () => setState(() => _currentIndex = index),
       behavior: HitTestBehavior.opaque,
       child: AnimatedScale(
-        scale: isSelected ? 1.06 : 1.0,
+        scale: isSelected ? 1.05 : 1.0,
         duration: const Duration(milliseconds: 160),
         curve: Curves.easeOutBack,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFFFCE4EC) : Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
+            gradient: isSelected
+                ? const LinearGradient(
+                    colors: [
+                      Color(0xFFFFF0F5),
+                      Color(0xFFFFDAE8),
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  )
+                : null,
+            color: isSelected ? null : Colors.transparent,
+            borderRadius: BorderRadius.circular(18),
+            border: isSelected
+                ? Border.all(color: const Color(0xFFFFBFD6), width: 1)
+                : null,
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFFF04E78).withValues(alpha: 0.16),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -308,15 +351,15 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
               Icon(
                 isSelected ? activeIcon : icon,
                 size: 22,
-                color: isSelected ? const Color(0xFFE91E63) : const Color(0xFF8E849E),
+                color: isSelected ? const Color(0xFFE91E63) : const Color(0xFF9E8EA8),
               ),
               const SizedBox(height: 2),
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 10,
+                  fontSize: 10.5,
                   fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
-                  color: isSelected ? const Color(0xFFE91E63) : const Color(0xFF8E849E),
+                  color: isSelected ? const Color(0xFFC2185B) : const Color(0xFF9E8EA8),
                 ),
               ),
             ],

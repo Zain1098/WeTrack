@@ -208,178 +208,207 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // Top Bar with Greeting, Avatar, Language Toggle, Roman Dictionary & AI
+  // Top Bar with Soothing Cool Pink Gradient Header, Avatar, Language Toggle, Roman Dictionary & AI
   Widget _buildTopBar(BuildContext context, UserProfile profile, AppStrings s) {
     final displayName = profile.name.isEmpty ? "Friend" : profile.name;
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        // Avatar + Greeting
-        Expanded(
-          child: GestureDetector(
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const ProfileScreen()),
-              );
-            },
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFFFFF2F6), // Cool soothing petal pink
+            Color(0xFFFFE4EE), // Tranquil baby blush
+            Color(0xFFFCE9F3), // Calming soft lavender-rose
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(
+          color: const Color(0xFFFFD2E1),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFF04E78).withValues(alpha: 0.10),
+            blurRadius: 18,
+            offset: const Offset(0, 4),
+          ),
+          const BoxShadow(
+            color: Color(0x062E1065),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Left: Avatar + User Name & Greeting
+          Expanded(
+            child: GestureDetector(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                );
+              },
+              behavior: HitTestBehavior.opaque,
+              child: Row(
+                children: [
+                  // Tactile Glowing Avatar
+                  Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFF7E9C), Color(0xFFF04E78)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFF04E78).withValues(alpha: 0.28),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.all(2),
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white,
+                      ),
+                      child: ClipOval(
+                        child: profile.profileImagePath != null &&
+                                File(profile.profileImagePath!).existsSync()
+                            ? Image.file(
+                                File(profile.profileImagePath!),
+                                width: 42,
+                                height: 42,
+                                fit: BoxFit.cover,
+                              )
+                            : Image.asset(
+                                'UI/Profile page character.png',
+                                width: 42,
+                                height: 42,
+                                fit: BoxFit.cover,
+                                alignment: Alignment.topCenter,
+                              ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  // Name and Date
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                '${s.assalamGreeting}, $displayName 🌸',
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFF2E1065),
+                                  letterSpacing: -0.3,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 3),
+                            const Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 11,
+                              color: Color(0xFFF04E78),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          DateHelpers.formatFriendly(DateTime.now()),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF8C6B86),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 6),
+
+          // Right: Action Buttons (Language, Roman Dictionary, AI)
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Language Capsule
+              const ClayLanguageToggle(isCompact: true),
+              const SizedBox(width: 6),
+
+              // Roman Lughat / Dictionary Button
+              GestureDetector(
+                onTap: () => HealthDictionaryModal.show(context),
+                child: Container(
+                  width: 34,
+                  height: 34,
                   decoration: BoxDecoration(
+                    color: Colors.white,
                     shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFFF04E78), width: 1.5),
+                    border: Border.all(color: const Color(0xFFFFD5E2)),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFF04E78).withValues(alpha: 0.2),
-                        blurRadius: 10,
+                        color: const Color(0xFFE91E63).withValues(alpha: 0.1),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: const Center(
+                    child: Text('📖', style: TextStyle(fontSize: 14)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+
+              // AI Companion Button
+              GestureDetector(
+                onTap: () => AIAssistantSheet.show(context),
+                child: Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFF7E9C), Color(0xFFF04E78)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFF04E78).withValues(alpha: 0.32),
+                        blurRadius: 8,
                         offset: const Offset(0, 3),
                       ),
                     ],
                   ),
-                  child: ClipOval(
-                    child: profile.profileImagePath != null &&
-                            File(profile.profileImagePath!).existsSync()
-                        ? Image.file(
-                            File(profile.profileImagePath!),
-                            width: 44,
-                            height: 44,
-                            fit: BoxFit.cover,
-                          )
-                        : Image.asset(
-                            'UI/Profile page character.png',
-                            width: 44,
-                            height: 44,
-                            fit: BoxFit.cover,
-                            alignment: Alignment.topCenter,
-                          ),
+                  child: const Center(
+                    child: Icon(Icons.auto_awesome_rounded, size: 15, color: Colors.white),
                   ),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              '${s.assalamGreeting}, $displayName 🌸',
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w800,
-                                color: ClayColors.textPrimary,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(width: 2),
-                          const Icon(
-                            Icons.chevron_right_rounded,
-                            size: 16,
-                            color: ClayColors.primary,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        DateHelpers.formatFriendly(DateTime.now()),
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          color: ClayColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(width: 6),
-
-        // Action Buttons: Language Toggle + Roman Lughat + Ask AI
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // 3D Clay Language Capsule Toggle
-            const ClayLanguageToggle(isCompact: true),
-            const SizedBox(width: 6),
-
-            // Dictionary Button (Audio 1)
-            GestureDetector(
-              onTap: () => HealthDictionaryModal.show(context),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF0F5),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: const Color(0xFFFFD5E2)),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x0C8E24AA),
-                      blurRadius: 6,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    const Text('📖', style: TextStyle(fontSize: 12)),
-                    const SizedBox(width: 3),
-                    Text(
-                      s.dictionaryButton,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFFC2185B),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: 6),
-
-            // AI Companion Button
-            GestureDetector(
-              onTap: () => AIAssistantSheet.show(context),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: ClayColors.outline),
-                  boxShadow: [
-                    BoxShadow(
-                      color: ClayColors.primary.withValues(alpha: 0.1),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.auto_awesome_rounded, size: 13, color: ClayColors.primary),
-                    const SizedBox(width: 3),
-                    Text(
-                      s.aiButton,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: ClayColors.primary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -388,8 +417,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFFEDE7F6),
+        color: const Color(0xFFFFF0F5),
         borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: const Color(0xFFFFD2E2)),
       ),
       child: Row(
         children: [
@@ -408,7 +438,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   boxShadow: !isPregnancyMode
                       ? [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.06),
+                            color: const Color(0xFFF04E78).withValues(alpha: 0.12),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -425,7 +455,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.bold,
-                        color: !isPregnancyMode ? ClayColors.primary : ClayColors.textSecondary,
+                        color: !isPregnancyMode ? const Color(0xFFF04E78) : ClayColors.textSecondary,
                       ),
                     ),
                   ],
@@ -448,7 +478,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   boxShadow: isPregnancyMode
                       ? [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.06),
+                            color: const Color(0xFFF04E78).withValues(alpha: 0.12),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -465,7 +495,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.bold,
-                        color: isPregnancyMode ? ClayColors.secondary : ClayColors.textSecondary,
+                        color: isPregnancyMode ? const Color(0xFFF04E78) : ClayColors.textSecondary,
                       ),
                     ),
                   ],
@@ -495,12 +525,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFFFFF6F9),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFF0E5F5)),
+        border: Border.all(color: const Color(0xFFFFD2E2)),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0A000000),
+            color: Color(0x062E1065),
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
@@ -522,7 +552,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 curve: Curves.easeOutCubic,
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFFF04E78) : Colors.transparent,
+                  gradient: isSelected
+                      ? const LinearGradient(
+                          colors: [Color(0xFFFF7E9C), Color(0xFFF04E78)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        )
+                      : null,
+                  color: isSelected ? null : Colors.transparent,
                   borderRadius: BorderRadius.circular(18),
                   boxShadow: isSelected
                       ? [
