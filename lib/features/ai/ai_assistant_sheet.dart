@@ -1,8 +1,9 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/theme/clay_colors.dart';
-import '../../core/widgets/clay_pill.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../core/localization/app_strings.dart';
+import '../../core/localization/language_provider.dart';
+import '../../core/widgets/clay_language_toggle.dart';
 import '../app_providers.dart';
 import 'ai_service.dart';
 import 'gemini_ai_service.dart';
@@ -43,22 +44,64 @@ class _AIAssistantSheetState extends ConsumerState<AIAssistantSheet> {
   final AIService _aiService = GeminiAIService();
 
   bool _isLoading = false;
-  final List<ChatMessage> _messages = [
-    const ChatMessage(
-      text:
-          'Hello! I am your WeTrack Educational Assistant. I can help explain your cycle phases, fertile window science, and help you prepare questions for your doctor.\n\nRemember: I am an educational guide, not a medical doctor. I do not provide clinical diagnoses.',
-      isUser: false,
-      citation: 'ASRM Grounded Knowledgebase',
-    ),
+  List<ChatMessage> _messages = [];
+
+  static const List<(String, String)> _romanSuggestions = [
+    ('🌸', 'Cycle Day ka kya matlab hai?'),
+    ('🥚', 'Hamal theherne ke best din kab hain?'),
+    ('🧪', 'Pregnancy test kab karna chahiye?'),
+    ('💊', 'Folic Acid kab aur kyun lein?'),
+    ('🩸', 'PCOS aur irregular periods kya hai?'),
+    ('🩺', 'Doctor se kya sawalaat poochein?'),
+    ('💧', 'Safed pani (Discharge) ka matlab'),
+    ('🧔', 'Shohar ko kaise samjhayein?'),
+    ('⚠️', 'Emergency / Khatray ki alamat'),
   ];
 
-  static const List<String> _suggestions = [
-    'What does cycle day mean?',
-    'Explain fertile window',
-    'Do I have PCOS?',
-    'Folic acid benefits',
-    'Questions for my doctor',
+  static const List<(String, String)> _englishSuggestions = [
+    ('🌸', 'What does cycle day mean?'),
+    ('🥚', 'Best days for conception?'),
+    ('🧪', 'When to take pregnancy test?'),
+    ('💊', 'Folic acid benefits & dosage?'),
+    ('🩸', 'PCOS & irregular period signs?'),
+    ('🩺', 'Questions for my gynecologist'),
+    ('💧', 'What does cervical mucus mean?'),
+    ('🧔', 'Husband guidance & fertility support'),
+    ('⚠️', 'Emergency symptoms / Red flags'),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initWelcomeMessage();
+    });
+  }
+
+  void _initWelcomeMessage() {
+    final profile = ref.read(userProfileProvider);
+    final lang = ref.read(languageProvider);
+    final isRoman = lang == AppLanguage.romanUrdu;
+    final nameStr = profile.name.isNotEmpty ? profile.name : 'Piyari Behan';
+
+    setState(() {
+      _messages = [
+        ChatMessage(
+          text: isRoman
+              ? 'Assalam-o-Alaikum $nameStr! 🌸\n\n'
+                'Main aapki WeTrack Saathi hoon. Aap mujh se mahwari (periods), pregnancy planning, beza/ovulation, aur sehat ke baray mein be-jhijhak pooch sakti hain.\n\n'
+                '💬 *Aap mujh se aasan Roman Urdu ya English mein baat kar sakti hain!*'
+              : 'Hello $nameStr! 🌸\n\n'
+                'I am your WeTrack AI Companion. I can help explain your cycle phases, fertile window science, and help you prepare questions for your doctor.\n\n'
+                '💬 *Feel free to ask in Roman Urdu or English!*',
+          isUser: false,
+          citation: isRoman
+              ? 'WeTrack Tibbi Rahnumai • ASRM Standard'
+              : 'ASRM Grounded Knowledgebase',
+        ),
+      ];
+    });
+  }
 
   @override
   void dispose() {
@@ -94,6 +137,7 @@ class _AIAssistantSheetState extends ConsumerState<AIAssistantSheet> {
     final profile = ref.read(userProfileProvider);
     final cycleCalc = ref.read(cycleCalculationProvider);
     final pregCalc = ref.read(pregnancyCalculationProvider);
+    final lang = ref.read(languageProvider);
 
     final reqContext = AIRequestContext(
       goal: profile.goal,
@@ -103,6 +147,7 @@ class _AIAssistantSheetState extends ConsumerState<AIAssistantSheet> {
       cyclePhaseName: cycleCalc.currentPhase.displayName,
       pregnancyGestationalAge: pregCalc?.formattedGestationalAge,
       pregnancyTrimester: pregCalc?.currentTrimester,
+      isRomanUrdu: lang == AppLanguage.romanUrdu,
     );
 
     final response = await _aiService.askQuestion(
@@ -128,13 +173,17 @@ class _AIAssistantSheetState extends ConsumerState<AIAssistantSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = ref.watch(languageProvider);
+    final isRoman = lang == AppLanguage.romanUrdu;
+    final currentSuggestions = isRoman ? _romanSuggestions : _englishSuggestions;
+
     return Container(
-      height: MediaQuery.of(context).size.height * 0.88,
+      height: MediaQuery.of(context).size.height * 0.90,
       padding: EdgeInsets.only(
-        top: 20,
-        left: 20,
-        right: 20,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+        top: 14,
+        left: 18,
+        right: 18,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 14,
       ),
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -149,77 +198,152 @@ class _AIAssistantSheetState extends ConsumerState<AIAssistantSheet> {
       ),
       child: Column(
         children: [
-          // Sheet Header
+          // Drag Handle
+          Center(
+            child: Container(
+              width: 44,
+              height: 5,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE2DCF0),
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Sheet Header with Cute 3D Companion Avatar & Language Toggle
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: const BoxDecoration(
-                      color: ClayColors.surfaceTint,
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
                       shape: BoxShape.circle,
+                      gradient: const RadialGradient(
+                        colors: [Color(0xFFFFEEF3), Color(0xFFFFD4E2)],
+                        center: Alignment.center,
+                      ),
+                      border: Border.all(color: const Color(0xFFFFBFD6), width: 1.5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFF04E78).withValues(alpha: 0.18),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
-                    child: const Icon(
-                      Icons.auto_awesome,
-                      color: ClayColors.primary,
-                      size: 20,
+                    child: ClipOval(
+                      child: Image.asset(
+                        'UI/Profile page character.png',
+                        width: 44,
+                        height: 44,
+                        fit: BoxFit.cover,
+                        alignment: Alignment.topCenter,
+                        errorBuilder: (context, error, stackTrace) => const Icon(
+                          Icons.auto_awesome_rounded,
+                          color: Color(0xFFF04E78),
+                          size: 22,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 10),
-                  const Column(
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'WeTrack AI Companion',
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w900,
-                          color: ClayColors.textPrimary,
-                        ),
+                      Row(
+                        children: [
+                          Text(
+                            isRoman ? 'WeTrack Saathi 🌸' : 'WeTrack AI Saathi 🌸',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                              color: const Color(0xFF1E1A29),
+                            ),
+                          ),
+                        ],
                       ),
                       Text(
-                        'Educational Only • Zero Diagnosis',
-                        style: TextStyle(
+                        isRoman
+                            ? 'Aapki Niji Health Guide • Roman English'
+                            : 'Personal Health Guide • Empathetic AI',
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 11,
-                          color: ClayColors.textSecondary,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF867E96),
                         ),
                       ),
                     ],
                   ),
                 ],
               ),
-              IconButton(
-                icon: const Icon(Icons.close, color: ClayColors.textSecondary),
-                onPressed: () => Navigator.pop(context),
+              Row(
+                children: [
+                  const ClayLanguageToggle(isCompact: true),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, color: Color(0xFF867E96)),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
               ),
             ],
           ),
-          const Divider(height: 20, color: ClayColors.outline),
+          const Divider(height: 18, color: Color(0xFFF0ECF7)),
 
-          // Suggestion Chips
+          // Suggestion Chips (In Roman Urdu / Roman English)
           SizedBox(
-            height: 44,
-            child: ListView(
+            height: 38,
+            child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              children: _suggestions.map((sug) {
+              physics: const BouncingScrollPhysics(),
+              itemCount: currentSuggestions.length,
+              itemBuilder: (ctx, idx) {
+                final item = currentSuggestions[idx];
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
-                  child: ClayPill(
-                    label: sug,
-                    onTap: () => _sendMessage(sug),
+                  child: GestureDetector(
+                    onTap: () => _sendMessage(item.$2),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFFF6F9), Color(0xFFFFEEF4)],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFFFD4E2)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(item.$1, style: const TextStyle(fontSize: 13)),
+                          const SizedBox(width: 5),
+                          Text(
+                            item.$2,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF9C27B0),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 );
-              }).toList(),
+              },
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
 
           // Messages List
           Expanded(
             child: ListView.builder(
               controller: _scrollController,
+              physics: const BouncingScrollPhysics(),
               itemCount: _messages.length,
               itemBuilder: (ctx, idx) {
                 final msg = _messages[idx];
@@ -228,6 +352,7 @@ class _AIAssistantSheetState extends ConsumerState<AIAssistantSheet> {
             ),
           ),
 
+          // Loading Indicator
           if (_isLoading) ...[
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -238,16 +363,18 @@ class _AIAssistantSheetState extends ConsumerState<AIAssistantSheet> {
                     height: 16,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation(ClayColors.primary),
+                      valueColor: AlwaysStoppedAnimation(Color(0xFFF04E78)),
                     ),
                   ),
                   const SizedBox(width: 10),
-                  const Text(
-                    'Consulting ASRM educational knowledgebase...',
-                    style: TextStyle(
+                  Text(
+                    isRoman
+                        ? 'WeTrack Saathi soch rahi hai... 🌸'
+                        : 'Consulting WeTrack health knowledgebase...',
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 12,
                       fontStyle: FontStyle.italic,
-                      color: ClayColors.textTertiary,
+                      color: const Color(0xFF867E96),
                     ),
                   ),
                 ],
@@ -255,13 +382,20 @@ class _AIAssistantSheetState extends ConsumerState<AIAssistantSheet> {
             ),
           ],
 
-          // Input Field
+          // Input Box with 3D tactile pill design
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
             decoration: BoxDecoration(
-              color: ClayColors.canvas,
-              borderRadius: BorderRadius.circular(9999),
-              border: Border.all(color: ClayColors.outline),
+              color: const Color(0xFFF7F5FC),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: const Color(0xFFEDE8F6), width: 1.2),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Row(
               children: [
@@ -269,21 +403,46 @@ class _AIAssistantSheetState extends ConsumerState<AIAssistantSheet> {
                   child: TextField(
                     controller: _inputController,
                     onSubmitted: _sendMessage,
-                    decoration: const InputDecoration(
-                      hintText: 'Ask about cycle, symptoms, fertility...',
-                      hintStyle: TextStyle(
+                    style: GoogleFonts.plusJakartaSans(fontSize: 14, color: const Color(0xFF1E1A29)),
+                    decoration: InputDecoration(
+                      hintText: isRoman
+                          ? 'Yahan sawaal likhein (Roman Urdu/English)...'
+                          : 'Ask about cycle, symptoms, fertility...',
+                      hintStyle: GoogleFonts.plusJakartaSans(
                         fontSize: 13,
-                        color: ClayColors.textTertiary,
+                        color: const Color(0xFF9E8EA8),
                       ),
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
                     ),
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.arrow_upward_rounded),
-                  color: ClayColors.primary,
-                  onPressed: () => _sendMessage(_inputController.text),
+                GestureDetector(
+                  onTap: () => _sendMessage(_inputController.text),
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFF7E9C), Color(0xFFF04E78)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFF04E78).withValues(alpha: 0.3),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.arrow_upward_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -301,15 +460,28 @@ class _AIAssistantSheetState extends ConsumerState<AIAssistantSheet> {
           margin: const EdgeInsets.symmetric(vertical: 6),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           constraints: BoxConstraints(
-            maxWidth: MediaQuery.of(context).size.width * 0.75,
+            maxWidth: MediaQuery.of(context).size.width * 0.78,
           ),
           decoration: BoxDecoration(
-            color: ClayColors.primary,
-            borderRadius: BorderRadius.circular(22),
+            gradient: const LinearGradient(
+              colors: [Color(0xFFE91E63), Color(0xFFC2185B)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20).copyWith(
+              bottomRight: const Radius.circular(4),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFE91E63).withValues(alpha: 0.22),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
           child: Text(
             msg.text,
-            style: const TextStyle(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 14,
               color: Colors.white,
               fontWeight: FontWeight.w600,
@@ -328,38 +500,68 @@ class _AIAssistantSheetState extends ConsumerState<AIAssistantSheet> {
           maxWidth: MediaQuery.of(context).size.width * 0.88,
         ),
         decoration: BoxDecoration(
-          color: ClayColors.canvas,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: ClayColors.outline),
+          color: const Color(0xFFFAF9FD),
+          borderRadius: BorderRadius.circular(22).copyWith(
+            topLeft: const Radius.circular(4),
+          ),
+          border: Border.all(color: const Color(0xFFEFEBF6), width: 1.2),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Row(
+              children: [
+                const Text('🌸', style: TextStyle(fontSize: 12)),
+                const SizedBox(width: 4),
+                Text(
+                  'WeTrack Saathi',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFFF04E78),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
             Text(
               msg.text,
-              style: const TextStyle(
-                fontSize: 14,
-                color: ClayColors.textPrimary,
-                height: 1.45,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13.5,
+                color: const Color(0xFF2C243B),
+                height: 1.5,
               ),
             ),
             if (msg.citation != null) ...[
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  const Icon(Icons.menu_book, size: 12, color: ClayColors.mint),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3EEFC),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.verified_outlined, size: 12, color: Color(0xFF7E60E4)),
+                    const SizedBox(width: 4),
+                    Text(
                       msg.citation!,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: ClayColors.textTertiary,
-                        fontStyle: FontStyle.italic,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 10.5,
+                        color: const Color(0xFF7E60E4),
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ],

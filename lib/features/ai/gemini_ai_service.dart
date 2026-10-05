@@ -35,14 +35,14 @@ class GeminiAIService implements AIService {
                 'text': '${AIService.systemSafetyPrompt}\n\n'
                     'USER STRUCTURED CONTEXT: ${jsonEncode(context.toStructuredPromptData())}\n\n'
                     'USER QUESTION: $question\n\n'
-                    'RESPOND WITH CLINICAL CALMNESS, RELEVANT SCIENTIFIC CITATIONS (ASRM), AND ZERO DIAGNOSTIC ASSERTIONS.',
+                    'INSTRUCTION: Respond in ${context.isRomanUrdu ? "conversational, sweet, natural Roman Urdu / Roman English (e.g. Assalam-o-Alaikum, Hamal ke ahem din, ovulation, doctor se mashwara)" : "gentle, compassionate English"}. Zero diagnostic claims, compassionate tone, and clear bullet points.',
               }
             ]
           }
         ],
         'generationConfig': {
-          'temperature': 0.3,
-          'maxOutputTokens': 500,
+          'temperature': 0.35,
+          'maxOutputTokens': 650,
         }
       };
 
@@ -64,7 +64,9 @@ class GeminiAIService implements AIService {
             final text = parts[0]['text'] as String;
             return AIResponse(
               text: text,
-              sourceCitation: 'Grounded in ASRM Guidelines & Gemini 1.5 Medical Filter',
+              sourceCitation: context.isRomanUrdu
+                  ? 'WeTrack Tibbi Rahnumai • ASRM & Clinical Standards'
+                  : 'Grounded in ASRM Guidelines & Gemini 1.5 Medical Filter',
               isOfflineFallback: false,
             );
           }
