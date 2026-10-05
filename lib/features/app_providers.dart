@@ -9,6 +9,7 @@ import '../data/models/fertility_observation.dart';
 import '../data/models/pregnancy_record.dart';
 import '../data/models/appointment.dart';
 import '../data/models/partner_share_permission.dart';
+import '../data/models/notification_preferences.dart';
 import '../data/services/cycle_calculation_service.dart';
 import '../data/services/pregnancy_calculation_service.dart';
 import '../core/utils/date_helpers.dart';
@@ -341,6 +342,25 @@ class PartnerPermissionNotifier extends Notifier<PartnerSharePermission> {
 final partnerPermissionProvider =
     NotifierProvider<PartnerPermissionNotifier, PartnerSharePermission>(
         PartnerPermissionNotifier.new);
+
+// Notification Preferences Notifier
+class NotificationPreferencesNotifier extends Notifier<NotificationPreferences> {
+  @override
+  NotificationPreferences build() {
+    final repo = ref.watch(localStorageRepositoryProvider);
+    return repo.getNotificationPreferences();
+  }
+
+  Future<void> update(NotificationPreferences preferences) async {
+    final repo = ref.read(localStorageRepositoryProvider);
+    state = preferences;
+    await repo.saveNotificationPreferences(preferences);
+  }
+}
+
+final notificationPreferencesProvider =
+    NotifierProvider<NotificationPreferencesNotifier, NotificationPreferences>(
+        NotificationPreferencesNotifier.new);
 
 // Deterministic Cycle Calculation Provider
 final cycleCalculationProvider = Provider<CycleCalculationResult>((ref) {

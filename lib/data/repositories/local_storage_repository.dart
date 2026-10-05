@@ -8,6 +8,7 @@ import '../models/fertility_observation.dart';
 import '../models/pregnancy_record.dart';
 import '../models/appointment.dart';
 import '../models/partner_share_permission.dart';
+import '../models/notification_preferences.dart';
 import '../../core/utils/date_helpers.dart';
 import '../../core/localization/app_strings.dart';
 
@@ -21,6 +22,7 @@ class LocalStorageRepository {
   static const String _kPregnancyRecordKey = 'wt_pregnancy_record';
   static const String _kAppointmentsKey = 'wt_appointments';
   static const String _kPartnerKey = 'wt_partner_permission';
+  static const String _kNotificationsKey = 'wt_notification_preferences';
   static const String _kPinCodeKey = 'wt_pin_code';
   static const String _kLanguageKey = 'wt_app_language';
 
@@ -172,6 +174,32 @@ class LocalStorageRepository {
 
   Future<void> savePartnerSharePermission(PartnerSharePermission p) async {
     await _prefs.setString(_kPartnerKey, jsonEncode(p.toJson()));
+  }
+
+  // Notification Preferences
+  NotificationPreferences getNotificationPreferences() {
+    final raw = _prefs.getString(_kNotificationsKey);
+    if (raw == null) return const NotificationPreferences();
+    try {
+      return NotificationPreferences.fromJson(
+          jsonDecode(raw) as Map<String, dynamic>);
+    } catch (_) {
+      return const NotificationPreferences();
+    }
+  }
+
+  Future<void> saveNotificationPreferences(NotificationPreferences p) async {
+    await _prefs.setString(_kNotificationsKey, jsonEncode(p.toJson()));
+  }
+
+  // Clear Only Cycle & Health Logs (Keep Account & Profile)
+  Future<void> clearHealthLogsOnly() async {
+    await _prefs.remove(_kPeriodEntriesKey);
+    await _prefs.remove(_kCycleRecordsKey);
+    await _prefs.remove(_kSymptomEntriesKey);
+    await _prefs.remove(_kFertilityObsKey);
+    await _prefs.remove(_kPregnancyRecordKey);
+    await _prefs.remove(_kAppointmentsKey);
   }
 
   // PIN Lock & Privacy
