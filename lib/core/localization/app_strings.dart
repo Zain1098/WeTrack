@@ -115,18 +115,18 @@ class RomanUrduStrings implements AppStrings {
   const RomanUrduStrings();
 
   @override
-  String get navHome => 'Ghar (Home)';
+  String get navHome => 'Ghar';
   @override
   String get navCalendar => 'Calendar';
   @override
-  String get navInsights => 'Hisaab (Insights)';
+  String get navInsights => 'Hisaab';
   @override
-  String get navLearn => 'Rahnumai (Learn)';
+  String get navLearn => 'Rahnumai';
   @override
   String get navSettings => 'Settings';
 
   @override
-  String get quickActionsTitle => 'Quick Actions (Jaldi Kaam)';
+  String get quickActionsTitle => 'Jaldi Actions';
   @override
   String get logPeriodTitle => 'Mahwari (Period) Log';
   @override
@@ -144,7 +144,7 @@ class RomanUrduStrings implements AppStrings {
   @override
   String get positiveTestSubtitle => 'Hamal (Pregnancy) Dashboard shuru karein';
   @override
-  String get askAiTitle => 'AI Health Companion Se Poochhein';
+  String get askAiTitle => 'AI Health Companion';
   @override
   String get askAiSubtitle => 'Cycle, pregnancy aur science par foran jawab';
 
@@ -184,7 +184,7 @@ class RomanUrduStrings implements AppStrings {
   @override
   String get calendarTitle => 'Mahwari Calendar';
   @override
-  String get calendarDisclaimer => 'Takhmeena (Predictions)';
+  String get calendarDisclaimer => 'Takhmeena';
   @override
   String get selectDayPrompt => 'Tareekh par tap karke haalat dekhein ya log karein';
   @override
@@ -197,9 +197,9 @@ class RomanUrduStrings implements AppStrings {
   String get legendExpected => 'Expected Period';
 
   @override
-  String get insightsTitle => 'Cycle Ka Hisaab (Insights)';
+  String get insightsTitle => 'Cycle Ka Hisaab';
   @override
-  String get insightsSubtitle => 'Pichlay Mahino Ka Record';
+  String get insightsSubtitle => 'Record';
   @override
   String get averageCycleLength => 'Aam Cycle Ka Gap';
   @override
@@ -348,7 +348,7 @@ class EnglishStrings implements AppStrings {
   @override
   String get calendarTitle => 'Cycle Calendar';
   @override
-  String get calendarDisclaimer => 'Estimated Predictions';
+  String get calendarDisclaimer => 'Predictions';
   @override
   String get selectDayPrompt => 'Tap any date to inspect details or log symptoms';
   @override
@@ -363,7 +363,7 @@ class EnglishStrings implements AppStrings {
   @override
   String get insightsTitle => 'Cycle Insights';
   @override
-  String get insightsSubtitle => 'Historical Trends & Metrics';
+  String get insightsSubtitle => 'History';
   @override
   String get averageCycleLength => 'Average Cycle Gap';
   @override

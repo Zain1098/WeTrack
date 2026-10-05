@@ -7,7 +7,6 @@ import '../../core/constants/medical_constants.dart';
 import '../../data/services/auth_service.dart';
 import '../app_providers.dart';
 import '../profile/profile_screen.dart';
-import '../../core/localization/app_strings.dart';
 import '../../core/localization/language_provider.dart';
 import '../../core/widgets/clay_language_toggle.dart';
 

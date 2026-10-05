@@ -4,7 +4,6 @@ import '../../core/theme/clay_colors.dart';
 import '../../core/widgets/clay_card.dart';
 import '../../core/widgets/disclaimer_badge.dart';
 import '../../core/utils/date_helpers.dart';
-import '../../core/localization/app_strings.dart';
 import '../../core/localization/language_provider.dart';
 import '../app_providers.dart';
 
@@ -30,15 +29,19 @@ class InsightsScreen extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    s.insightsTitle,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
-                      color: ClayColors.textPrimary,
-                      letterSpacing: -0.5,
+                  Expanded(
+                    child: Text(
+                      s.insightsTitle,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: ClayColors.textPrimary,
+                        letterSpacing: -0.5,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
+                  const SizedBox(width: 8),
                   DisclaimerBadge(text: s.insightsSubtitle),
                 ],
               ),

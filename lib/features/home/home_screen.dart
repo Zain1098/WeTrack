@@ -306,36 +306,50 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Text(
+                          '${s.assalamGreeting} 🌸',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF9C4F72),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 1),
                         Row(
                           children: [
                             Flexible(
                               child: Text(
-                                '${s.assalamGreeting}, $displayName 🌸',
+                                displayName,
                                 style: const TextStyle(
-                                  fontSize: 15,
+                                  fontSize: 16.5,
                                   fontWeight: FontWeight.w900,
                                   color: Color(0xFF2E1065),
-                                  letterSpacing: -0.3,
+                                  letterSpacing: -0.4,
                                 ),
+                                maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             const SizedBox(width: 3),
                             const Icon(
                               Icons.arrow_forward_ios_rounded,
-                              size: 11,
+                              size: 10,
                               color: Color(0xFFF04E78),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 1),
                         Text(
                           DateHelpers.formatFriendly(DateTime.now()),
                           style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w500,
                             color: Color(0xFF8C6B86),
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
@@ -344,7 +358,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 4),
 
           // Right: Action Buttons (Language, Roman Dictionary, AI)
           Row(
@@ -352,14 +366,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             children: [
               // Language Capsule
               const ClayLanguageToggle(isCompact: true),
-              const SizedBox(width: 6),
+              const SizedBox(width: 4),
 
               // Roman Lughat / Dictionary Button
               GestureDetector(
                 onTap: () => HealthDictionaryModal.show(context),
                 child: Container(
-                  width: 34,
-                  height: 34,
+                  width: 32,
+                  height: 32,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,
@@ -373,18 +387,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ],
                   ),
                   child: const Center(
-                    child: Text('📖', style: TextStyle(fontSize: 14)),
+                    child: Text('📖', style: TextStyle(fontSize: 13.5)),
                   ),
                 ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 4),
 
               // AI Companion Button
               GestureDetector(
                 onTap: () => AIAssistantSheet.show(context),
                 child: Container(
-                  width: 34,
-                  height: 34,
+                  width: 32,
+                  height: 32,
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [Color(0xFFFF7E9C), Color(0xFFF04E78)],
@@ -401,7 +415,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ],
                   ),
                   child: const Center(
-                    child: Icon(Icons.auto_awesome_rounded, size: 15, color: Colors.white),
+                    child: Icon(Icons.auto_awesome_rounded, size: 14, color: Colors.white),
                   ),
                 ),
               ),
@@ -512,14 +526,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildSectionSwitcher(bool isPregnancyMode) {
     final tabs = isPregnancyMode
         ? [
-            ('👶', 'Baby & Aaj'),
-            ('🩺', 'Doctor & Scan'),
-            ('🧔', 'Shohar & Madad'),
+            ('👶', 'Baby Care'),
+            ('🩺', 'Doctor Scan'),
+            ('🧔', 'Shohar'),
           ]
         : [
             ('🌸', 'Aaj Ka Din'),
             ('🌿', 'Sehat & Plan'),
-            ('🧔', 'Shohar & Madad'),
+            ('🧔', 'Shohar'),
           ];
 
     return Container(
@@ -550,7 +564,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 curve: Curves.easeOutCubic,
-                padding: const EdgeInsets.symmetric(vertical: 8),
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
                 decoration: BoxDecoration(
                   gradient: isSelected
                       ? const LinearGradient(
@@ -573,15 +587,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(tab.$1, style: const TextStyle(fontSize: 13)),
-                    const SizedBox(width: 5),
-                    Text(
-                      tab.$2,
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w800,
-                        color: isSelected ? Colors.white : ClayColors.textSecondary,
+                    Text(tab.$1, style: const TextStyle(fontSize: 12.5)),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        tab.$2,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: isSelected ? Colors.white : ClayColors.textSecondary,
+                        ),
                       ),
                     ),
                   ],

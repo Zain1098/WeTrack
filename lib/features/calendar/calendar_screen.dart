@@ -56,15 +56,19 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    s.calendarTitle,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
-                      color: ClayColors.textPrimary,
-                      letterSpacing: -0.5,
+                  Expanded(
+                    child: Text(
+                      s.calendarTitle,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: ClayColors.textPrimary,
+                        letterSpacing: -0.5,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
+                  const SizedBox(width: 8),
                   DisclaimerBadge(text: s.calendarDisclaimer),
                 ],
               ),
