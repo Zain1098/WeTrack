@@ -43,6 +43,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _selectedSection = 0; // 0: Aaj Ka Din / Baby Care, 1: Sehat & Plan / Doctor Scan, 2: Shohar & Madad
   int? _previewGestationWeek; // Interactive time-machine preview week
 
+  // Ultrasound report readings
+  int _fetalHeartRate = 140; // bpm
+  double _amnioticFluidIndex = 12.0; // cm
+  String _placentaPosition = 'Posterior (Safe)';
+  String _babyPresentation = 'Cephalic (Sar Neeche)';
+
+  // Doctor checklist ticked questions
+  final Set<int> _checkedDoctorQuestions = {};
+
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(userProfileProvider);
@@ -182,20 +191,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     // 5. Weekly Baby Development Card in Roman Urdu with Sensory Badges
                     _buildBabyWeeklyInsightCard(pregCalc),
                   ] else if (_selectedSection == 1) ...[
-                    // 2. Mother's Health Monitor Timeline Banner
-                    _buildMotherTimelineBanner(pregCalc),
+                    // 1. 3D Ultrasound Sonogram Console Card
+                    _buildDoctorScanHeroCard(context, pregCalc),
                     const SizedBox(height: 14),
 
-                    // 3. Trimester Progress Slider
-                    _buildTrimesterProgressBar(pregCalc),
+                    // 2. 4 Tactile 3D Vitals Pods (FHR, AFI, Placenta, Baby Lie)
+                    _buildUltrasoundReportVitalsCard(),
                     const SizedBox(height: 14),
 
-                    // 3b. Doctor Appointments & Ultrasound Scan Card
+                    // 3. 4-Stage Ultrasound Milestones Journey Stepper
+                    _buildScanMilestonesJourney(pregCalc.completedWeeks),
+                    const SizedBox(height: 14),
+
+                    // 4. Upcoming Doctor Appointment & Clinic Visit Card
                     _buildDoctorAppointmentsCard(context),
                     const SizedBox(height: 14),
 
-                    // 5. Weekly Baby Development Card
-                    _buildBabyWeeklyInsightCard(pregCalc),
+                    // 5. Doctor Consultation Checklist (Questions to Ask Gynecologist)
+                    _buildDoctorConsultationChecklist(pregCalc.completedWeeks),
                   ] else ...[
                     _buildPartnerHomeCard(context),
                     const SizedBox(height: 14),
@@ -1635,72 +1648,191 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   // 2. Mother's Health Monitor Timeline Banner (mother_timeline_banner.png)
-  Widget _buildMotherTimelineBanner(PregnancyCalculationResult pregCalc) {
+  // 1. 3D Ultrasound Sonogram Console Card
+  Widget _buildDoctorScanHeroCard(BuildContext context, PregnancyCalculationResult pregCalc) {
+    final week = pregCalc.completedWeeks;
+
+    final String scanTitle;
+    final String scanBadge;
+    final String scanDescription;
+    final String scanPreparation;
+
+    if (week <= 10) {
+      scanTitle = 'Dating & Viability Scan (Week 6-9)';
+      scanBadge = 'Heartbeat Confirmation 💓';
+      scanDescription = 'Baby ki pehli dharakan aur theek jagah implantation check hoti hai.';
+      scanPreparation = 'Pehle 30 minute mein 2 glass paani piyein (Full Bladder zaroori hai).';
+    } else if (week <= 14) {
+      scanTitle = 'NT Scan & Dual Marker (Week 11-13)';
+      scanBadge = 'Chromosomal Health 🔬';
+      scanDescription = 'Nuchal translucency aur nasal bone ki pemaish se baby ki basic anatomy check hoti hai.';
+      scanPreparation = 'Aam routine mein jayein. Saath mein Dual Marker blood test bhi hota hai.';
+    } else if (week <= 24) {
+      scanTitle = 'Anomaly / TIFFA Scan (Week 18-22)';
+      scanBadge = 'Sab Se Ahem Scan ⭐';
+      scanDescription = 'Mukammal detail scan! Baby ke dimaagh, dil, gurday, spine aur chehre ka bariki se jaiza.';
+      scanPreparation = 'Aaram deh kapre pehnein. Ye scan 25-35 minute leta hai. Shohar ko saath le jayein.';
+    } else if (week <= 34) {
+      scanTitle = 'Growth & Doppler Scan (Week 28-34)';
+      scanBadge = 'Wazan & Paani Ka Jaiza 🌊';
+      scanDescription = 'Baby ka wazan (EFW), khoon ki rawani aur amniotic fluid (paani ki theli) ka level.';
+      scanPreparation = 'Baby ki kicks ka record note karke doctor ko zaroor dikhayein.';
+    } else {
+      scanTitle = 'Term & Presentation Scan (Week 36-40)';
+      scanBadge = 'Delivery Planning 🍼';
+      scanDescription = 'Baby ka sar neeche (Cephalic) hai ya ulta (Breech), aur normal delivery ki tayyari.';
+      scanPreparation = 'Hospital bag aur emergency gaari ka intezam ready rakhein.';
+    }
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFF3EDF8)),
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: const Color(0xFFFFD2E2), width: 1.2),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0A2E1065),
-            blurRadius: 12,
+            color: Color(0x0C2E1065),
+            blurRadius: 16,
             offset: Offset(0, 4),
+          ),
+          BoxShadow(
+            color: Color(0x08F04E78),
+            blurRadius: 24,
+            offset: Offset(0, 8),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            child: Image.asset(
-              'UI/mother_timeline_banner.png',
-              width: double.infinity,
-              height: 120,
-              fit: BoxFit.cover,
-              errorBuilder: (ctx, err, stack) => Container(
-                height: 80,
-                color: const Color(0xFFFFEEF3),
-                child: const Center(child: Text('🤰 Pregnancy Timeline')),
+          // 3D Sonogram Header with Ambient Wave Monitor
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFF2E1A47),
+                  Color(0xFF4A148C),
+                  Color(0xFF6A1B9A),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                  ),
+                  child: const Text('🩺', style: TextStyle(fontSize: 22)),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFF80AB),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              'Week ${pregCalc.completedWeeks}',
+                              style: const TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            scanBadge,
+                            style: const TextStyle(
+                              fontSize: 10.5,
+                              color: Color(0xFFFFD54F),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        scanTitle,
+                        style: const TextStyle(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
+
+          // Sonogram Content & Preparation Guide
           Padding(
-            padding: const EdgeInsets.all(14),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Maa aur Bacha Monitor',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: ClayColors.textPrimary,
-                      ),
-                    ),
-                    Text(
-                      'Doctor visits & milestones track karein',
-                      style: TextStyle(fontSize: 11, color: ClayColors.textSecondary),
-                    ),
-                  ],
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF3E5F5),
-                    borderRadius: BorderRadius.circular(12),
+                Text(
+                  scanDescription,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    color: Color(0xFF2E1A47),
+                    fontWeight: FontWeight.w600,
+                    height: 1.4,
                   ),
-                  child: Text(
-                    'Week ${pregCalc.completedWeeks}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF7B1FA2),
-                    ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF8E1),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFFFE082)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('💡', style: TextStyle(fontSize: 16)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Ultrasound Ki Tayyari:',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFFE65100),
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              scanPreparation,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.brown[800],
+                                height: 1.35,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -1711,55 +1843,541 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // 3. Trimester Progress Bar
-  Widget _buildTrimesterProgressBar(PregnancyCalculationResult pregCalc) {
+  // 2. 4 Tactile 3D Vitals Pods (FHR, AFI, Placenta, Baby Lie)
+  Widget _buildUltrasoundReportVitalsCard() {
     return ClayCard(
       padding: const EdgeInsets.all(18),
-      borderRadius: 22,
+      borderRadius: 24,
+      backgroundColor: Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Pregnancy Ka Safar',
-                style: TextStyle(
-                  fontSize: 14.5,
-                  fontWeight: FontWeight.w800,
-                  color: ClayColors.textPrimary,
-                ),
+              const Row(
+                children: [
+                  Text('📋', style: TextStyle(fontSize: 17)),
+                  SizedBox(width: 8),
+                  Text(
+                    'Ultrasound Report Vitals',
+                    style: TextStyle(
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w900,
+                      color: ClayColors.textPrimary,
+                    ),
+                  ),
+                ],
               ),
-              Text(
-                '${(pregCalc.progressFraction * 100).toInt()}% Safar Mukammal',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFFE91E63),
+              GestureDetector(
+                onTap: _showEditUltrasoundModal,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFCE4EC),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFF8BBD0)),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('✏️ ', style: TextStyle(fontSize: 10)),
+                      Text(
+                        'Report Edit',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFC2185B),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: LinearProgressIndicator(
-              value: pregCalc.progressFraction.clamp(0.0, 1.0),
-              minHeight: 12,
-              backgroundColor: const Color(0xFFF3E5F5),
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFE91E63)),
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          const SizedBox(height: 14),
+
+          // 4 Tactile 3D Vitals Grid
+          Row(
             children: [
-              Text('1st Trimester', style: TextStyle(fontSize: 10, color: Colors.grey)),
-              Text('2nd Trimester', style: TextStyle(fontSize: 10, color: Colors.grey)),
-              Text('3rd Trimester', style: TextStyle(fontSize: 10, color: Colors.grey)),
+              Expanded(
+                child: _buildVitalPod(
+                  emoji: '💓',
+                  title: 'FHR (Dhadkan)',
+                  value: '$_fetalHeartRate bpm',
+                  status: 'Normal (110-160)',
+                  color: const Color(0xFFE91E63),
+                  bgColor: const Color(0xFFFFF0F5),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildVitalPod(
+                  emoji: '🌊',
+                  title: 'AFI (Paani)',
+                  value: '${_amnioticFluidIndex.toStringAsFixed(1)} cm',
+                  status: 'Normal (8-18 cm)',
+                  color: const Color(0xFF0288D1),
+                  bgColor: const Color(0xFFE1F5FE),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _buildVitalPod(
+                  emoji: '🌿',
+                  title: 'Placenta Position',
+                  value: _placentaPosition,
+                  status: 'Mehfooz (No Previa)',
+                  color: const Color(0xFF388E3C),
+                  bgColor: const Color(0xFFE8F5E9),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildVitalPod(
+                  emoji: '👶',
+                  title: 'Baby Position',
+                  value: _babyPresentation,
+                  status: 'Normal Delivery',
+                  color: const Color(0xFF7B1FA2),
+                  bgColor: const Color(0xFFF3E5F5),
+                ),
+              ),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildVitalPod({
+    required String emoji,
+    required String title,
+    required String value,
+    required String status,
+    required Color color,
+    required Color bgColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(emoji, style: const TextStyle(fontSize: 16)),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.brown[700],
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            status,
+            style: TextStyle(
+              fontSize: 9.5,
+              fontWeight: FontWeight.w700,
+              color: color.withValues(alpha: 0.8),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 3. 4-Stage Ultrasound Milestones Journey Stepper
+  Widget _buildScanMilestonesJourney(int currentWeek) {
+    final stages = [
+      (
+        'Scan 1',
+        'Dating & Heartbeat',
+        'Week 6-9',
+        currentWeek >= 10,
+        currentWeek >= 6 && currentWeek <= 9,
+      ),
+      (
+        'Scan 2',
+        'NT & Anatomy Scan',
+        'Week 11-13',
+        currentWeek >= 14,
+        currentWeek >= 11 && currentWeek <= 13,
+      ),
+      (
+        'Scan 3',
+        'Anomaly / TIFFA',
+        'Week 18-22',
+        currentWeek >= 23,
+        currentWeek >= 18 && currentWeek <= 22,
+      ),
+      (
+        'Scan 4',
+        'Growth & Doppler',
+        'Week 28-34',
+        currentWeek >= 35,
+        currentWeek >= 28 && currentWeek <= 34,
+      ),
+    ];
+
+    return ClayCard(
+      padding: const EdgeInsets.all(18),
+      borderRadius: 24,
+      backgroundColor: Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Text('🗺️', style: TextStyle(fontSize: 17)),
+              SizedBox(width: 8),
+              Text(
+                '4 Ahem Ultrasound Marhale',
+                style: TextStyle(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w900,
+                  color: ClayColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Column(
+            children: List.generate(stages.length, (idx) {
+              final stage = stages[idx];
+              final isDone = stage.$4;
+              final isActive = stage.$5;
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isActive
+                        ? const Color(0xFFFFF0F5)
+                        : (isDone ? const Color(0xFFF1F8E9) : const Color(0xFFFBF8FE)),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isActive
+                          ? const Color(0xFFE91E63)
+                          : (isDone ? const Color(0xFF81C784) : const Color(0xFFEDE7F6)),
+                      width: isActive ? 1.5 : 1.0,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: isActive
+                              ? const Color(0xFFE91E63)
+                              : (isDone ? const Color(0xFF4CAF50) : const Color(0xFFBDBDBD)),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          isDone ? '✓' : '${idx + 1}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              stage.$2,
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.bold,
+                                color: isActive
+                                    ? const Color(0xFF880E4F)
+                                    : ClayColors.textPrimary,
+                              ),
+                            ),
+                            Text(
+                              stage.$3,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: ClayColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: isActive
+                              ? const Color(0xFFC2185B)
+                              : (isDone ? const Color(0xFF4CAF50) : const Color(0xFFE0E0E0)),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          isActive ? 'Active 🩺' : (isDone ? 'Done ✅' : 'Planned 📅'),
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: isDone || isActive ? Colors.white : Colors.black54,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 5. Doctor Consultation Checklist (Questions to Ask Gynecologist)
+  Widget _buildDoctorConsultationChecklist(int currentWeek) {
+    final questions = [
+      'Kya baby ki dil ki dharakan (FHR) aur growth hafton ke hisab se theek hai?',
+      'Mera blood pressure, wazan aur hemoglobin (Hb) level normal hai?',
+      'Placenta aur amniotic fluid (paani ki theli) ka level theek hai?',
+      'Delivery ki tayyari ke liye konsi exercises ya multivitamin lazmi hain?',
+    ];
+
+    return ClayCard(
+      padding: const EdgeInsets.all(18),
+      borderRadius: 24,
+      backgroundColor: Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Text('📝', style: TextStyle(fontSize: 17)),
+              SizedBox(width: 8),
+              Text(
+                'Doctor Se Pouchne Wale 4 Sawalaat',
+                style: TextStyle(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w900,
+                  color: ClayColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Clinic visit ke waqt sawal pooch kar tick karte jayein taake kuch bhoolay na:',
+            style: TextStyle(fontSize: 11, color: ClayColors.textSecondary),
+          ),
+          const SizedBox(height: 12),
+          Column(
+            children: List.generate(questions.length, (idx) {
+              final isChecked = _checkedDoctorQuestions.contains(idx);
+
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    if (isChecked) {
+                      _checkedDoctorQuestions.remove(idx);
+                    } else {
+                      _checkedDoctorQuestions.add(idx);
+                    }
+                  });
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: isChecked ? const Color(0xFFF1F8E9) : const Color(0xFFFFF9FA),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: isChecked ? const Color(0xFF81C784) : const Color(0xFFFFD1DC),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        isChecked ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+                        color: isChecked ? const Color(0xFF4CAF50) : const Color(0xFFE91E63),
+                        size: 20,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          questions[idx],
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: isChecked ? Colors.black54 : const Color(0xFF2E1A47),
+                            decoration: isChecked ? TextDecoration.lineThrough : null,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Quick Modal to Edit Ultrasound Vitals
+  void _showEditUltrasoundModal() {
+    final fhrController = TextEditingController(text: '$_fetalHeartRate');
+    final afiController = TextEditingController(text: '$_amnioticFluidIndex');
+    String chosenPlacenta = _placentaPosition;
+    String chosenPresentation = _babyPresentation;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => Container(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+          ),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE2D9EC),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Ultrasound Report Vitals Enter Karein',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF2E1A47)),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: fhrController,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: 'Heart Rate (bpm)',
+                        labelStyle: const TextStyle(fontSize: 12),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextField(
+                      controller: afiController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: InputDecoration(
+                        labelText: 'AFI Paani (cm)',
+                        labelStyle: const TextStyle(fontSize: 12),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              const Text('Placenta Position:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 8,
+                children: ['Posterior (Safe)', 'Anterior (Safe)', 'Fundal', 'Low-Lying (Previa)'].map((p) {
+                  final isSel = chosenPlacenta == p;
+                  return ChoiceChip(
+                    label: Text(p, style: TextStyle(fontSize: 11, color: isSel ? Colors.white : Colors.black87)),
+                    selected: isSel,
+                    selectedColor: const Color(0xFFC2185B),
+                    onSelected: (val) => setModalState(() => chosenPlacenta = p),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 10),
+              const Text('Baby Lie / Position:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 8,
+                children: ['Cephalic (Sar Neeche)', 'Breech (Ulta)', 'Transverse (Tircha)'].map((l) {
+                  final isSel = chosenPresentation == l;
+                  return ChoiceChip(
+                    label: Text(l, style: TextStyle(fontSize: 11, color: isSel ? Colors.white : Colors.black87)),
+                    selected: isSel,
+                    selectedColor: const Color(0xFF8E24AA),
+                    onSelected: (val) => setModalState(() => chosenPresentation = l),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 18),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFC2185B),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  onPressed: () {
+                    final fhr = int.tryParse(fhrController.text.trim()) ?? _fetalHeartRate;
+                    final afi = double.tryParse(afiController.text.trim()) ?? _amnioticFluidIndex;
+                    setState(() {
+                      _fetalHeartRate = fhr;
+                      _amnioticFluidIndex = afi;
+                      _placentaPosition = chosenPlacenta;
+                      _babyPresentation = chosenPresentation;
+                    });
+                    Navigator.of(ctx).pop();
+                  },
+                  child: const Text('Save Report Vitals ✨', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
