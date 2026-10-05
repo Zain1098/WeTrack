@@ -113,7 +113,7 @@ class _LogFertilityModalState extends ConsumerState<LogFertilityModal> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'Fertility & Milap Log',
+                            'Fertility & Intimacy Log',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w900,
@@ -182,7 +182,7 @@ class _LogFertilityModalState extends ConsumerState<LogFertilityModal> {
                         Text('🔒', style: TextStyle(fontSize: 16)),
                         SizedBox(width: 6),
                         Text(
-                          'Intercourse (Milap) Ki Qisam',
+                          'Intercourse / Intimacy Ki Qisam',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w800,
@@ -441,7 +441,7 @@ class _LogFertilityModalState extends ConsumerState<LogFertilityModal> {
                         ),
                         child: const Center(
                           child: Text(
-                            'Fertility & Milap Record Save Karein ✨',
+                            'Fertility & Intimacy Record Save Karein ✨',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 14,

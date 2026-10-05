@@ -714,7 +714,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           const SizedBox(height: 12),
           const Text(
-            'Partner ka matlab hi partner hai! Aapka milap (sex), cycle dates, aur alamaat shohar ke sath synced hain taake dono mil kar planning karein. Agar koi cheez chupana chahein to Settings se easily off kar sakti hain.',
+            'Partner ka matlab shohar ke sath mil kar family plan karna hai! Aapka intimacy / taluq, cycle dates, aur alamaat shohar ke sath synced hain taake dono mil kar planning karein. Agar koi cheez private rakhni ho to Settings se easily off kar sakti hain.',
             style: TextStyle(fontSize: 12, color: ClayColors.textSecondary, height: 1.4),
           ),
           const SizedBox(height: 12),
@@ -2660,7 +2660,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     PregnancyCalculationResult? pregCalc,
   }) {
     final hour = DateTime.now().hour;
-    final greeting = hour < 12 ? 'Good morning! ❤️' : (hour < 17 ? 'Good afternoon! 🌸' : 'Good evening! 🌙');
+    final greeting = (hour >= 5 && hour < 12)
+        ? 'Good morning! ☀️'
+        : (hour >= 12 && hour < 17)
+            ? 'Good afternoon! 🌸'
+            : (hour >= 17 && hour < 20)
+                ? 'Good evening! 🌇'
+                : 'Good night! 🌙';
 
     if (isPregnancyMode && pregCalc != null) {
       final weeks = pregCalc.completedWeeks;
@@ -3417,7 +3423,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 const Icon(Icons.favorite_border_rounded, size: 13, color: Color(0xFFE91E63)),
                 const SizedBox(width: 4),
                 const Text(
-                  'Milap / Intercourse Log Update Karein',
+                  'Intimacy / Intercourse Log Update Karein',
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,

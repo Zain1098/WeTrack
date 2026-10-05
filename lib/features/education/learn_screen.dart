@@ -82,7 +82,7 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
       categoryKey: 'myths',
       titleUrdu: 'Myth: Period Khatam Hote Hi Conceive Nahi Ho Sakta?',
       titleEnglish: 'Myth: Can Conception Happen Immediately After Period Ends?',
-      summaryUrdu: 'Kya period ke foran agle din milap se pregnancy ho sakti hai?',
+      summaryUrdu: 'Kya period ke foran agle din intercourse se pregnancy ho sakti hai?',
       summaryEnglish: 'Can unprotected intercourse right after bleeding ceases result in pregnancy?',
       contentUrdu:
           'Haqeeqat (Ovulation & Sperm Lifespan):\n• Agar kisi aurat ka cycle short ho (e.g. 21–24 din), to ovulation period khatam hone ke foran baad Day 8 ya 9 par ho sakti hai.\n• Sperm female body ke andar 3 se 5 din tak zinda reh sakta hai.\n• Is liye agar period ke aakhri din ya foran baad unprotected intercourse ho, to conception ke genuine chances hotay hain.',
@@ -106,11 +106,11 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
       reviewDate: 'Updated 2026',
     ),
 
-    // 2. Fertility & Milap
+    // 2. Fertility & Family Planning
     LearnArticle(
       id: 'asrm_fertility',
       categoryKey: 'fertility',
-      titleUrdu: 'Fertile Window Aur Milap Ka Sahi Waqt (ASRM Guidelines)',
+      titleUrdu: 'Fertile Window Aur Intercourse Ka Sahi Waqt (ASRM Guidelines)',
       titleEnglish: 'Fertile Window & Optimal Intercourse Timing (ASRM)',
       summaryUrdu: 'Cycle ke 6 sab se ahem din aur intercourse ka sahi schedule samajhein.',
       summaryEnglish: 'Clinical timing for the 6 critical fertile days to maximize conception.',

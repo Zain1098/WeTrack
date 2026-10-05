@@ -946,7 +946,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           ),
                           const SizedBox(height: 6),
                           const Text(
-                            'Shohar ke sath pairing karein taake milap, ovulation aur doctor appointments ka dono ko pata ho. Har privacy control aapke hath mein hai.',
+                            'Shohar ke sath pairing karein taake intimacy, ovulation aur doctor appointments ka dono ko pata ho. Har privacy control aapke hath mein hai.',
                             style: TextStyle(fontSize: 12.5, color: Color(0xFF7E768E)),
                           ),
                           const SizedBox(height: 16),
@@ -1181,8 +1181,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           ),
                           SwitchListTile.adaptive(
                             contentPadding: EdgeInsets.zero,
-                            title: const Text('💑 Milap & Conception (TTC) Logs', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
-                            subtitle: const Text('Fertile window aur milap taake bacha thehernay ka pata chale', style: TextStyle(fontSize: 11.5)),
+                            title: const Text('💑 Intimacy & Conception (TTC) Logs', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
+                            subtitle: const Text('Fertile window aur intimacy taake bacha thehernay ka pata chale', style: TextStyle(fontSize: 11.5)),
                             activeTrackColor: const Color(0xFFF04E78),
                             value: partner.shareIntimacy,
                             onChanged: (val) => ref.read(partnerPermissionProvider.notifier).update(partner.copyWith(shareIntimacy: val)),

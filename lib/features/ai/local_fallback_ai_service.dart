@@ -103,8 +103,8 @@ class LocalFallbackAIService implements AIService {
               '✨ **Sab Se Ziyada Pregnancy Chance Wale Din:**\n'
               '• Ovulation se 3 se 4 din pehle aur ovulation ke din pregnancy ke chances sab se zyada hote hain.\n'
               '• Shohar ka sperm aurat ke jism mein 3 se 5 din tak zinda reh sakta hai, jabke beza (egg) release hone ke baad sirf 12 se 24 ghante rehta hai.\n\n'
-              '💑 **Milap Ka Behtareen Schedule:**\n'
-              'Fertile window ke doran har 1 ya 2 din baad milap karna sab se munasib rehta hai. Stress bilkul na lein aur pursakoon rahein.\n\n'
+              '💑 **Intercourse / Taluq Ka Behtareen Schedule:**\n'
+              'Fertile window ke doran har 1 ya 2 din baad intercourse karna sab se munasib rehta hai. Stress bilkul na lein aur pursakoon rahein.\n\n'
               '💧 **Jism Ka Ishara:**\n'
               'Jab safed pani anday ki safedi ki tarah lacheela (stretchy) aur shafaf ho jaye, to ye ovulation ka sab se behtareen waqt hota hai.',
           sourceCitation: 'ASRM Practice Committee on Natural Fertility',

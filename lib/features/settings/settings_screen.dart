@@ -258,7 +258,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
               SwitchListTile.adaptive(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Milap / Sex Intercourse Logs', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
+                title: const Text('Intimacy / Intercourse Logs', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
                 subtitle: const Text('Default: On • Shohar ke sath conception planning', style: TextStyle(fontSize: 11, color: ClayColors.mint)),
                 value: partner.shareIntimacy,
                 activeTrackColor: ClayColors.primary,
@@ -709,7 +709,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Partner ka matlab hi shohar ke sath mil kar family plan karna hai. Is liye milap (sex) aur cycle ka data by default share hota hai. Agar koi record private rakhna ho to neeche diye gaye switch se band kar sakti hain.',
+                              'Partner ka matlab shohar ke sath mil kar family plan karna hai. Is liye intimacy / taluq aur cycle ka data by default share hota hai. Agar koi record private rakhna ho to neeche diye gaye switch se band kar sakti hain.',
                               style: TextStyle(fontSize: 11.5, color: ClayColors.textSecondary, height: 1.4),
                             ),
                           ),
@@ -722,7 +722,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     SwitchListTile.adaptive(
                       contentPadding: EdgeInsets.zero,
                       dense: true,
-                      title: const Text('🔒 Milap / Sex Intercourse Logs', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                      title: const Text('🔒 Intimacy / Intercourse Logs', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
                       subtitle: const Text('Conception planning & intimate logs (Default: On)', style: TextStyle(fontSize: 11, color: ClayColors.mint)),
                       value: partner.shareIntimacy,
                       activeTrackColor: ClayColors.primary,

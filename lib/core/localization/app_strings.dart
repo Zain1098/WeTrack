@@ -138,7 +138,7 @@ class RomanUrduStrings implements AppStrings {
   @override
   String get logOvulationTitle => 'Ovulation Strip (LH) Test';
   @override
-  String get logOvulationSubtitle => 'Egg release, reham ki rutubat aur milap log';
+  String get logOvulationSubtitle => 'Egg release, cervical fluid aur intimacy log';
   @override
   String get positiveTestTitle => 'Pregnancy Positive Test ✨';
   @override
@@ -159,7 +159,7 @@ class RomanUrduStrings implements AppStrings {
   @override
   String get moodHappy => 'Khush';
   @override
-  String get actionIntimacy => 'Milap/Sex';
+  String get actionIntimacy => 'Intimacy / Qurbat';
   @override
   String get moodRest => 'Aaram';
   @override
@@ -257,7 +257,7 @@ class RomanUrduStrings implements AppStrings {
   @override
   String get categoryMyths => 'Desi Myths vs Facts';
   @override
-  String get categoryFertility => 'Fertility & Milap';
+  String get categoryFertility => 'Fertility & Family Planning';
   @override
   String get categoryCycle => 'Cycle & Hormones';
   @override
