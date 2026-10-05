@@ -9,6 +9,7 @@ import '../models/pregnancy_record.dart';
 import '../models/appointment.dart';
 import '../models/partner_share_permission.dart';
 import '../../core/utils/date_helpers.dart';
+import '../../core/localization/app_strings.dart';
 
 /// Offline-First Local Storage Repository backed by SharedPreferences
 class LocalStorageRepository {
@@ -21,6 +22,7 @@ class LocalStorageRepository {
   static const String _kAppointmentsKey = 'wt_appointments';
   static const String _kPartnerKey = 'wt_partner_permission';
   static const String _kPinCodeKey = 'wt_pin_code';
+  static const String _kLanguageKey = 'wt_app_language';
 
   final SharedPreferences _prefs;
 
@@ -194,6 +196,17 @@ class LocalStorageRepository {
       'pregnancy': _prefs.getString(_kPregnancyRecordKey),
       'appointments': _prefs.getStringList(_kAppointmentsKey),
     };
+  }
+
+  // App Language Preference
+  AppLanguage getAppLanguage() {
+    final raw = _prefs.getString(_kLanguageKey);
+    if (raw == 'english') return AppLanguage.english;
+    return AppLanguage.romanUrdu; // Roman Urdu is default
+  }
+
+  Future<void> saveAppLanguage(AppLanguage language) async {
+    await _prefs.setString(_kLanguageKey, language.name);
   }
 
   // Permanent Wipe Out

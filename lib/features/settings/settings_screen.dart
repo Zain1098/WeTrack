@@ -7,6 +7,9 @@ import '../../core/constants/medical_constants.dart';
 import '../../data/services/auth_service.dart';
 import '../app_providers.dart';
 import '../profile/profile_screen.dart';
+import '../../core/localization/app_strings.dart';
+import '../../core/localization/language_provider.dart';
+import '../../core/widgets/clay_language_toggle.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -320,6 +323,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(userProfileProvider);
+    final s = ref.watch(appStringsProvider);
 
     return Scaffold(
       backgroundColor: ClayColors.canvas,
@@ -330,9 +334,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header
-              const Text(
-                'Settings & Privacy',
-                style: TextStyle(
+              Text(
+                s.settingsTitle,
+                style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w900,
                   color: ClayColors.textPrimary,
@@ -395,6 +399,73 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               const SizedBox(height: 20),
 
+              // Language & Zubaan Section (3D Clay Card with Interactive Toggle)
+              Text(
+                s.languageSetting,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: ClayColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 10),
+              ClayCard(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFCE4EC),
+                              borderRadius: BorderRadius.circular(14),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFFE91E63).withValues(alpha: 0.15),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: const Text('🌸', style: TextStyle(fontSize: 18)),
+                          ),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'App Zubaan / Language',
+                                  style: TextStyle(
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: ClayColors.textPrimary,
+                                  ),
+                                ),
+                                SizedBox(height: 2),
+                                Text(
+                                  'Roman Urdu ya English',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: ClayColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const ClayLanguageToggle(isCompact: false),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
               // Security & Privacy Section
               const Text(
                 'Privacy & App Lock',
@@ -412,7 +483,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: const Icon(Icons.lock_rounded, color: ClayColors.primary),
-                      title: const Text('PIN App Lock', style: TextStyle(fontWeight: FontWeight.w700)),
+                      title: Text(s.pinLockSetting, style: const TextStyle(fontWeight: FontWeight.w700)),
                       subtitle: Text(
                         profile.pinCode != null ? 'PIN is Active' : 'No PIN configured',
                         style: const TextStyle(fontSize: 12),
@@ -429,7 +500,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: const Icon(Icons.people_outline, color: ClayColors.secondary),
-                      title: const Text('Partner Sharing', style: TextStyle(fontWeight: FontWeight.w700)),
+                      title: Text(s.partnerSharingSetting, style: const TextStyle(fontWeight: FontWeight.w700)),
                       subtitle: const Text('Manage invite code and permissions', style: TextStyle(fontSize: 12)),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                       onTap: () => _showPartnerModal(context),
@@ -456,7 +527,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: const Icon(Icons.download_rounded, color: ClayColors.mint),
-                      title: const Text('Export All Data (JSON)', style: TextStyle(fontWeight: FontWeight.w700)),
+                      title: Text(s.exportDataTitle, style: const TextStyle(fontWeight: FontWeight.w700)),
                       subtitle: const Text('Download your complete local records', style: TextStyle(fontSize: 12)),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                       onTap: () => _exportData(context),
@@ -465,7 +536,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: const Icon(Icons.delete_forever, color: ClayColors.error),
-                      title: const Text('Delete All Data', style: TextStyle(fontWeight: FontWeight.w700, color: ClayColors.error)),
+                      title: Text(s.deleteDataTitle, style: const TextStyle(fontWeight: FontWeight.w700, color: ClayColors.error)),
                       subtitle: const Text('Permanently erase everything from device', style: TextStyle(fontSize: 12)),
                       onTap: () => _confirmDeleteAll(context),
                     ),

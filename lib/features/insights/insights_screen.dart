@@ -4,6 +4,8 @@ import '../../core/theme/clay_colors.dart';
 import '../../core/widgets/clay_card.dart';
 import '../../core/widgets/disclaimer_badge.dart';
 import '../../core/utils/date_helpers.dart';
+import '../../core/localization/app_strings.dart';
+import '../../core/localization/language_provider.dart';
 import '../app_providers.dart';
 
 class InsightsScreen extends ConsumerWidget {
@@ -14,6 +16,7 @@ class InsightsScreen extends ConsumerWidget {
     final profile = ref.watch(userProfileProvider);
     final history = ref.watch(cycleHistoryProvider);
     final cycleCalc = ref.watch(cycleCalculationProvider);
+    final s = ref.watch(appStringsProvider);
 
     return Scaffold(
       backgroundColor: ClayColors.canvas,
@@ -27,21 +30,21 @@ class InsightsScreen extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Cycle Insights',
-                    style: TextStyle(
+                  Text(
+                    s.insightsTitle,
+                    style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w900,
                       color: ClayColors.textPrimary,
                       letterSpacing: -0.5,
                     ),
                   ),
-                  const DisclaimerBadge(text: 'Historical Trends'),
+                  DisclaimerBadge(text: s.insightsSubtitle),
                 ],
               ),
               const SizedBox(height: 18),
 
-              // Average Metrics Summary (2-Column Grid as in Stitch Spec)
+              // Average Metrics Summary (2-Column Grid as in Stitch Spec with 3D Depth)
               Row(
                 children: [
                   Expanded(
@@ -52,9 +55,16 @@ class InsightsScreen extends ConsumerWidget {
                         children: [
                           Container(
                             padding: const EdgeInsets.all(8),
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               color: ClayColors.primaryContainer,
                               shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: ClayColors.primary.withValues(alpha: 0.2),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                             ),
                             child: const Icon(
                               Icons.timelapse_rounded,
@@ -72,9 +82,9 @@ class InsightsScreen extends ConsumerWidget {
                             ),
                           ),
                           const SizedBox(height: 2),
-                          const Text(
-                            'Average Cycle',
-                            style: TextStyle(
+                          Text(
+                            s.averageCycleLength,
+                            style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                               color: ClayColors.textSecondary,
@@ -93,9 +103,16 @@ class InsightsScreen extends ConsumerWidget {
                         children: [
                           Container(
                             padding: const EdgeInsets.all(8),
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               color: ClayColors.secondaryContainer,
                               shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: ClayColors.secondary.withValues(alpha: 0.2),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                             ),
                             child: const Icon(
                               Icons.water_drop_rounded,
@@ -113,9 +130,9 @@ class InsightsScreen extends ConsumerWidget {
                             ),
                           ),
                           const SizedBox(height: 2),
-                          const Text(
-                            'Period Duration',
-                            style: TextStyle(
+                          Text(
+                            s.averagePeriodLength,
+                            style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                               color: ClayColors.textSecondary,

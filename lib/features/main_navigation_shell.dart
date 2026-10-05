@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/theme/clay_colors.dart';
+import '../core/localization/language_provider.dart';
 import 'home/home_screen.dart';
 import 'calendar/calendar_screen.dart';
 import 'insights/insights_screen.dart';
@@ -34,6 +35,7 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
 
   void _showQuickLogMenu(BuildContext context) {
     final goal = ref.read(userProfileProvider).goal;
+    final s = ref.read(appStringsProvider);
 
     showModalBottomSheet(
       context: context,
@@ -43,146 +45,241 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         clipBehavior: Clip.antiAlias,
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-            const Text(
-              'Quick Action',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
-                color: ClayColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 16),
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: const BoxDecoration(
-                  color: ClayColors.secondaryContainer,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.water_drop, color: ClayColors.secondary),
-              ),
-              title: const Text('Log Period Day', style: TextStyle(fontWeight: FontWeight.w800)),
-              subtitle: const Text('Record bleeding flow & start date', style: TextStyle(fontSize: 12)),
-              onTap: () {
-                Navigator.pop(ctx);
-                LogPeriodModal.show(context);
-              },
-            ),
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: const BoxDecoration(
-                  color: ClayColors.primaryContainer,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.healing, color: ClayColors.primary),
-              ),
-              title: const Text('Log Symptoms & Mood', style: TextStyle(fontWeight: FontWeight.w800)),
-              subtitle: const Text('Record cramps, energy, headaches, moods', style: TextStyle(fontSize: 12)),
-              onTap: () {
-                Navigator.pop(ctx);
-                LogSymptomsModal.show(context);
-              },
-            ),
-            if (goal == AppGoal.tryToConceive) ...[
-              ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: const BoxDecoration(
-                    color: ClayColors.sunnyContainer,
-                    shape: BoxShape.circle,
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE2D9EC),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.favorite, color: Color(0xFFD97706)),
                 ),
-                title: const Text('Log Ovulation Test (LH)', style: TextStyle(fontWeight: FontWeight.w800)),
-                subtitle: const Text('Record test result, cervical mucus, intimacy', style: TextStyle(fontSize: 12)),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                s.quickActionsTitle,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  color: ClayColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 14),
+              _build3DQuickTile(
+                icon: Icons.water_drop_rounded,
+                iconColor: const Color(0xFFE91E63),
+                bgColor: const Color(0xFFFCE4EC),
+                title: s.logPeriodTitle,
+                subtitle: s.logPeriodSubtitle,
                 onTap: () {
                   Navigator.pop(ctx);
-                  LogFertilityModal.show(context);
+                  LogPeriodModal.show(context);
                 },
               ),
-            ],
-            if (goal != AppGoal.alreadyPregnant) ...[
-              ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: const BoxDecoration(
-                    color: ClayColors.mintContainer,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.child_care, color: ClayColors.mint),
-                ),
-                title: const Text('Positive Pregnancy Test', style: TextStyle(fontWeight: FontWeight.w800)),
-                subtitle: const Text('Transition to pregnancy tracking mode', style: TextStyle(fontSize: 12)),
+              const SizedBox(height: 10),
+              _build3DQuickTile(
+                icon: Icons.healing_rounded,
+                iconColor: const Color(0xFFAB47BC),
+                bgColor: const Color(0xFFF3E5F5),
+                title: s.logSymptomsTitle,
+                subtitle: s.logSymptomsSubtitle,
                 onTap: () {
                   Navigator.pop(ctx);
-                  PositivePregnancyTestModal.show(context);
+                  LogSymptomsModal.show(context);
                 },
               ),
-            ],
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: const BoxDecoration(
-                  color: ClayColors.surfaceTint,
-                  shape: BoxShape.circle,
+              if (goal == AppGoal.tryToConceive) ...[
+                const SizedBox(height: 10),
+                _build3DQuickTile(
+                  icon: Icons.favorite_rounded,
+                  iconColor: const Color(0xFFF57C00),
+                  bgColor: const Color(0xFFFFF3E0),
+                  title: s.logOvulationTitle,
+                  subtitle: s.logOvulationSubtitle,
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    LogFertilityModal.show(context);
+                  },
                 ),
-                child: const Icon(Icons.auto_awesome, color: ClayColors.primary),
+              ],
+              if (goal != AppGoal.alreadyPregnant) ...[
+                const SizedBox(height: 10),
+                _build3DQuickTile(
+                  icon: Icons.child_care_rounded,
+                  iconColor: const Color(0xFF00897B),
+                  bgColor: const Color(0xFFE0F2F1),
+                  title: s.positiveTestTitle,
+                  subtitle: s.positiveTestSubtitle,
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    PositivePregnancyTestModal.show(context);
+                  },
+                ),
+              ],
+              const SizedBox(height: 10),
+              _build3DQuickTile(
+                icon: Icons.auto_awesome_rounded,
+                iconColor: const Color(0xFF5E35B1),
+                bgColor: const Color(0xFFEDE7F6),
+                title: s.askAiTitle,
+                subtitle: s.askAiSubtitle,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  AIAssistantSheet.show(context);
+                },
               ),
-              title: const Text('Ask AI Educational Companion',
-                  style: TextStyle(fontWeight: FontWeight.w800)),
-              subtitle: const Text('Questions on cycle, science & doctor prep',
-                  style: TextStyle(fontSize: 12)),
-              onTap: () {
-                Navigator.pop(ctx);
-                AIAssistantSheet.show(context);
-              },
+              const SizedBox(height: 10),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _build3DQuickTile({
+    required IconData icon,
+    required Color iconColor,
+    required Color bgColor,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFBF8FE),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFEDE7F6)),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x062E1065),
+              blurRadius: 8,
+              offset: Offset(0, 2),
             ),
           ],
         ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: bgColor,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: iconColor, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w800,
+                      color: ClayColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: ClayColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios_rounded, size: 13, color: Color(0xFFB0A4C0)),
+          ],
+        ),
       ),
-    ),
-  );
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final s = ref.watch(appStringsProvider);
+
     return Scaffold(
       backgroundColor: ClayColors.canvas,
       body: IndexedStack(
         index: _currentIndex,
         children: _screens,
       ),
-      floatingActionButton: FloatingActionButton(
-        elevation: 6,
-        backgroundColor: ClayColors.primary,
-        foregroundColor: Colors.white,
-        shape: const CircleBorder(),
-        onPressed: () => _showQuickLogMenu(context),
-        child: const Icon(Icons.add, size: 28),
+      floatingActionButton: GestureDetector(
+        onTap: () => _showQuickLogMenu(context),
+        child: Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: const LinearGradient(
+              colors: [Color(0xFFFF5252), Color(0xFFE91E63), Color(0xFF9E8CE7)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFE91E63).withValues(alpha: 0.38),
+                blurRadius: 18,
+                offset: const Offset(0, 6),
+              ),
+            ],
+            border: Border.all(color: Colors.white, width: 3),
+          ),
+          child: const Center(
+            child: Icon(Icons.add_rounded, size: 30, color: Colors.white),
+          ),
+        ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
-        color: Colors.white,
-        elevation: 8,
-        shadowColor: const Color(0x208B5CF6),
-        notchMargin: 8,
-        shape: const CircularNotchedRectangle(),
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildNavItem(0, Icons.spa_outlined, Icons.spa_rounded, 'Home'),
-            _buildNavItem(1, Icons.calendar_month_outlined, Icons.calendar_month_rounded, 'Calendar'),
-            const SizedBox(width: 44), // Space for notched FAB
-            _buildNavItem(2, Icons.auto_graph_outlined, Icons.auto_graph_rounded, 'Insights'),
-            _buildNavItem(3, Icons.menu_book_outlined, Icons.menu_book_rounded, 'Learn'),
+      bottomNavigationBar: Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x187B1FA2),
+              blurRadius: 24,
+              offset: Offset(0, 4),
+            ),
+            BoxShadow(
+              color: Color(0x0A000000),
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
           ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: BottomAppBar(
+            elevation: 0,
+            color: Colors.white,
+            notchMargin: 8,
+            shape: const CircularNotchedRectangle(),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildNavItem(0, Icons.spa_outlined, Icons.spa_rounded, s.navHome),
+                _buildNavItem(1, Icons.calendar_month_outlined, Icons.calendar_month_rounded, s.navCalendar),
+                const SizedBox(width: 44), // Space for notched FAB
+                _buildNavItem(2, Icons.auto_graph_outlined, Icons.auto_graph_rounded, s.navInsights),
+                _buildNavItem(3, Icons.menu_book_outlined, Icons.menu_book_rounded, s.navLearn),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -190,29 +287,40 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
 
   Widget _buildNavItem(int index, IconData icon, IconData activeIcon, String label) {
     final isSelected = _currentIndex == index;
-    return InkWell(
-      borderRadius: BorderRadius.circular(16),
+
+    return GestureDetector(
       onTap: () => setState(() => _currentIndex = index),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              isSelected ? activeIcon : icon,
-              size: 22,
-              color: isSelected ? ClayColors.primary : ClayColors.textTertiary,
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                color: isSelected ? ClayColors.primary : ClayColors.textTertiary,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedScale(
+        scale: isSelected ? 1.06 : 1.0,
+        duration: const Duration(milliseconds: 160),
+        curve: Curves.easeOutBack,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFFFCE4EC) : Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                isSelected ? activeIcon : icon,
+                size: 22,
+                color: isSelected ? const Color(0xFFE91E63) : const Color(0xFF8E849E),
               ),
-            ),
-          ],
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+                  color: isSelected ? const Color(0xFFE91E63) : const Color(0xFF8E849E),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

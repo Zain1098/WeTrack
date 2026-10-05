@@ -4,6 +4,8 @@ import '../../core/theme/clay_colors.dart';
 import '../../core/widgets/clay_card.dart';
 import '../../core/widgets/disclaimer_badge.dart';
 import '../../core/utils/date_helpers.dart';
+import '../../core/localization/app_strings.dart';
+import '../../core/localization/language_provider.dart';
 import '../app_providers.dart';
 import '../cycle/log_period_modal.dart';
 import '../cycle/log_symptoms_modal.dart';
@@ -36,6 +38,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final cycleCalc = ref.watch(cycleCalculationProvider);
     final periodEntries = ref.watch(periodEntriesProvider);
     final symptomEntries = ref.watch(symptomEntriesProvider);
+    final s = ref.watch(appStringsProvider);
 
     // Days in current month
     final firstDayWeekday = _currentMonth.weekday; // 1 = Mon, 7 = Sun
@@ -53,16 +56,16 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Cycle Calendar',
-                    style: TextStyle(
+                  Text(
+                    s.calendarTitle,
+                    style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w900,
                       color: ClayColors.textPrimary,
                       letterSpacing: -0.5,
                     ),
                   ),
-                  const DisclaimerBadge(text: 'Predictions are Estimates'),
+                  DisclaimerBadge(text: s.calendarDisclaimer),
                 ],
               ),
               const SizedBox(height: 16),
@@ -99,13 +102,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     // Weekdays Row
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: const ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+                      children: s.weekdayHeaders
                           .map((d) => SizedBox(
                                 width: 34,
                                 child: Text(
                                   d,
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w700,
                                     color: ClayColors.textTertiary,
@@ -130,7 +133,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               const SizedBox(height: 16),
 
               // Calendar Color Legend (Mandatory from spec)
-              _buildLegend(),
+              _buildLegend(s),
 
               const SizedBox(height: 18),
 
@@ -188,31 +191,82 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       Color textColor = ClayColors.textPrimary;
       Border? border;
 
+      List<BoxShadow>? shadows;
+
       if (hasConfirmedPeriod) {
         bg = ClayColors.secondary;
         textColor = Colors.white;
+        shadows = [
+          BoxShadow(
+            color: ClayColors.secondary.withValues(alpha: 0.4),
+            blurRadius: 7,
+            offset: const Offset(0, 3),
+          ),
+          const BoxShadow(
+            color: Colors.white70,
+            blurRadius: 3,
+            offset: Offset(-1, -1),
+          ),
+        ];
       } else if (isPredictedPeriod) {
         bg = ClayColors.secondaryContainer;
         textColor = ClayColors.secondary;
         border = Border.all(color: ClayColors.secondary, width: 1.2);
+        shadows = [
+          BoxShadow(
+            color: ClayColors.secondary.withValues(alpha: 0.15),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ];
       } else if (isOvulationDay) {
         bg = const Color(0xFFF59E0B);
         textColor = Colors.white;
+        shadows = [
+          BoxShadow(
+            color: const Color(0xFFF59E0B).withValues(alpha: 0.45),
+            blurRadius: 7,
+            offset: const Offset(0, 3),
+          ),
+          const BoxShadow(
+            color: Colors.white,
+            blurRadius: 3,
+            offset: Offset(-1, -1),
+          ),
+        ];
       } else if (isFertileWindow) {
         bg = ClayColors.sunnyContainer;
         textColor = const Color(0xFFB45309);
       } else if (isToday) {
         border = Border.all(color: ClayColors.primary, width: 2);
+        shadows = [
+          BoxShadow(
+            color: ClayColors.primary.withValues(alpha: 0.25),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ];
+      }
+
+      if (isSelected && shadows == null) {
+        shadows = [
+          BoxShadow(
+            color: ClayColors.primary.withValues(alpha: 0.2),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ];
       }
 
       dayWidgets.add(
         GestureDetector(
           onTap: () => setState(() => _selectedDay = date),
           child: Container(
-            margin: const EdgeInsets.all(2),
+            margin: const EdgeInsets.all(2.5),
             decoration: BoxDecoration(
               color: bg ?? (isSelected ? ClayColors.surfaceTint : Colors.transparent),
               shape: BoxShape.circle,
+              boxShadow: shadows,
               border: border ??
                   (isSelected
                       ? Border.all(color: ClayColors.primary, width: 2)
@@ -223,7 +277,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 '$day',
                 style: TextStyle(
                   fontSize: 13,
-                  fontWeight: (hasConfirmedPeriod || isOvulationDay || isToday)
+                  fontWeight: (hasConfirmedPeriod || isOvulationDay || isToday || isSelected)
                       ? FontWeight.w900
                       : FontWeight.w600,
                   color: textColor,
@@ -243,7 +297,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     );
   }
 
-  Widget _buildLegend() {
+  Widget _buildLegend(AppStrings s) {
     return ClayCard(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Column(
@@ -261,10 +315,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildLegendItem(ClayColors.secondary, 'Confirmed Period'),
+              _buildLegendItem(ClayColors.secondary, s.legendConfirmedPeriod),
               _buildLegendItem(
                 ClayColors.secondaryContainer,
-                'Predicted Period',
+                s.legendPredictedPeriod,
                 isOutline: true,
                 borderColor: ClayColors.secondary,
               ),
@@ -274,8 +328,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildLegendItem(ClayColors.sunnyContainer, 'Estimated Fertile Window'),
-              _buildLegendItem(const Color(0xFFF59E0B), 'Estimated Ovulation'),
+              _buildLegendItem(ClayColors.sunnyContainer, s.legendFertileWindow),
+              _buildLegendItem(const Color(0xFFF59E0B), s.legendOvulationDay),
             ],
           ),
         ],

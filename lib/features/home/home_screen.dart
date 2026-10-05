@@ -23,6 +23,9 @@ import '../appointments/appointment_modal.dart';
 import '../safety/emergency_red_flags_modal.dart';
 import '../pregnancy/kick_counter_modal.dart';
 import '../partner/husband_care_card_modal.dart';
+import '../../core/localization/app_strings.dart';
+import '../../core/localization/language_provider.dart';
+import '../../core/widgets/clay_language_toggle.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -42,6 +45,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final profile = ref.watch(userProfileProvider);
     final cycleCalc = ref.watch(cycleCalculationProvider);
     final pregCalc = ref.watch(pregnancyCalculationProvider);
+    final s = ref.watch(appStringsProvider);
     final todaySymptoms = ref.watch(symptomEntriesProvider).where(
           (s) => DateHelpers.daysBetween(s.date, DateTime.now()) == 0,
         );
@@ -57,16 +61,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top Bar with Greeting, Avatar, Dictionary & AI
-              _buildTopBar(context, profile),
+              // Top Bar with Greeting, Avatar, Language Toggle, Dictionary & AI
+              _buildTopBar(context, profile, s),
               const SizedBox(height: 14),
 
               // Segmented Journey Switcher: [ 🌸 Mahwari ] [ 🤰 Hamal ]
-              _buildJourneySwitcher(isPregnancyMode),
+              _buildJourneySwitcher(isPregnancyMode, s),
               const SizedBox(height: 12),
 
               // Quick Support Shortcuts: [ 🚨 Emergency Guide ] [ 🧔 Husband Care Guide ]
-              _buildSupportShortcutsRow(context, profile, cycleCalc, pregCalc),
+              _buildSupportShortcutsRow(context, profile, cycleCalc, pregCalc, s),
               const SizedBox(height: 16),
 
               if (!isPregnancyMode) ...[
@@ -117,7 +121,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 const SizedBox(height: 14),
 
                 // 4b. Pre-conception Daily Folic Acid Tracker (400 mcg - ASRM/NHS)
-                _buildFolicAcidTracker(),
+                _buildFolicAcidTracker(s),
                 const SizedBox(height: 14),
 
                 // 4c. 21-Day Smart Conception & DPO Countdown Timeline Card
@@ -125,11 +129,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 const SizedBox(height: 16),
 
                 // 5. Quick Overview • Today (matching Period Tracker.jpg squircles)
-                _buildQuickOverviewRow(context),
+                _buildQuickOverviewRow(context, s),
                 const SizedBox(height: 16),
 
                 // 6. Visual Quick Action Tiles
-                _buildCycleQuickActions(context),
+                _buildCycleQuickActions(context, s),
                 const SizedBox(height: 16),
 
                 // 7. Today Mood & Symptom Tracker Card
@@ -188,99 +192,112 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // Top Bar with Greeting, Avatar, Roman Dictionary & AI
-  Widget _buildTopBar(BuildContext context, UserProfile profile) {
+  // Top Bar with Greeting, Avatar, Language Toggle, Roman Dictionary & AI
+  Widget _buildTopBar(BuildContext context, UserProfile profile, AppStrings s) {
     final displayName = profile.name.isEmpty ? "Friend" : profile.name;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         // Avatar + Greeting
-        GestureDetector(
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const ProfileScreen()),
-            );
-          },
-          child: Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFFF04E78), width: 1.5),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFF04E78).withValues(alpha: 0.2),
-                      blurRadius: 10,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: ClipOval(
-                  child: profile.profileImagePath != null &&
-                          File(profile.profileImagePath!).existsSync()
-                      ? Image.file(
-                          File(profile.profileImagePath!),
-                          width: 44,
-                          height: 44,
-                          fit: BoxFit.cover,
-                        )
-                      : Image.asset(
-                          'UI/Profile page character.png',
-                          width: 44,
-                          height: 44,
-                          fit: BoxFit.cover,
-                          alignment: Alignment.topCenter,
-                        ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        'Assalam-o-Alaikum, $displayName 🌸',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: ClayColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(width: 2),
-                      const Icon(
-                        Icons.chevron_right_rounded,
-                        size: 16,
-                        color: ClayColors.primary,
+        Expanded(
+          child: GestureDetector(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ProfileScreen()),
+              );
+            },
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFFF04E78), width: 1.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFF04E78).withValues(alpha: 0.2),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    DateHelpers.formatFriendly(DateTime.now()),
-                    style: const TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w500,
-                      color: ClayColors.textSecondary,
-                    ),
+                  child: ClipOval(
+                    child: profile.profileImagePath != null &&
+                            File(profile.profileImagePath!).existsSync()
+                        ? Image.file(
+                            File(profile.profileImagePath!),
+                            width: 44,
+                            height: 44,
+                            fit: BoxFit.cover,
+                          )
+                        : Image.asset(
+                            'UI/Profile page character.png',
+                            width: 44,
+                            height: 44,
+                            fit: BoxFit.cover,
+                            alignment: Alignment.topCenter,
+                          ),
                   ),
-                ],
-              ),
-            ],
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              '${s.assalamGreeting}, $displayName 🌸',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800,
+                                color: ClayColors.textPrimary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 2),
+                          const Icon(
+                            Icons.chevron_right_rounded,
+                            size: 16,
+                            color: ClayColors.primary,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        DateHelpers.formatFriendly(DateTime.now()),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: ClayColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
+        const SizedBox(width: 6),
 
-        // Action Buttons: Roman Lughat + Ask AI
+        // Action Buttons: Language Toggle + Roman Lughat + Ask AI
         Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
+            // 3D Clay Language Capsule Toggle
+            const ClayLanguageToggle(isCompact: true),
+            const SizedBox(width: 6),
+
             // Dictionary Button (Audio 1)
             GestureDetector(
               onTap: () => HealthDictionaryModal.show(context),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFF0F5),
                   borderRadius: BorderRadius.circular(18),
@@ -293,14 +310,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                   ],
                 ),
-                child: const Row(
+                child: Row(
                   children: [
-                    Text('📖', style: TextStyle(fontSize: 13)),
-                    SizedBox(width: 4),
+                    const Text('📖', style: TextStyle(fontSize: 12)),
+                    const SizedBox(width: 3),
                     Text(
-                      'Lughat',
-                      style: TextStyle(
-                        fontSize: 11.5,
+                      s.dictionaryButton,
+                      style: const TextStyle(
+                        fontSize: 11,
                         fontWeight: FontWeight.w800,
                         color: Color(0xFFC2185B),
                       ),
@@ -309,13 +326,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
 
             // AI Companion Button
             GestureDetector(
               onTap: () => AIAssistantSheet.show(context),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(18),
@@ -328,14 +345,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                   ],
                 ),
-                child: const Row(
+                child: Row(
                   children: [
-                    Icon(Icons.auto_awesome_rounded, size: 14, color: ClayColors.primary),
-                    SizedBox(width: 4),
+                    const Icon(Icons.auto_awesome_rounded, size: 13, color: ClayColors.primary),
+                    const SizedBox(width: 3),
                     Text(
-                      'AI',
-                      style: TextStyle(
-                        fontSize: 11.5,
+                      s.aiButton,
+                      style: const TextStyle(
+                        fontSize: 11,
                         fontWeight: FontWeight.bold,
                         color: ClayColors.primary,
                       ),
@@ -351,7 +368,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   // Segmented Journey Switcher
-  Widget _buildJourneySwitcher(bool isPregnancyMode) {
+  Widget _buildJourneySwitcher(bool isPregnancyMode, AppStrings s) {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
@@ -388,7 +405,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     Text('🌸', style: TextStyle(fontSize: !isPregnancyMode ? 15 : 13)),
                     const SizedBox(width: 6),
                     Text(
-                      'Mahwari (Cycle)',
+                      s.journeyCycle,
                       style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.bold,
@@ -428,7 +445,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     Text('🤰', style: TextStyle(fontSize: isPregnancyMode ? 15 : 13)),
                     const SizedBox(width: 6),
                     Text(
-                      'Hamal (Pregnancy)',
+                      s.journeyPregnancy,
                       style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.bold,
@@ -629,13 +646,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   // 5. Quick Overview • Today (Tactile 3D Squishy Buttons)
-  Widget _buildQuickOverviewRow(BuildContext context) {
+  Widget _buildQuickOverviewRow(BuildContext context, AppStrings s) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Quick Overview • Aaj Ka Halat',
-          style: TextStyle(
+        Text(
+          s.quickOverviewTitle,
+          style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w800,
             color: ClayColors.textPrimary,
@@ -649,35 +666,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             children: [
               Squishy3DButton(
                 emoji: '😊',
-                label: 'Khush',
+                label: s.moodHappy,
                 primaryColor: const Color(0xFFFF9800),
                 onTap: () => LogSymptomsModal.show(context),
               ),
               const SizedBox(width: 12),
               Squishy3DButton(
                 emoji: '🔒',
-                label: 'Milap/Sex',
+                label: s.actionIntimacy,
                 primaryColor: const Color(0xFF03A9F4),
                 onTap: () => LogFertilityModal.show(context),
               ),
               const SizedBox(width: 12),
               Squishy3DButton(
                 emoji: '🛋️',
-                label: 'Aaram',
+                label: s.moodRest,
                 primaryColor: const Color(0xFFE91E63),
                 onTap: () => LogSymptomsModal.show(context),
               ),
               const SizedBox(width: 12),
               Squishy3DButton(
                 emoji: '💧',
-                label: 'Sab Theek',
+                label: s.moodFine,
                 primaryColor: const Color(0xFF00BFA5),
                 onTap: () => LogSymptomsModal.show(context),
               ),
               const SizedBox(width: 12),
               Squishy3DButton(
                 emoji: '⚡',
-                label: 'Dard/Cramp',
+                label: s.moodCramps,
                 primaryColor: const Color(0xFF9C27B0),
                 onTap: () => LogSymptomsModal.show(context),
               ),
@@ -689,7 +706,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   // 6. Visual Quick Action Tiles
-  Widget _buildCycleQuickActions(BuildContext context) {
+  Widget _buildCycleQuickActions(BuildContext context, AppStrings s) {
     return Row(
       children: [
         Expanded(
@@ -697,7 +714,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             icon: Icons.water_drop_rounded,
             color: const Color(0xFFFF5252),
             bgColor: const Color(0xFFFFEBEE),
-            label: 'Bleeding Log',
+            label: s.logBleedingTile,
             onTap: () => LogPeriodModal.show(context),
           ),
         ),
@@ -707,7 +724,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             icon: Icons.sentiment_satisfied_alt_rounded,
             color: const Color(0xFFAB47BC),
             bgColor: const Color(0xFFF3E5F5),
-            label: 'Mood Log',
+            label: s.logMoodTile,
             onTap: () => LogSymptomsModal.show(context),
           ),
         ),
@@ -717,7 +734,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             icon: Icons.healing_rounded,
             color: const Color(0xFF26A69A),
             bgColor: const Color(0xFFE0F2F1),
-            label: 'Alamat (Symptoms)',
+            label: s.logPainTile,
             onTap: () => LogSymptomsModal.show(context),
           ),
         ),
@@ -1661,7 +1678,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   // Trying-to-Conceive Folic Acid (400 mcg) Daily Check (ASRM & NHS Guidelines)
-  Widget _buildFolicAcidTracker() {
+  Widget _buildFolicAcidTracker(AppStrings s) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -1712,7 +1729,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 Text(
                   _folicAcidTaken
                       ? 'Folic Acid Done! ✨ (400 mcg)'
-                      : 'Daily Folic Acid (400 mcg) Check 💊',
+                      : s.folicAcidTrackerTitle,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
@@ -1720,9 +1737,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 2),
-                const Text(
-                  'ASRM & NHS ke mutabiq pregnancy plan karne ke dauran rozana 400 mcg Folic Acid lena baby ke brain aur spine ki hifazat ke liye intehai zaroori hai.',
-                  style: TextStyle(
+                Text(
+                  s.folicAcidTrackerDesc,
+                  style: const TextStyle(
                     fontSize: 10.5,
                     color: Color(0xFF5D4A72),
                     height: 1.3,
@@ -1983,6 +2000,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     UserProfile profile,
     CycleCalculationResult cycleCalc,
     PregnancyCalculationResult? pregCalc,
+    AppStrings s,
   ) {
     return Row(
       children: [
@@ -2003,14 +2021,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ],
               ),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('🚨', style: TextStyle(fontSize: 13)),
-                  SizedBox(width: 6),
+                  const Text('🚨', style: TextStyle(fontSize: 13)),
+                  const SizedBox(width: 6),
                   Text(
-                    'Emergency Guide',
-                    style: TextStyle(
+                    s.emergencyGuideButton,
+                    style: const TextStyle(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w800,
                       color: Color(0xFFC62828),
@@ -2044,14 +2062,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ],
               ),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('🧔', style: TextStyle(fontSize: 13)),
-                  SizedBox(width: 6),
+                  const Text('🧔', style: TextStyle(fontSize: 13)),
+                  const SizedBox(width: 6),
                   Text(
-                    'Husband Care Guide',
-                    style: TextStyle(
+                    s.husbandGuideButton,
+                    style: const TextStyle(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w800,
                       color: Color(0xFF6A1B9A),
