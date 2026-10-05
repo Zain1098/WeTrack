@@ -162,10 +162,6 @@ class _Living3DMascotState extends State<Living3DMascot>
     if (widget.isPregnancyMode) {
       return 'UI/baby_3d_milestone.png';
     }
-    final p = widget.phase ?? CyclePhase.follicular;
-    if (p == CyclePhase.menstrual) {
-      return 'UI/download.jpg';
-    }
     return 'UI/login_screen_Character-removebg-preview.png';
   }
 
@@ -182,8 +178,8 @@ class _Living3DMascotState extends State<Living3DMascot>
         // Dynamic 3D tilt tracking user finger
         final delta = details.localPosition;
         setState(() {
-          _tiltX = (delta.dy - 100) / 100 * -0.15;
-          _tiltY = (delta.dx - 100) / 100 * 0.15;
+          _tiltX = (delta.dy - 80) / 80 * -0.15;
+          _tiltY = (delta.dx - 80) / 80 * 0.15;
         });
       },
       onPanEnd: (_) {
@@ -209,26 +205,26 @@ class _Living3DMascotState extends State<Living3DMascot>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // 1. Floating Dynamic Speech Bubble (Roman English)
+                // 1. Floating Dynamic Speech Bubble (Cute Roman Urdu/English)
                 if (_showSpeechBubble)
                   Transform.translate(
                     offset: Offset(0, floatOffset * 0.6),
                     child: Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      constraints: const BoxConstraints(maxWidth: 310),
+                      margin: const EdgeInsets.only(bottom: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      constraints: const BoxConstraints(maxWidth: 290),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(22),
+                        borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: auraColor.withValues(alpha: 0.35), width: 1.5),
                         boxShadow: [
                           BoxShadow(
                             color: auraColor.withValues(alpha: 0.15),
-                            blurRadius: 16,
-                            offset: const Offset(0, 6),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
                           ),
                           const BoxShadow(
-                            color: Color(0x0C2E1065),
+                            color: Color(0x082E1065),
                             blurRadius: 6,
                             offset: Offset(0, 2),
                           ),
@@ -238,120 +234,104 @@ class _Living3DMascotState extends State<Living3DMascot>
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(5),
+                            padding: const EdgeInsets.all(4),
                             decoration: BoxDecoration(
                               color: auraColor.withValues(alpha: 0.14),
                               shape: BoxShape.circle,
                             ),
-                            child: const Text('💬', style: TextStyle(fontSize: 13)),
+                            child: const Text('💬', style: TextStyle(fontSize: 12)),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               currentQuote,
-                              style: TextStyle(
-                                fontSize: 12,
+                              style: const TextStyle(
+                                fontSize: 11.5,
                                 fontWeight: FontWeight.w700,
-                                color: const Color(0xFF2E1A47),
-                                height: 1.35,
+                                color: Color(0xFF2E1A47),
+                                height: 1.3,
                               ),
                             ),
                           ),
                           const SizedBox(width: 4),
-                          const Text('✨', style: TextStyle(fontSize: 12)),
+                          const Text('🌸', style: TextStyle(fontSize: 11)),
                         ],
                       ),
                     ),
                   ),
 
                 // 2. The 3D Living Character Pedestal & Avatar
-                Stack(
-                  alignment: Alignment.center,
-                  clipBehavior: Clip.none,
-                  children: [
-                    // Dynamic 3D Pedestal Base Glow
-                    Container(
-                      width: 170,
-                      height: 170,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          colors: [
-                            auraColor.withValues(alpha: 0.28),
-                            auraColor.withValues(alpha: 0.08),
-                            Colors.transparent,
-                          ],
-                          stops: const [0.4, 0.75, 1.0],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: auraColor.withValues(alpha: 0.25),
-                            blurRadius: 32,
-                            spreadRadius: 4,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Orbiting Sparkles & Hearts (Living effect)
-                    ...List.generate(4, (index) {
-                      final angle = (sparkleProgress * 2 * pi) + (index * pi / 2);
-                      final orbitRadius = 88.0 + (index % 2 == 0 ? 8 : -8);
-                      final x = cos(angle) * orbitRadius;
-                      final y = sin(angle) * orbitRadius;
-                      final emojis = ['✨', '🌸', '💖', '⭐'];
-
-                      return Positioned(
-                        left: 85 + x - 10,
-                        top: 85 + y - 10,
-                        child: Opacity(
-                          opacity: (0.4 + 0.6 * sin(angle)).abs().clamp(0.2, 0.95),
-                          child: Text(
-                            emojis[index],
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                        ),
-                      );
-                    }),
-
-                    // The Breathing & Floating 3D Character
-                    Transform.translate(
-                      offset: Offset(0, floatOffset),
-                      child: Transform.scale(
-                        scale: breatheScale,
+                SizedBox(
+                  height: 150,
+                  width: 170,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    clipBehavior: Clip.none,
+                    children: [
+                      // 3D Pedestal Base Ground Shadow
+                      Positioned(
+                        bottom: 6,
                         child: Container(
-                          width: 145,
-                          height: 145,
+                          width: 110,
+                          height: 22,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Colors.white,
-                              width: 3.5,
-                            ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.12),
-                                blurRadius: 20,
-                                offset: const Offset(0, 8),
+                                color: auraColor.withValues(alpha: 0.25),
+                                blurRadius: 16,
+                                spreadRadius: 3,
+                                offset: const Offset(0, 4),
                               ),
                               BoxShadow(
-                                color: auraColor.withValues(alpha: 0.3),
-                                blurRadius: 14,
-                                offset: const Offset(0, 4),
+                                color: Colors.black.withValues(alpha: 0.08),
+                                blurRadius: 10,
+                                offset: const Offset(0, 5),
                               ),
                             ],
                           ),
-                          child: ClipOval(
-                            child: Container(
-                              color: const Color(0xFFFFF7FA),
+                        ),
+                      ),
+
+                      // Orbiting Sparkles & Hearts (Living Cute Particle Aura)
+                      ...List.generate(4, (index) {
+                        final angle = (sparkleProgress * 2 * pi) + (index * pi / 2);
+                        final orbitRadiusX = 64.0;
+                        final orbitRadiusY = 52.0;
+                        final x = cos(angle) * orbitRadiusX;
+                        final y = sin(angle) * orbitRadiusY;
+                        final emojis = ['✨', '🌸', '💖', '⭐'];
+
+                        return Positioned(
+                          left: 78 + x - 8,
+                          top: 55 + y - 8,
+                          child: Opacity(
+                            opacity: (0.4 + 0.6 * sin(angle)).abs().clamp(0.25, 0.95),
+                            child: Text(
+                              emojis[index],
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ),
+                        );
+                      }),
+
+                      // The Breathing & Floating 3D Character Figurine
+                      Positioned(
+                        top: 0,
+                        child: Transform.translate(
+                          offset: Offset(0, floatOffset),
+                          child: Transform.scale(
+                            scale: breatheScale,
+                            child: SizedBox(
+                              width: 125,
+                              height: 125,
                               child: Image.asset(
                                 assetImage,
-                                fit: BoxFit.cover,
+                                fit: BoxFit.contain,
                                 errorBuilder: (ctx, err, stack) => Center(
                                   child: Icon(
                                     Icons.face_3_rounded,
-                                    size: 70,
+                                    size: 64,
                                     color: auraColor,
                                   ),
                                 ),
@@ -360,43 +340,39 @@ class _Living3DMascotState extends State<Living3DMascot>
                           ),
                         ),
                       ),
-                    ),
 
-                    // Tap-Me Pulse Badge
-                    Positioned(
-                      bottom: -4,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1E1A29),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.white, width: 1.5),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x28000000),
-                              blurRadius: 8,
-                              offset: Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text('👆 ', style: TextStyle(fontSize: 9)),
-                            Text(
-                              'Tap Me to Talk',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.4,
+                      // Tap-Me Friendly Capsule Tag
+                      Positioned(
+                        bottom: 0,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: auraColor.withValues(alpha: 0.4), width: 1.2),
+                            boxShadow: [
+                              BoxShadow(
+                                color: auraColor.withValues(alpha: 0.18),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('Tap karein ✨',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    color: auraColor,
+                                  )),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),

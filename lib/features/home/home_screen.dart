@@ -23,6 +23,7 @@ import '../appointments/appointment_modal.dart';
 import '../safety/emergency_red_flags_modal.dart';
 import '../pregnancy/kick_counter_modal.dart';
 import '../partner/husband_care_card_modal.dart';
+import '../settings/settings_screen.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/localization/language_provider.dart';
 import '../../core/widgets/clay_language_toggle.dart';
@@ -39,6 +40,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _waterGlasses = 4;
   bool _vitaminsTaken = false;
   bool _folicAcidTaken = false;
+  int _selectedSection = 0; // 0: Aaj Ka Din, 1: Sehat & Plan, 2: Shohar & Madad
 
   @override
   Widget build(BuildContext context) {
@@ -69,118 +71,132 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               _buildJourneySwitcher(isPregnancyMode, s),
               const SizedBox(height: 12),
 
-              // Quick Support Shortcuts: [ 🚨 Emergency Guide ] [ 🧔 Husband Care Guide ]
-              _buildSupportShortcutsRow(context, profile, cycleCalc, pregCalc, s),
+              // Clean 3-Tab Section Switcher: [ 🌸 Aaj Ka Din ] [ 🌿 Sehat & Plan ] [ 🧔 Shohar & Madad ]
+              _buildSectionSwitcher(isPregnancyMode),
               const SizedBox(height: 16),
 
               if (!isPregnancyMode) ...[
                 // --- CYCLE & PERIOD MODE ---
-                // 0. Contextual Daily Briefing (Good morning! Cycle Day X · Trying to Conceive)
-                _buildDailyBriefingCard(profile, cycleCalc),
-                const SizedBox(height: 14),
+                if (_selectedSection == 0) ...[
+                  // --- TAB 0: AAJ KA DIN (Daily Core) ---
+                  // 0. Contextual Daily Briefing
+                  _buildDailyBriefingCard(profile, cycleCalc),
+                  const SizedBox(height: 12),
 
-                // 1. Horizontal Mini Calendar Strip (matching Period Tracker.jpg)
-                _buildMiniCalendarStrip(),
-                const SizedBox(height: 14),
+                  // 1. Horizontal Mini Calendar Strip
+                  _buildMiniCalendarStrip(),
+                  const SizedBox(height: 14),
 
-                // 2. Living 3D Animated Mascot (Breathing, 3D Perspective Tilt & Dialogues)
-                Living3DMascot(
-                  phase: cycleCalc.currentPhase,
-                  onTap: () {
-                    final days = cycleCalc.daysUntilNextPeriod;
-                    final message = days == 0
-                        ? 'Aaj mahwari (period) expected hai!'
-                        : days > 0
-                            ? '$days Din Baqi Hain Agle Period Me'
-                            : '${days.abs()} Din Upar Ho Chukay Hain';
-                    PeriodMascotAlertModal.show(
-                      context: context,
-                      title: 'Mahwari (Period) Update',
-                      daysMessage: message,
-                      tips: const [
-                        'Halka garam paani ya chamomile chai piyein.',
-                        'Heating pad ya garam kapra aaram ke liye paas rakhein.',
-                        'Bag me pads advance me rakh lein taake pareshani na ho.',
-                        'Aaj ka mood aur dard ek tap me log karein.',
-                      ],
-                      onLogTap: () => LogPeriodModal.show(context),
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
+                  // 2. Living 3D Animated Mascot
+                  Living3DMascot(
+                    phase: cycleCalc.currentPhase,
+                    onTap: () {
+                      final days = cycleCalc.daysUntilNextPeriod;
+                      final message = days == 0
+                          ? 'Aaj mahwari (period) expected hai!'
+                          : days > 0
+                              ? '$days Din Baqi Hain Agle Period Me'
+                              : '${days.abs()} Din Upar Ho Chukay Hain';
+                      PeriodMascotAlertModal.show(
+                        context: context,
+                        title: 'Mahwari (Period) Update',
+                        daysMessage: message,
+                        tips: const [
+                          'Halka garam paani ya chamomile chai piyein.',
+                          'Heating pad ya garam kapra aaram ke liye paas rakhein.',
+                          'Bag me pads advance me rakh lein taake pareshani na ho.',
+                          'Aaj ka mood aur dard ek tap me log karein.',
+                        ],
+                        onLogTap: () => LogPeriodModal.show(context),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 14),
 
-                // 3. Circular 28-Day Segmented Dial (matching Period Tracker.jpg)
-                ClayCycleDial(
-                  calculation: cycleCalc,
-                  onTap: () => LogPeriodModal.show(context),
-                ),
-                const SizedBox(height: 14),
+                  // 3. Circular 28-Day Segmented Dial
+                  ClayCycleDial(
+                    calculation: cycleCalc,
+                    onTap: () => LogPeriodModal.show(context),
+                  ),
+                  const SizedBox(height: 14),
 
-                // 4. Automated Guidance Banner (Audio 3 & Audio 1)
-                _buildAutomatedGuidanceCard(context, cycleCalc),
-                const SizedBox(height: 14),
+                  // 5. Quick Overview • Today (5 Squishy 3D buttons)
+                  _buildQuickOverviewRow(context, s),
+                  const SizedBox(height: 14),
 
-                // 4b. Pre-conception Daily Folic Acid Tracker (400 mcg - ASRM/NHS)
-                _buildFolicAcidTracker(s),
-                const SizedBox(height: 14),
+                  // 6. Visual Quick Action Tiles
+                  _buildCycleQuickActions(context, s),
+                ] else if (_selectedSection == 1) ...[
+                  // --- TAB 1: SEHAT & CONCEPTION (Health & Medical Planning) ---
+                  // 4b. Pre-conception Daily Folic Acid Tracker (400 mcg - ASRM/NHS)
+                  _buildFolicAcidTracker(s),
+                  const SizedBox(height: 14),
 
-                // 4c. 21-Day Smart Conception & DPO Countdown Timeline Card
-                _buildSmartConceptionCountdownCard(context, cycleCalc),
-                const SizedBox(height: 16),
+                  // 4c. 21-Day Smart Conception & DPO Countdown Timeline Card
+                  _buildSmartConceptionCountdownCard(context, cycleCalc),
+                  const SizedBox(height: 14),
 
-                // 5. Quick Overview • Today (matching Period Tracker.jpg squircles)
-                _buildQuickOverviewRow(context, s),
-                const SizedBox(height: 16),
+                  // 8a. Pregnancy Test Timing & Guidance Card (NHS & ASRM Rules)
+                  _buildPregnancyTestTimingCard(context, cycleCalc),
+                  const SizedBox(height: 14),
 
-                // 6. Visual Quick Action Tiles
-                _buildCycleQuickActions(context, s),
-                const SizedBox(height: 16),
+                  // 8c. Doctor Appointments & Ultrasound Card
+                  _buildDoctorAppointmentsCard(context),
+                  const SizedBox(height: 14),
 
-                // 7. Today Mood & Symptom Tracker Card
-                _buildTodayStatusCard(context, todaySymptoms.isNotEmpty ? todaySymptoms.first : null),
-                const SizedBox(height: 16),
+                  // 7. Today Mood & Symptom Tracker Card
+                  _buildTodayStatusCard(context, todaySymptoms.isNotEmpty ? todaySymptoms.first : null),
+                  const SizedBox(height: 14),
 
-                // 8a. Pregnancy Test Timing & Guidance Card (NHS & ASRM Rules)
-                _buildPregnancyTestTimingCard(context, cycleCalc),
-                const SizedBox(height: 16),
+                  // 9. Cycle Phase Insight Card in Roman English
+                  _buildCycleInsightCard(cycleCalc),
+                  const SizedBox(height: 14),
 
-                // 8b. Doctor Pregnancy Confirmation Switch Banner (Audio 3)
-                _buildDoctorPregnancyBanner(context),
-                const SizedBox(height: 16),
+                  // 8b. Doctor Pregnancy Confirmation Switch Banner
+                  _buildDoctorPregnancyBanner(context),
+                ] else ...[
+                  // --- TAB 2: SHOHAR & SAFETY (Partner & Help) ---
+                  _buildPartnerHomeCard(context),
+                  const SizedBox(height: 14),
 
-                // 8c. Doctor Appointments & Ultrasound Card
-                _buildDoctorAppointmentsCard(context),
-                const SizedBox(height: 16),
+                  _buildSupportShortcutsRow(context, profile, cycleCalc, pregCalc, s),
+                  const SizedBox(height: 14),
 
-                // 9. Cycle Phase Insight Card in Roman English
-                _buildCycleInsightCard(cycleCalc),
+                  _buildAutomatedGuidanceCard(context, cycleCalc),
+                ],
               ] else ...[
-                // --- PREGNANCY MODE (matching Pregnancy & Period Tracker Mobile App reference) ---
+                // --- PREGNANCY MODE ---
                 if (pregCalc == null) ...[
                   _buildPregnancySetupCard(context),
                 ] else ...[
-                  // 1. Hero 3D Baby Milestone Card with Completed/Remaining tags
-                  _buildBabyHeroCard(context, pregCalc),
-                  const SizedBox(height: 16),
+                  if (_selectedSection == 0) ...[
+                    // 1. Hero 3D Baby Milestone Card with Completed/Remaining tags
+                    _buildBabyHeroCard(context, pregCalc),
+                    const SizedBox(height: 14),
 
-                  // 2. Mother's Health Monitor Timeline Banner (mother_timeline_banner.png)
-                  _buildMotherTimelineBanner(pregCalc),
-                  const SizedBox(height: 16),
+                    // 4. Mother & Baby Daily Tracker (Kicks, Water, Vitamins)
+                    _buildMotherTrackRecordCard(),
+                  ] else if (_selectedSection == 1) ...[
+                    // 2. Mother's Health Monitor Timeline Banner
+                    _buildMotherTimelineBanner(pregCalc),
+                    const SizedBox(height: 14),
 
-                  // 3. Trimester Progress Slider
-                  _buildTrimesterProgressBar(pregCalc),
-                  const SizedBox(height: 16),
+                    // 3. Trimester Progress Slider
+                    _buildTrimesterProgressBar(pregCalc),
+                    const SizedBox(height: 14),
 
-                  // 3b. Doctor Appointments & Ultrasound Scan Card
-                  _buildDoctorAppointmentsCard(context),
-                  const SizedBox(height: 16),
+                    // 3b. Doctor Appointments & Ultrasound Scan Card
+                    _buildDoctorAppointmentsCard(context),
+                    const SizedBox(height: 14),
 
-                  // 4. Mother & Baby Daily Tracker (Kicks, Water, Vitamins)
-                  _buildMotherTrackRecordCard(),
-                  const SizedBox(height: 16),
+                    // 5. Weekly Baby Development Card
+                    _buildBabyWeeklyInsightCard(pregCalc),
+                  ] else ...[
+                    _buildPartnerHomeCard(context),
+                    const SizedBox(height: 14),
 
-                  // 5. Weekly Baby Development Card
-                  _buildBabyWeeklyInsightCard(pregCalc),
+                    _buildSupportShortcutsRow(context, profile, cycleCalc, pregCalc, s),
+                  ],
                 ],
               ],
 
@@ -455,6 +471,206 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ],
                 ),
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Clean 3-Tab Section Switcher
+  Widget _buildSectionSwitcher(bool isPregnancyMode) {
+    final tabs = isPregnancyMode
+        ? [
+            ('👶', 'Baby & Aaj'),
+            ('🩺', 'Doctor & Scan'),
+            ('🧔', 'Shohar & Madad'),
+          ]
+        : [
+            ('🌸', 'Aaj Ka Din'),
+            ('🌿', 'Sehat & Plan'),
+            ('🧔', 'Shohar & Madad'),
+          ];
+
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFF0E5F5)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: List.generate(tabs.length, (idx) {
+          final isSelected = _selectedSection == idx;
+          final tab = tabs[idx];
+          return Expanded(
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedSection = idx;
+                });
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOutCubic,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected ? const Color(0xFFF04E78) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: const Color(0xFFF04E78).withValues(alpha: 0.35),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(tab.$1, style: const TextStyle(fontSize: 13)),
+                    const SizedBox(width: 5),
+                    Text(
+                      tab.$2,
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w800,
+                        color: isSelected ? Colors.white : ClayColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  // 3D Partner Home Card
+  Widget _buildPartnerHomeCard(BuildContext context) {
+    final partner = ref.watch(partnerPermissionProvider);
+    final isAllShared = partner.shareIntimacy &&
+        partner.shareCycleDates &&
+        partner.shareSymptoms &&
+        partner.sharePregnancyMilestones &&
+        partner.shareAppointments;
+
+    return ClayCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3E5F5),
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF9C27B0).withValues(alpha: 0.15),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Text('🧔', style: TextStyle(fontSize: 20)),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Shohar / Partner Mode Active',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: ClayColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      isAllShared ? '🟢 By Default: Tamam Data Shared' : '🟠 Custom Privacy Settings',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.bold,
+                        color: isAllShared ? const Color(0xFF2E7D32) : const Color(0xFFE65100),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFCE4EC),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text(
+                    'Settings',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: ClayColors.primary),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Partner ka matlab hi partner hai! Aapka milap (sex), cycle dates, aur alamaat shohar ke sath synced hain taake dono mil kar planning karein. Agar koi cheez chupana chahein to Settings se easily off kar sakti hain.',
+            style: TextStyle(fontSize: 12, color: ClayColors.textSecondary, height: 1.4),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF9F5FB),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.vpn_key_rounded, size: 14, color: ClayColors.secondary),
+                    SizedBox(width: 6),
+                    Text(
+                      'Code: WT-849-210',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: ClayColors.textPrimary),
+                    ),
+                  ],
+                ),
+                TextButton(
+                  style: TextButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                  ),
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Shohar pairing code copied to clipboard!')),
+                    );
+                  },
+                  child: const Text('Copy Code', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                ),
+              ],
             ),
           ),
         ],

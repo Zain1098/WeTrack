@@ -16,9 +16,9 @@ class PartnerSharePermission {
     this.shareCycleDates = true,
     this.sharePregnancyMilestones = true,
     this.shareAppointments = true,
-    this.shareSymptoms = false, // Private by default
-    this.shareIntimacy = false, // Strictly private by default
-    this.sharePersonalNotes = false, // Strictly private by default
+    this.shareSymptoms = true, // Shared by default
+    this.shareIntimacy = true, // Shared by default (partner intimacy & planning)
+    this.sharePersonalNotes = false, // Private diary notes
   });
 
   PartnerSharePermission copyWith({
@@ -67,8 +67,8 @@ class PartnerSharePermission {
         sharePregnancyMilestones:
             json['sharePregnancyMilestones'] as bool? ?? true,
         shareAppointments: json['shareAppointments'] as bool? ?? true,
-        shareSymptoms: json['shareSymptoms'] as bool? ?? false,
-        shareIntimacy: json['shareIntimacy'] as bool? ?? false,
+        shareSymptoms: json['shareSymptoms'] as bool? ?? true,
+        shareIntimacy: json['shareIntimacy'] as bool? ?? true,
         sharePersonalNotes: json['sharePersonalNotes'] as bool? ?? false,
       );
 }

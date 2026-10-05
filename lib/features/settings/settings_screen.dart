@@ -177,16 +177,103 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               const SizedBox(height: 20),
 
+              // Master All-Sharing Switch
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: (partner.shareIntimacy && partner.shareCycleDates && partner.shareSymptoms && partner.sharePregnancyMilestones && partner.shareAppointments)
+                      ? const Color(0xFFE8F5E9)
+                      : const Color(0xFFFFF3E0),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: (partner.shareIntimacy && partner.shareCycleDates && partner.shareSymptoms && partner.sharePregnancyMilestones && partner.shareAppointments)
+                        ? const Color(0xFF81C784)
+                        : const Color(0xFFFFB74D),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                (partner.shareIntimacy && partner.shareCycleDates && partner.shareSymptoms && partner.sharePregnancyMilestones && partner.shareAppointments)
+                                    ? Icons.check_circle_rounded
+                                    : Icons.lock_outline_rounded,
+                                color: (partner.shareIntimacy && partner.shareCycleDates && partner.shareSymptoms && partner.sharePregnancyMilestones && partner.shareAppointments)
+                                    ? const Color(0xFF2E7D32)
+                                    : const Color(0xFFE65100),
+                                size: 18,
+                              ),
+                              const SizedBox(width: 6),
+                              const Text(
+                                'Sab Data Share Karein',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                  color: ClayColors.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          const Text(
+                            'Shohar ke sath tamam logs share honge',
+                            style: TextStyle(fontSize: 11, color: ClayColors.textSecondary),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch.adaptive(
+                      value: partner.shareIntimacy && partner.shareCycleDates && partner.shareSymptoms && partner.sharePregnancyMilestones && partner.shareAppointments,
+                      activeTrackColor: ClayColors.primary,
+                      onChanged: (val) {
+                        ref.read(partnerPermissionProvider.notifier).update(
+                              partner.copyWith(
+                                shareIntimacy: val,
+                                shareCycleDates: val,
+                                sharePregnancyMilestones: val,
+                                shareSymptoms: val,
+                                shareAppointments: val,
+                              ),
+                            );
+                        setSheetState(() {});
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
               // Permissions Toggles
               const Text(
-                'Field-by-Field Permissions',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+                'Alag Alag Permissions (Agar koi cheez chupani ho):',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: ClayColors.textPrimary),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
 
               SwitchListTile.adaptive(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Share Cycle Dates & Estimates', style: TextStyle(fontSize: 14)),
+                title: const Text('Milap / Sex Intercourse Logs', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
+                subtitle: const Text('Default: On • Shohar ke sath conception planning', style: TextStyle(fontSize: 11, color: ClayColors.mint)),
+                value: partner.shareIntimacy,
+                activeTrackColor: ClayColors.primary,
+                onChanged: (val) {
+                  ref.read(partnerPermissionProvider.notifier).update(
+                        partner.copyWith(shareIntimacy: val),
+                      );
+                  setSheetState(() {});
+                },
+              ),
+              SwitchListTile.adaptive(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Mahwari & Cycle Dates', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
+                subtitle: const Text('Default: On • Period start/end aur fertile window', style: TextStyle(fontSize: 11, color: ClayColors.mint)),
                 value: partner.shareCycleDates,
                 activeTrackColor: ClayColors.primary,
                 onChanged: (val) {
@@ -198,7 +285,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               SwitchListTile.adaptive(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Share Pregnancy Milestones', style: TextStyle(fontSize: 14)),
+                title: const Text('Hamal & Baby Milestones', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
+                subtitle: const Text('Default: On • Baby growth aur weekly updates', style: TextStyle(fontSize: 11, color: ClayColors.mint)),
                 value: partner.sharePregnancyMilestones,
                 activeTrackColor: ClayColors.primary,
                 onChanged: (val) {
@@ -210,8 +298,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               SwitchListTile.adaptive(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Share Symptoms & Moods', style: TextStyle(fontSize: 14)),
-                subtitle: const Text('Default: Off', style: TextStyle(fontSize: 11)),
+                title: const Text('Alamaat, Dard & Moods', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
+                subtitle: const Text('Default: On • Shohar khayal rakh sakay', style: TextStyle(fontSize: 11, color: ClayColors.mint)),
                 value: partner.shareSymptoms,
                 activeTrackColor: ClayColors.primary,
                 onChanged: (val) {
@@ -223,13 +311,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               SwitchListTile.adaptive(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Share Intimacy Logs', style: TextStyle(fontSize: 14)),
-                subtitle: const Text('Default: Strictly Off (Private)', style: TextStyle(fontSize: 11)),
-                value: partner.shareIntimacy,
+                title: const Text('Doctor Appointments & Ultrasound', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
+                subtitle: const Text('Default: On • Checkup aur scan ki dates', style: TextStyle(fontSize: 11, color: ClayColors.mint)),
+                value: partner.shareAppointments,
                 activeTrackColor: ClayColors.primary,
                 onChanged: (val) {
                   ref.read(partnerPermissionProvider.notifier).update(
-                        partner.copyWith(shareIntimacy: val),
+                        partner.copyWith(shareAppointments: val),
                       );
                   setSheetState(() {});
                 },
@@ -324,6 +412,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget build(BuildContext context) {
     final profile = ref.watch(userProfileProvider);
     final s = ref.watch(appStringsProvider);
+    final partner = ref.watch(partnerPermissionProvider);
+    final isAllShared = partner.shareIntimacy &&
+        partner.shareCycleDates &&
+        partner.shareSymptoms &&
+        partner.sharePregnancyMilestones &&
+        partner.shareAppointments;
 
     return Scaffold(
       backgroundColor: ClayColors.canvas,
@@ -466,9 +560,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               const SizedBox(height: 20),
 
-              // Security & Privacy Section
+              // Security & PIN Lock Section
               const Text(
-                'Privacy & App Lock',
+                'Security & App Lock',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
@@ -478,32 +572,222 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               const SizedBox(height: 10),
               ClayCard(
                 padding: const EdgeInsets.all(14),
-                child: Column(
-                  children: [
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.lock_rounded, color: ClayColors.primary),
-                      title: Text(s.pinLockSetting, style: const TextStyle(fontWeight: FontWeight.w700)),
-                      subtitle: Text(
-                        profile.pinCode != null ? 'PIN is Active' : 'No PIN configured',
-                        style: const TextStyle(fontSize: 12),
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.lock_rounded, color: ClayColors.primary),
+                  title: Text(s.pinLockSetting, style: const TextStyle(fontWeight: FontWeight.w700)),
+                  subtitle: Text(
+                    profile.pinCode != null ? 'PIN is Active' : 'No PIN configured',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  trailing: TextButton(
+                    onPressed: () => _showPinDialog(context, profile.pinCode),
+                    child: Text(
+                      profile.pinCode != null ? 'Change' : 'Set PIN',
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Shohar / Partner Mode Data Sharing & Privacy Section
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Shohar / Partner Mode & Privacy',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: ClayColors.textPrimary,
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => _showPartnerModal(context),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF3E5F5),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      trailing: TextButton(
-                        onPressed: () => _showPinDialog(context, profile.pinCode),
-                        child: Text(
-                          profile.pinCode != null ? 'Change' : 'Set PIN',
-                          style: const TextStyle(fontWeight: FontWeight.w700),
-                        ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.qr_code, size: 14, color: ClayColors.secondary),
+                          SizedBox(width: 4),
+                          Text('Code', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: ClayColors.secondary)),
+                        ],
                       ),
                     ),
-                    const Divider(color: ClayColors.outline),
-                    ListTile(
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              ClayCard(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Master All-Sharing Switch Banner
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: isAllShared ? const Color(0xFFE8F5E9) : const Color(0xFFFFF3E0),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isAllShared ? const Color(0xFF81C784) : const Color(0xFFFFB74D),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Icon(
+                                  isAllShared ? Icons.verified_user_rounded : Icons.lock_outline_rounded,
+                                  color: isAllShared ? const Color(0xFF2E7D32) : const Color(0xFFE65100),
+                                  size: 22,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        isAllShared ? 'Sab Data Share Ho Raha Hai' : 'Custom Sharing Active',
+                                        style: TextStyle(
+                                          fontSize: 13.5,
+                                          fontWeight: FontWeight.w800,
+                                          color: isAllShared ? const Color(0xFF2E7D32) : const Color(0xFFE65100),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        isAllShared
+                                            ? 'By default shohar ke sath 100% data shared hai'
+                                            : 'Kuch logs private kiye gaye hain',
+                                        style: const TextStyle(fontSize: 11, color: ClayColors.textSecondary),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Switch.adaptive(
+                            value: isAllShared,
+                            activeTrackColor: ClayColors.primary,
+                            onChanged: (val) {
+                              ref.read(partnerPermissionProvider.notifier).update(
+                                    partner.copyWith(
+                                      shareIntimacy: val,
+                                      shareCycleDates: val,
+                                      sharePregnancyMilestones: val,
+                                      shareSymptoms: val,
+                                      shareAppointments: val,
+                                    ),
+                                  );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Explanation Note
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF9F5FB),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('💡', style: TextStyle(fontSize: 14)),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Partner ka matlab hi shohar ke sath mil kar family plan karna hai. Is liye milap (sex) aur cycle ka data by default share hota hai. Agar koi record private rakhna ho to neeche diye gaye switch se band kar sakti hain.',
+                              style: TextStyle(fontSize: 11.5, color: ClayColors.textSecondary, height: 1.4),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Granular Switches
+                    SwitchListTile.adaptive(
                       contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.people_outline, color: ClayColors.secondary),
-                      title: Text(s.partnerSharingSetting, style: const TextStyle(fontWeight: FontWeight.w700)),
-                      subtitle: const Text('Manage invite code and permissions', style: TextStyle(fontSize: 12)),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-                      onTap: () => _showPartnerModal(context),
+                      dense: true,
+                      title: const Text('🔒 Milap / Sex Intercourse Logs', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                      subtitle: const Text('Conception planning & intimate logs (Default: On)', style: TextStyle(fontSize: 11, color: ClayColors.mint)),
+                      value: partner.shareIntimacy,
+                      activeTrackColor: ClayColors.primary,
+                      onChanged: (val) {
+                        ref.read(partnerPermissionProvider.notifier).update(
+                              partner.copyWith(shareIntimacy: val),
+                            );
+                      },
+                    ),
+                    const Divider(height: 1, color: Color(0xFFF0F0F0)),
+                    SwitchListTile.adaptive(
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      title: const Text('🌸 Mahwari & Cycle Dates', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                      subtitle: const Text('Period dates aur fertile window (Default: On)', style: TextStyle(fontSize: 11, color: ClayColors.mint)),
+                      value: partner.shareCycleDates,
+                      activeTrackColor: ClayColors.primary,
+                      onChanged: (val) {
+                        ref.read(partnerPermissionProvider.notifier).update(
+                              partner.copyWith(shareCycleDates: val),
+                            );
+                      },
+                    ),
+                    const Divider(height: 1, color: Color(0xFFF0F0F0)),
+                    SwitchListTile.adaptive(
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      title: const Text('🤰 Hamal & Baby Milestones', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                      subtitle: const Text('Baby growth aur weekly updates (Default: On)', style: TextStyle(fontSize: 11, color: ClayColors.mint)),
+                      value: partner.sharePregnancyMilestones,
+                      activeTrackColor: ClayColors.primary,
+                      onChanged: (val) {
+                        ref.read(partnerPermissionProvider.notifier).update(
+                              partner.copyWith(sharePregnancyMilestones: val),
+                            );
+                      },
+                    ),
+                    const Divider(height: 1, color: Color(0xFFF0F0F0)),
+                    SwitchListTile.adaptive(
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      title: const Text('🩺 Alamaat, Dard & Moods', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                      subtitle: const Text('Shohar tabiyat ka khayal rakh sakay (Default: On)', style: TextStyle(fontSize: 11, color: ClayColors.mint)),
+                      value: partner.shareSymptoms,
+                      activeTrackColor: ClayColors.primary,
+                      onChanged: (val) {
+                        ref.read(partnerPermissionProvider.notifier).update(
+                              partner.copyWith(shareSymptoms: val),
+                            );
+                      },
+                    ),
+                    const Divider(height: 1, color: Color(0xFFF0F0F0)),
+                    SwitchListTile.adaptive(
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      title: const Text('📅 Doctor Appointments & Scans', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                      subtitle: const Text('Checkup dates aur reminders (Default: On)', style: TextStyle(fontSize: 11, color: ClayColors.mint)),
+                      value: partner.shareAppointments,
+                      activeTrackColor: ClayColors.primary,
+                      onChanged: (val) {
+                        ref.read(partnerPermissionProvider.notifier).update(
+                              partner.copyWith(shareAppointments: val),
+                            );
+                      },
                     ),
                   ],
                 ),
