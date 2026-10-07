@@ -335,7 +335,13 @@ class AuthService {
         if (name != null && name.isNotEmpty) 'name': name,
         'updated_at': DateTime.now().toIso8601String(),
       };
-      if (avatarUrl != null) payload['avatar_url'] = avatarUrl;
+      // Never leak local filesystem paths to remote cloud database
+      if (avatarUrl != null &&
+          !avatarUrl.startsWith('/') &&
+          !avatarUrl.startsWith('file:') &&
+          !avatarUrl.contains(r':\')) {
+        payload['avatar_url'] = avatarUrl;
+      }
       if (age != null) payload['age'] = age;
       if (maritalStatus != null) payload['marital_status'] = maritalStatus;
       if (heightCm != null) payload['height_cm'] = heightCm;

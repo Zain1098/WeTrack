@@ -191,13 +191,32 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               profileImagePath: savedFile.path,
             );
 
-        // Sync with Supabase profiles table
+        // Optionally upload to remote Supabase Storage and sync public URL (never leak local device path)
+        String? remoteAvatarUrl;
         final user = ref.read(authServiceProvider).currentUser;
         if (user != null) {
+          try {
+            final bytes = await savedFile.readAsBytes();
+            final fileExt = savedFile.path.split('.').last;
+            final fileName = '${user.id}/avatar.$fileExt';
+            await Supabase.instance.client.storage
+                .from('avatars')
+                .uploadBinary(
+                  fileName,
+                  bytes,
+                  fileOptions: const FileOptions(upsert: true),
+                );
+            remoteAvatarUrl = Supabase.instance.client.storage
+                .from('avatars')
+                .getPublicUrl(fileName);
+          } catch (e) {
+            debugPrint('Note: Remote avatar storage upload skipped ($e)');
+          }
+
           await ref.read(authServiceProvider).syncUserToDatabase(
                 userId: user.id,
                 email: user.email ?? '',
-                avatarUrl: savedFile.path,
+                avatarUrl: remoteAvatarUrl,
               );
         }
 
