@@ -17,7 +17,7 @@ class AuthService {
   final SharedPreferences _prefs;
 
   String? _lastDevOtp;
-  String? get lastDevOtp => _lastDevOtp;
+  String? get lastDevOtp => kDebugMode ? _lastDevOtp : null;
 
   User? get currentUser {
     try {
@@ -155,8 +155,12 @@ class AuthService {
     required String email,
     bool shouldCreateUser = true,
   }) async {
-    final randomCode = (10000000 + Random().nextInt(90000000)).toString();
-    _lastDevOtp = randomCode;
+    if (kDebugMode) {
+      final randomCode = (10000000 + Random().nextInt(90000000)).toString();
+      _lastDevOtp = randomCode;
+    } else {
+      _lastDevOtp = null;
+    }
 
     try {
       await Supabase.instance.client.auth.signInWithOtp(
@@ -191,8 +195,8 @@ class AuthService {
     await _prefs.setBool('is_guest_user', false);
     final cleanToken = token.trim();
 
-    // Check if matching dev/fallback OTP
-    if (_lastDevOtp != null && cleanToken == _lastDevOtp) {
+    // Check if matching dev/fallback OTP (strictly debug mode only)
+    if (kDebugMode && _lastDevOtp != null && cleanToken == _lastDevOtp) {
       final user = currentUser;
       if (user != null) {
         await syncUserToDatabase(
@@ -261,8 +265,12 @@ class AuthService {
   }
 
   Future<void> sendPasswordReset(String email) async {
-    final randomCode = (10000000 + Random().nextInt(90000000)).toString();
-    _lastDevOtp = randomCode;
+    if (kDebugMode) {
+      final randomCode = (10000000 + Random().nextInt(90000000)).toString();
+      _lastDevOtp = randomCode;
+    } else {
+      _lastDevOtp = null;
+    }
 
     try {
       await Supabase.instance.client.auth.resetPasswordForEmail(email.trim());
@@ -278,8 +286,8 @@ class AuthService {
   }) async {
     final cleanToken = token.trim();
 
-    if (_lastDevOtp != null && cleanToken == _lastDevOtp) {
-      // Dev OTP accepted
+    if (kDebugMode && _lastDevOtp != null && cleanToken == _lastDevOtp) {
+      // Dev OTP accepted (debug mode only)
       try {
         await Supabase.instance.client.auth.updateUser(
           UserAttributes(password: newPassword),
