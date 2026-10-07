@@ -55,5 +55,25 @@ void main() {
       expect(response.text.contains('6-day interval'), true);
       expect(response.sourceCitation?.contains('ASRM'), true);
     });
+
+    test('Provides Roman Urdu responses when requested by context', () async {
+      const urduContext = AIRequestContext(
+        goal: AppGoal.trackCycle,
+        userName: 'Ayesha',
+        currentCycleDay: 14,
+        cycleLength: 28,
+        cyclePhaseName: 'Ovulation Window',
+        isRomanUrdu: true,
+      );
+
+      final response = await aiService.askQuestion(
+        context: urduContext,
+        question: 'Do I have PCOS?',
+      );
+
+      expect(response.text.contains('Main ek educational saathi hoon'), true);
+      expect(response.containsDoctorQuestions, true);
+    });
   });
 }
+

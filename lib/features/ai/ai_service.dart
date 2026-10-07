@@ -22,7 +22,7 @@ class AIRequestContext {
     this.pregnancyGestationalAge,
     this.pregnancyTrimester,
     this.recentSymptoms = const [],
-    this.isRomanUrdu = true,
+    this.isRomanUrdu = false,
   });
 
   Map<String, dynamic> toStructuredPromptData() {

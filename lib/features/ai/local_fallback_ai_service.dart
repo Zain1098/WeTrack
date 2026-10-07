@@ -232,7 +232,7 @@ class LocalFallbackAIService implements AIService {
         return const AIResponse(
           text:
               'URGENT SAFETY NOTICE:\n'
-              'If you experience sudden severe pelvic pain, heavy bleeding soaking a pad in an hour, fainting, high fever, or fluid leakage during pregnancy, seek immediate medical attention at an emergency clinic.',
+              'If you experience sudden severe pelvic pain, heavy bleeding soaking a pad in an hour, fainting, high fever, or fluid leakage during pregnancy, Seek immediate medical evaluation at an emergency clinic.',
           sourceCitation: 'ACOG Emergency Obstetric Guidance',
           isOfflineFallback: true,
         );
