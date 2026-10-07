@@ -39,9 +39,8 @@ class _Living3DMascotState extends State<Living3DMascot>
   // 4. Sparkle / Orbit particles animation
   late final AnimationController _sparkleController;
 
-  // 3D Perspective Tilt Coordinates
-  double _tiltX = 0.0;
-  double _tiltY = 0.0;
+  // 3D Perspective Tilt Coordinates (Driven via ValueNotifier to avoid 60fps setState rebuilds)
+  final ValueNotifier<Offset> _tiltNotifier = ValueNotifier<Offset>(Offset.zero);
 
   // Speech bubble state
   bool _showSpeechBubble = true;
@@ -108,6 +107,7 @@ class _Living3DMascotState extends State<Living3DMascot>
     _heartbeatController.dispose();
     _bounceController.dispose();
     _sparkleController.dispose();
+    _tiltNotifier.dispose();
     super.dispose();
   }
 
@@ -256,23 +256,19 @@ class _Living3DMascotState extends State<Living3DMascot>
     final assetImage = _getAssetImage();
     final growthScale = _getDynamicGrowthScale();
 
-    return GestureDetector(
-      onTap: _onTapMascot,
-      onPanUpdate: (details) {
-        // Dynamic 3D tilt tracking user finger drag
-        final delta = details.localPosition;
-        setState(() {
-          _tiltX = (delta.dy - 90) / 90 * -0.18;
-          _tiltY = (delta.dx - 90) / 90 * 0.18;
-        });
-      },
-      onPanEnd: (_) {
-        // Return smoothly to center
-        setState(() {
-          _tiltX = 0.0;
-          _tiltY = 0.0;
-        });
-      },
+    return RepaintBoundary(
+      child: GestureDetector(
+        onTap: _onTapMascot,
+        onPanUpdate: (details) {
+          final delta = details.localPosition;
+          _tiltNotifier.value = Offset(
+            (delta.dy - 90) / 90 * -0.18,
+            (delta.dx - 90) / 90 * 0.18,
+          );
+        },
+        onPanEnd: (_) {
+          _tiltNotifier.value = Offset.zero;
+        },
       child: AnimatedBuilder(
         animation: Listenable.merge([
           _floatAnim,
@@ -288,14 +284,17 @@ class _Living3DMascotState extends State<Living3DMascot>
           final heartbeatGlowVal = _heartbeatGlow.value;
           final sparkleProgress = _sparkleController.value;
 
-          return Transform(
-            alignment: Alignment.center,
-            transform: Matrix4.identity()
-              ..setEntry(3, 2, 0.0015) // Deep 3D perspective
-              ..rotateX(_tiltX)
-              ..rotateY(_tiltY),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+          return ValueListenableBuilder<Offset>(
+            valueListenable: _tiltNotifier,
+            builder: (context, tilt, _) {
+              return Transform(
+                alignment: Alignment.center,
+                transform: Matrix4.identity()
+                  ..setEntry(3, 2, 0.0015) // Deep 3D perspective
+                  ..rotateX(tilt.dx)
+                  ..rotateY(tilt.dy),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
               children: [
                 // 1. Floating Dynamic Roman Urdu Dialogue Bubble
                 if (_showSpeechBubble)
@@ -600,12 +599,15 @@ class _Living3DMascotState extends State<Living3DMascot>
                       ),
                     ),
                   ),
+                  ],
                 ],
-              ],
-            ),
-          );
-        },
-      ),
-    );
+              ),
+            );
+          },
+        );
+      },
+    ),
+  ),
+);
   }
 }
