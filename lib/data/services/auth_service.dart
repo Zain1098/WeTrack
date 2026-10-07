@@ -27,7 +27,13 @@ class AuthService {
     }
   }
 
-  bool get isAuthenticated => currentUser != null;
+  bool get isGuestUser => _prefs.getBool('is_guest_user') ?? false;
+
+  bool get isAuthenticated => currentUser != null || isGuestUser;
+
+  Future<void> continueAsGuest() async {
+    await _prefs.setBool('is_guest_user', true);
+  }
 
   Stream<AuthState> get authStateChanges {
     try {

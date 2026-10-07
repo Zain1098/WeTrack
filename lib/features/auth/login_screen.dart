@@ -8,6 +8,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/services/auth_service.dart';
 import '../app_providers.dart';
 import '../main_navigation_shell.dart';
+import '../settings/pin_lock_screen.dart';
+import '../onboarding/onboarding_screen.dart';
 
 enum AuthScreenMode {
   login,
@@ -95,18 +97,58 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     try {
       _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
         if (data.event == AuthChangeEvent.signedIn && mounted) {
-          ref.invalidate(userProfileProvider);
-          if (widget.onSuccess != null) {
-            widget.onSuccess!();
-          } else {
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (_) => const MainNavigationShell()),
-              (route) => false,
-            );
-          }
+          _navigateToNextScreen();
         }
       });
     } catch (_) {}
+  }
+
+  void _navigateToNextScreen() {
+    if (!mounted) return;
+    if (widget.onSuccess != null) {
+      widget.onSuccess!();
+      return;
+    }
+    ref.invalidate(userProfileProvider);
+    final repo = ref.read(localStorageRepositoryProvider);
+    final profile = ref.read(userProfileProvider);
+    final isLocked = repo.getPinCode() != null;
+
+    if (isLocked) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const PinLockScreen()),
+        (route) => false,
+      );
+    } else if (!profile.hasCompletedOnboarding) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (_) => OnboardingScreen(
+            onComplete: () {
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const MainNavigationShell()),
+                (route) => false,
+              );
+            },
+          ),
+        ),
+        (route) => false,
+      );
+    } else {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const MainNavigationShell()),
+        (route) => false,
+      );
+    }
+  }
+
+  Future<void> _continueAsGuest() async {
+    setState(() => _isLoading = true);
+    final auth = ref.read(authServiceProvider);
+    await auth.continueAsGuest();
+    if (mounted) {
+      setState(() => _isLoading = false);
+      _navigateToNextScreen();
+    }
   }
 
   @override
@@ -369,15 +411,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       );
 
       if (mounted) {
-        if (widget.onSuccess != null) {
-          widget.onSuccess!();
-        } else {
-          ref.invalidate(userProfileProvider);
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (_) => const MainNavigationShell()),
-            (route) => false,
-          );
-        }
+        _navigateToNextScreen();
       }
     } on AuthException catch (e) {
       if (e.message.toLowerCase().contains('email not confirmed')) {
@@ -1174,6 +1208,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
             // Bottom Toggle Text
             _buildBottomToggleLink(),
+
+            // Guest / Offline Mode Option
+            if (_mode == AuthScreenMode.login || _mode == AuthScreenMode.signUp) ...[
+              const SizedBox(height: 12),
+              Center(
+                child: TextButton.icon(
+                  onPressed: _isLoading ? null : _continueAsGuest,
+                  icon: const Icon(Icons.shield_outlined, size: 16, color: Color(0xFF7E60BF)),
+                  label: Text(
+                    'Continue as Guest (Offline Mode)',
+                    style: GoogleFonts.nunito(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF7E60BF),
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ],
         ],
       ),

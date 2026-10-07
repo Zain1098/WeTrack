@@ -7,8 +7,8 @@ import 'package:wetrack/features/app_providers.dart';
 import 'package:wetrack/main.dart';
 
 void main() {
-  testWidgets('WeTrack app initializes and renders title', (WidgetTester tester) async {
-    SharedPreferences.setMockInitialValues({'is_guest_user': true});
+  testWidgets('Unauthenticated user lands on Login screen', (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({'is_guest_user': false});
     final prefs = await SharedPreferences.getInstance();
     final repo = LocalStorageRepository(prefs);
     final auth = AuthService(prefs);
@@ -27,5 +27,27 @@ void main() {
 
     // Verify unauthenticated user lands on the Login screen
     expect(find.textContaining('Welcome Back'), findsWidgets);
+  });
+
+  testWidgets('Guest user bypasses Login screen into app', (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({'is_guest_user': true});
+    final prefs = await SharedPreferences.getInstance();
+    final repo = LocalStorageRepository(prefs);
+    final auth = AuthService(prefs);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          localStorageRepositoryProvider.overrideWithValue(repo),
+          authServiceProvider.overrideWithValue(auth),
+        ],
+        child: const WeTrackApp(),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    // Verify guest user does not see Login screen
+    expect(find.textContaining('Welcome Back'), findsNothing);
   });
 }
