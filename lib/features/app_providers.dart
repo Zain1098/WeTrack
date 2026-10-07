@@ -121,7 +121,13 @@ class PeriodEntriesNotifier extends Notifier<List<PeriodEntry>> {
   @override
   List<PeriodEntry> build() {
     final repo = ref.watch(localStorageRepositoryProvider);
-    return repo.getPeriodEntries();
+    final entries = repo.getPeriodEntries();
+    // Backfill cycle history if existing entries are present but history is empty
+    if (entries.isNotEmpty && repo.getCycleRecords().isEmpty) {
+      final records = CycleCalculationService.generateCycleRecordsFromEntries(entries);
+      repo.saveCycleRecords(records);
+    }
+    return entries;
   }
 
   Future<void> logPeriodDay({
@@ -138,13 +144,25 @@ class PeriodEntriesNotifier extends Notifier<List<PeriodEntry>> {
       loggedAt: DateTime.now(),
     );
     await repo.savePeriodEntry(entry);
-    state = repo.getPeriodEntries();
+    final updated = repo.getPeriodEntries();
+    state = updated;
+
+    // Automatically recalculate and sync completed/ongoing cycle history
+    final records = CycleCalculationService.generateCycleRecordsFromEntries(updated);
+    await repo.saveCycleRecords(records);
+    ref.read(cycleHistoryProvider.notifier).refresh();
   }
 
   Future<void> removePeriodDay(String id) async {
     final repo = ref.read(localStorageRepositoryProvider);
     await repo.deletePeriodEntry(id);
-    state = repo.getPeriodEntries();
+    final updated = repo.getPeriodEntries();
+    state = updated;
+
+    // Automatically recalculate and sync completed/ongoing cycle history
+    final records = CycleCalculationService.generateCycleRecordsFromEntries(updated);
+    await repo.saveCycleRecords(records);
+    ref.read(cycleHistoryProvider.notifier).refresh();
   }
 }
 
@@ -165,6 +183,17 @@ class CycleHistoryNotifier extends Notifier<List<CycleRecord>> {
     final list = [...state, record];
     state = list;
     await repo.saveCycleRecords(list);
+  }
+
+  Future<void> setRecords(List<CycleRecord> records) async {
+    final repo = ref.read(localStorageRepositoryProvider);
+    state = records;
+    await repo.saveCycleRecords(records);
+  }
+
+  void refresh() {
+    final repo = ref.read(localStorageRepositoryProvider);
+    state = repo.getCycleRecords();
   }
 }
 

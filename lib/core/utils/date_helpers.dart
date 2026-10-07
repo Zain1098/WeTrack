@@ -39,4 +39,14 @@ class DateHelpers {
   static String formatMonthYear(DateTime dt) {
     return DateFormat('MMMM yyyy').format(dt);
   }
+
+  /// Safely adds calendar days without DST duration drift
+  static DateTime addDays(DateTime dt, int days) {
+    return DateTime(dt.year, dt.month, dt.day + days);
+  }
+
+  /// Safely subtracts calendar days without DST duration drift
+  static DateTime subtractDays(DateTime dt, int days) {
+    return DateTime(dt.year, dt.month, dt.day - days);
+  }
 }

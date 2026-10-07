@@ -1,4 +1,5 @@
 import '../models/cycle_record.dart';
+import '../models/period_entry.dart';
 import '../../core/constants/medical_constants.dart';
 import '../../core/utils/date_helpers.dart';
 
@@ -89,14 +90,83 @@ class CycleCalculationService {
     return (sum / validLengths.length).round();
   }
 
+  /// Automatically segments and groups raw [PeriodEntry] logs into structured [CycleRecord]s.
+  /// Bleeding days separated by <= 3 non-bleeding days belong to the same period episode.
+  /// Each cycle begins at the start of one episode and ends the day prior to the next episode.
+  static List<CycleRecord> generateCycleRecordsFromEntries(List<PeriodEntry> entries) {
+    if (entries.isEmpty) return [];
+
+    // Sort chronologically ascending
+    final sorted = [...entries]..sort((a, b) => a.date.compareTo(b.date));
+
+    // Group into bleeding episodes
+    final List<List<PeriodEntry>> episodes = [];
+    List<PeriodEntry> currentEpisode = [];
+
+    for (final entry in sorted) {
+      if (currentEpisode.isEmpty) {
+        currentEpisode.add(entry);
+      } else {
+        final daysDiff = DateHelpers.daysBetween(currentEpisode.last.date, entry.date);
+        if (daysDiff <= 3) {
+          currentEpisode.add(entry);
+        } else {
+          episodes.add(currentEpisode);
+          currentEpisode = [entry];
+        }
+      }
+    }
+    if (currentEpisode.isNotEmpty) {
+      episodes.add(currentEpisode);
+    }
+
+    final List<CycleRecord> records = [];
+
+    for (int i = 0; i < episodes.length; i++) {
+      final episode = episodes[i];
+      final startDate = DateHelpers.toDateOnly(episode.first.date);
+      final lastBleedDate = DateHelpers.toDateOnly(episode.last.date);
+      final periodDurationDays = DateHelpers.daysBetween(startDate, lastBleedDate) + 1;
+
+      if (i < episodes.length - 1) {
+        final nextEpisodeStart = DateHelpers.toDateOnly(episodes[i + 1].first.date);
+        final cycleLengthDays = DateHelpers.daysBetween(startDate, nextEpisodeStart);
+        final endDate = DateHelpers.subtractDays(nextEpisodeStart, 1);
+        final isAnomalous = cycleLengthDays < MedicalConstants.minPlausibleCycleLengthDays ||
+            cycleLengthDays > MedicalConstants.maxPlausibleCycleLengthDays;
+
+        records.add(CycleRecord(
+          id: 'cycle_${startDate.millisecondsSinceEpoch}',
+          startDate: startDate,
+          endDate: endDate,
+          cycleLengthDays: cycleLengthDays,
+          periodDurationDays: periodDurationDays,
+          isAnomalous: isAnomalous,
+        ));
+      } else {
+        // Ongoing/current cycle (not completed yet)
+        records.add(CycleRecord(
+          id: 'cycle_${startDate.millisecondsSinceEpoch}',
+          startDate: startDate,
+          endDate: null,
+          cycleLengthDays: null,
+          periodDurationDays: periodDurationDays,
+          isAnomalous: false,
+        ));
+      }
+    }
+
+    // Sort descending by startDate so most recent cycle is first
+    records.sort((a, b) => b.startDate.compareTo(a.startDate));
+    return records;
+  }
+
   /// Calculates estimated next period start date
   static DateTime calculateNextPeriod({
     required DateTime lastPeriodStartDate,
     required int cycleLength,
   }) {
-    return DateHelpers.toDateOnly(
-      lastPeriodStartDate.add(Duration(days: cycleLength)),
-    );
+    return DateHelpers.addDays(lastPeriodStartDate, cycleLength);
   }
 
   /// Calculates estimated ovulation day (Cycle length minus luteal phase, typically 14 days)
@@ -106,17 +176,14 @@ class CycleCalculationService {
     int lutealLength = MedicalConstants.defaultLutealPhaseDays,
   }) {
     final ovulationDayOffset = cycleLength - lutealLength;
-    return DateHelpers.toDateOnly(
-      lastPeriodStartDate.add(Duration(days: ovulationDayOffset)),
-    );
+    return DateHelpers.addDays(lastPeriodStartDate, ovulationDayOffset);
   }
 
   /// ASRM 6-day fertile window: 5 days prior to estimated ovulation plus ovulation day
   static DateTime calculateFertileWindowStart(DateTime estimatedOvulation) {
-    return DateHelpers.toDateOnly(
-      estimatedOvulation.subtract(
-        const Duration(days: MedicalConstants.fertileWindowLeadingDays),
-      ),
+    return DateHelpers.subtractDays(
+      estimatedOvulation,
+      MedicalConstants.fertileWindowLeadingDays,
     );
   }
 

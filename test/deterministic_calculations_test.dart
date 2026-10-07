@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wetrack/core/constants/medical_constants.dart';
 import 'package:wetrack/data/models/cycle_record.dart';
+import 'package:wetrack/data/models/period_entry.dart';
 import 'package:wetrack/data/models/pregnancy_record.dart';
 import 'package:wetrack/data/services/cycle_calculation_service.dart';
 import 'package:wetrack/data/services/pregnancy_calculation_service.dart';
@@ -129,6 +130,48 @@ void main() {
       );
 
       // Ignores 10 days, averages (30 + 30) / 2 = 30
+      expect(avg, 30);
+    });
+
+    test('generateCycleRecordsFromEntries segments episodes and calculates cycle lengths correctly', () {
+      final entries = [
+        // Episode 1 (Jan 1 - Jan 4)
+        PeriodEntry(id: '1', date: DateTime(2026, 1, 1), flow: FlowIntensity.heavy, loggedAt: DateTime.now()),
+        PeriodEntry(id: '2', date: DateTime(2026, 1, 2), flow: FlowIntensity.medium, loggedAt: DateTime.now()),
+        PeriodEntry(id: '3', date: DateTime(2026, 1, 3), flow: FlowIntensity.light, loggedAt: DateTime.now()),
+        PeriodEntry(id: '4', date: DateTime(2026, 1, 4), flow: FlowIntensity.spotting, loggedAt: DateTime.now()),
+        // Episode 2 (Jan 29 - Jan 31) -> Cycle 1 length = 28 days
+        PeriodEntry(id: '5', date: DateTime(2026, 1, 29), flow: FlowIntensity.heavy, loggedAt: DateTime.now()),
+        PeriodEntry(id: '6', date: DateTime(2026, 1, 30), flow: FlowIntensity.medium, loggedAt: DateTime.now()),
+        PeriodEntry(id: '7', date: DateTime(2026, 1, 31), flow: FlowIntensity.light, loggedAt: DateTime.now()),
+        // Episode 3 (Mar 2) -> Cycle 2 length = 32 days
+        PeriodEntry(id: '8', date: DateTime(2026, 3, 2), flow: FlowIntensity.medium, loggedAt: DateTime.now()),
+      ];
+
+      final records = CycleCalculationService.generateCycleRecordsFromEntries(entries);
+      expect(records.length, 3);
+
+      // Newest first
+      final currentCycle = records[0];
+      expect(currentCycle.startDate, DateTime(2026, 3, 2));
+      expect(currentCycle.isCompleted, false);
+      expect(currentCycle.cycleLengthDays, null);
+
+      final cycle2 = records[1];
+      expect(cycle2.startDate, DateTime(2026, 1, 29));
+      expect(cycle2.endDate, DateTime(2026, 3, 1));
+      expect(cycle2.cycleLengthDays, 32);
+      expect(cycle2.periodDurationDays, 3);
+      expect(cycle2.isCompleted, true);
+
+      final cycle1 = records[2];
+      expect(cycle1.startDate, DateTime(2026, 1, 1));
+      expect(cycle1.endDate, DateTime(2026, 1, 28));
+      expect(cycle1.cycleLengthDays, 28);
+      expect(cycle1.periodDurationDays, 4);
+      expect(cycle1.isCompleted, true);
+
+      final avg = CycleCalculationService.calculateAverageCycleLength(history: records);
       expect(avg, 30);
     });
   });
