@@ -7,12 +7,15 @@ class PregnancyCalculationResult {
   final int completedWeeks;
   final int remainingDays;
   final String formattedGestationalAge; // e.g. "16 weeks 2 days"
+  final String formattedGestationalAgeUrdu; // e.g. "16 hafte 2 din"
   final int currentTrimester; // 1, 2, or 3
   final int daysUntilDueDate;
   final DateTime estimatedDueDate;
   final String dueDateCountdownText;
+  final String dueDateCountdownTextUrdu;
   final double progressFraction; // 0.0 to 1.0
   final String babyFruitComparison;
+  final String babyFruitComparisonUrdu;
   final String babyApproximateLength;
   final String babyApproximateWeight;
   final String weeklyMilestoneSummary;
@@ -26,12 +29,15 @@ class PregnancyCalculationResult {
     required this.completedWeeks,
     required this.remainingDays,
     required this.formattedGestationalAge,
+    this.formattedGestationalAgeUrdu = '',
     required this.currentTrimester,
     required this.daysUntilDueDate,
     required this.estimatedDueDate,
     required this.dueDateCountdownText,
+    this.dueDateCountdownTextUrdu = '',
     required this.progressFraction,
     required this.babyFruitComparison,
+    this.babyFruitComparisonUrdu = '',
     required this.babyApproximateLength,
     required this.babyApproximateWeight,
     required this.weeklyMilestoneSummary,
@@ -62,7 +68,8 @@ class PregnancyCalculationService {
 
     final completedWeeks = totalDays ~/ 7;
     final remainingDays = totalDays % 7;
-    final formattedAge = '$completedWeeks hafte $remainingDays din';
+    final formattedAge = '$completedWeeks weeks $remainingDays days';
+    final formattedAgeUrdu = '$completedWeeks hafte $remainingDays din';
 
     // Trimester
     int trimester;
@@ -77,12 +84,16 @@ class PregnancyCalculationService {
     // Days to EDD
     final daysToEdd = DateHelpers.daysBetween(now, effectiveEdd);
     final String countdownText;
+    final String countdownTextUrdu;
     if (daysToEdd > 0) {
-      countdownText = '$daysToEdd din baqi hain delivery tak';
+      countdownText = '$daysToEdd days until estimated due date';
+      countdownTextUrdu = '$daysToEdd din baqi hain delivery tak';
     } else if (daysToEdd == 0) {
-      countdownText = 'Mubarak ho! Delivery ka din aaj hi hai! 🌸';
+      countdownText = 'Estimated due date is today!';
+      countdownTextUrdu = 'Mubarak ho! Delivery ka din aaj hi hai! 🌸';
     } else {
-      countdownText = 'Estimated due date guzar chuki hai (Doctor se milein)';
+      countdownText = 'Estimated due date passed';
+      countdownTextUrdu = 'Estimated due date guzar chuki hai (Doctor se milein)';
     }
 
     final progress = (totalDays / MedicalConstants.standardGestationDays).clamp(0.0, 1.0);
@@ -94,12 +105,15 @@ class PregnancyCalculationService {
       completedWeeks: completedWeeks,
       remainingDays: remainingDays,
       formattedGestationalAge: formattedAge,
+      formattedGestationalAgeUrdu: formattedAgeUrdu,
       currentTrimester: trimester,
       daysUntilDueDate: daysToEdd,
       estimatedDueDate: effectiveEdd,
       dueDateCountdownText: countdownText,
+      dueDateCountdownTextUrdu: countdownTextUrdu,
       progressFraction: progress,
       babyFruitComparison: milestoneInfo['fruit']!,
+      babyFruitComparisonUrdu: milestoneInfo['fruitUrdu'] ?? milestoneInfo['fruit']!,
       babyApproximateLength: milestoneInfo['length']!,
       babyApproximateWeight: milestoneInfo['weight']!,
       weeklyMilestoneSummary: milestoneInfo['summary']!,
@@ -111,7 +125,8 @@ class PregnancyCalculationService {
   static Map<String, String> getMilestoneForWeek(int week) {
     if (week < 4) {
       return {
-        'fruit': 'Khashkhash ka Daana (Poppy Seed)',
+        'fruit': 'Poppy Seed',
+        'fruitUrdu': 'Khashkhash ka Daana (Poppy Seed)',
         'length': '1 mm',
         'weight': '< 1 g',
         'summary': 'Blastocyst implantation occurring. Cells dividing rapidly into embryo and placenta.',
@@ -120,7 +135,8 @@ class PregnancyCalculationService {
       };
     } else if (week <= 8) {
       return {
-        'fruit': 'Raspberry 🍓',
+        'fruit': 'Raspberry',
+        'fruitUrdu': 'Raspberry 🍓',
         'length': '1.6 cm',
         'weight': '1 g',
         'summary': 'Tiny facial features, neural tube formed, and tiny limb buds developing.',
@@ -129,7 +145,8 @@ class PregnancyCalculationService {
       };
     } else if (week <= 12) {
       return {
-        'fruit': 'Aalubukhara (Plum) 🍑',
+        'fruit': 'Plum',
+        'fruitUrdu': 'Aalubukhara (Plum) 🍑',
         'length': '5.4 cm',
         'weight': '14 g',
         'summary': 'Fingers and toes clearly separated. Reflexes and vocal cords forming.',
@@ -138,7 +155,8 @@ class PregnancyCalculationService {
       };
     } else if (week <= 16) {
       return {
-        'fruit': 'Avocado 🥑',
+        'fruit': 'Avocado',
+        'fruitUrdu': 'Avocado 🥑',
         'length': '11.6 cm',
         'weight': '100 g',
         'summary': 'Baby can make facial expressions and hear muffled sounds. Heart pumps 25 quarts a day.',
@@ -147,7 +165,8 @@ class PregnancyCalculationService {
       };
     } else if (week <= 20) {
       return {
-        'fruit': 'Kela (Banana) 🍌',
+        'fruit': 'Banana',
+        'fruitUrdu': 'Kela (Banana) 🍌',
         'length': '25 cm',
         'weight': '300 g',
         'summary': 'Halfway mark! Vernix protects skin, and mother may feel first butterfly flutters (quickening).',
@@ -156,7 +175,8 @@ class PregnancyCalculationService {
       };
     } else if (week <= 24) {
       return {
-        'fruit': 'Kharbooza (Cantaloupe) 🍈',
+        'fruit': 'Cantaloupe',
+        'fruitUrdu': 'Kharbooza (Cantaloupe) 🍈',
         'length': '30 cm',
         'weight': '600 g',
         'summary': 'Lungs forming air sacs. Baby responds to familiar voices and music.',
@@ -165,7 +185,8 @@ class PregnancyCalculationService {
       };
     } else if (week <= 28) {
       return {
-        'fruit': 'Baingan (Eggplant) 🍆',
+        'fruit': 'Eggplant',
+        'fruitUrdu': 'Baingan (Eggplant) 🍆',
         'length': '37 cm',
         'weight': '1 kg',
         'summary': 'Third trimester begins! Baby opens eyes and practices regular sleep-wake cycles.',
@@ -174,7 +195,8 @@ class PregnancyCalculationService {
       };
     } else if (week <= 32) {
       return {
-        'fruit': 'Anaanas (Pineapple) 🍍',
+        'fruit': 'Pineapple',
+        'fruitUrdu': 'Anaanas (Pineapple) 🍍',
         'length': '42 cm',
         'weight': '1.7 kg',
         'summary': 'Bones hardening, rapid brain growth, and regular kicking or stretching movements.',
@@ -183,7 +205,8 @@ class PregnancyCalculationService {
       };
     } else if (week <= 36) {
       return {
-        'fruit': 'Papita / Melon 🍈',
+        'fruit': 'Melon',
+        'fruitUrdu': 'Papita / Melon 🍈',
         'length': '47 cm',
         'weight': '2.6 kg',
         'summary': 'Rapidly gaining protective fat layers. Head may start settling lower into pelvis.',
@@ -192,7 +215,8 @@ class PregnancyCalculationService {
       };
     } else {
       return {
-        'fruit': 'Tarbooz (Watermelon) 🍉',
+        'fruit': 'Watermelon',
+        'fruitUrdu': 'Tarbooz (Watermelon) 🍉',
         'length': '50 cm',
         'weight': '3.4 kg',
         'summary': 'Full term! Fully developed lungs and ready to meet you any day now.',
