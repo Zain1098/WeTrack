@@ -262,5 +262,27 @@ void main() {
       expect(res.dueDateCountdownText, 'Estimated due date is today!');
       expect(res.completedWeeks, 40);
     });
+
+    test('Calculates and returns localized Roman Urdu gestational milestones correctly', () {
+      final lmp = DateTime(2026, 1, 1);
+      final record = PregnancyRecord.fromLmp(lmp);
+
+      // Reference date: March 12, 2026 (Day 70 -> 10 weeks 0 days)
+      final refDate = DateTime(2026, 3, 12);
+      final res = PregnancyCalculationService.calculate(
+        record: record,
+        referenceDate: refDate,
+      );
+
+      expect(res.formattedGestationalAgeUrdu, '10 hafte 0 din');
+      expect(res.babyFruitComparisonUrdu.contains('Aloocha') || res.babyFruitComparisonUrdu.contains('Plum'), true);
+      expect(res.dueDateCountdownTextUrdu.contains('din baqi'), true);
+      expect(res.weeklyMilestoneSummaryUrdu.isNotEmpty, true);
+
+      // Test milestone for week 28 (Eggplant / Baingan)
+      final milestone28 = PregnancyCalculationService.getMilestoneForWeek(28);
+      expect(milestone28['fruitUrdu'], 'Baingan (Eggplant) 🍆');
+      expect(milestone28['summaryUrdu']!.contains('3rd Trimester shuru'), true);
+    });
   });
 }

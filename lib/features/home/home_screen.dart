@@ -58,6 +58,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final cycleCalc = ref.watch(cycleCalculationProvider);
     final pregCalc = ref.watch(pregnancyCalculationProvider);
     final s = ref.watch(appStringsProvider);
+    final currentLanguage = ref.watch(languageProvider);
+    final isUrdu = currentLanguage == AppLanguage.romanUrdu;
     final todaySymptoms = ref.watch(symptomEntriesProvider).where(
           (s) => DateHelpers.daysBetween(s.date, DateTime.now()) == 0,
         );
@@ -95,6 +97,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     cycleCalc,
                     isPregnancyMode: isPregnancyMode,
                     pregCalc: pregCalc,
+                    isUrdu: isUrdu,
                   ),
                   const SizedBox(height: 12),
 
@@ -186,7 +189,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ] else ...[
                   if (_selectedSection == 0) ...[
                     // 1. Hero 3D Baby Milestone Card with Completed/Remaining tags & Time-Machine
-                    _buildBabyHeroCard(context, pregCalc),
+                    _buildBabyHeroCard(context, pregCalc, isUrdu: isUrdu),
                     const SizedBox(height: 14),
 
                     // 4. Mother & Baby Daily Tracker (Kicks, Water, Vitamins)
@@ -194,7 +197,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     const SizedBox(height: 14),
 
                     // 5. Weekly Baby Development Card in Roman Urdu with Sensory Badges
-                    _buildBabyWeeklyInsightCard(pregCalc),
+                    _buildBabyWeeklyInsightCard(pregCalc, isUrdu: isUrdu),
                   ] else if (_selectedSection == 1) ...[
                     // 1. 3D Ultrasound Sonogram Console Card
                     _buildDoctorScanHeroCard(context, pregCalc),
@@ -1339,12 +1342,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   // 1. Hero 3D Baby Milestone Card with Completed/Remaining tags & Time-Machine
-  Widget _buildBabyHeroCard(BuildContext context, PregnancyCalculationResult pregCalc) {
+  Widget _buildBabyHeroCard(BuildContext context, PregnancyCalculationResult pregCalc, {required bool isUrdu}) {
     final activeWeek = _previewGestationWeek ?? pregCalc.completedWeeks;
     final isPreviewing = _previewGestationWeek != null && _previewGestationWeek != pregCalc.completedWeeks;
     final remaining = (40 - activeWeek).clamp(0, 40);
     final milestone = PregnancyCalculationService.getMilestoneForWeek(activeWeek);
-    final fruit = milestone['fruit'] ?? pregCalc.babyFruitComparison;
+    final fruit = isUrdu
+        ? (milestone['fruitUrdu'] ?? pregCalc.babyFruitComparisonUrdu)
+        : (milestone['fruit'] ?? pregCalc.babyFruitComparison);
     final length = milestone['length'] ?? pregCalc.babyApproximateLength;
     final weight = milestone['weight'] ?? pregCalc.babyApproximateWeight;
 
@@ -1446,7 +1451,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   children: [
                     const Text('✨ ', style: TextStyle(fontSize: 11)),
                     Text(
-                      '$activeWeek Hafte Done',
+                      isUrdu ? '$activeWeek Hafte Done' : '$activeWeek Weeks Done',
                       style: const TextStyle(
                         fontSize: 11.5,
                         fontWeight: FontWeight.bold,
@@ -1475,7 +1480,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   children: [
                     const Text('⏳ ', style: TextStyle(fontSize: 11)),
                     Text(
-                      '$remaining Hafte Baqi',
+                      isUrdu ? '$remaining Hafte Baqi' : '$remaining Weeks Left',
                       style: const TextStyle(
                         fontSize: 11.5,
                         fontWeight: FontWeight.bold,
@@ -1491,7 +1496,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
           // Gestational Age & Due Date Countdown
           Text(
-            '$activeWeek hafte ${pregCalc.remainingDays} din',
+            isUrdu
+                ? '$activeWeek hafte ${pregCalc.remainingDays} din'
+                : '$activeWeek weeks ${pregCalc.remainingDays} days',
             style: const TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w900,
@@ -1501,8 +1508,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           const SizedBox(height: 4),
           Text(
             isPreviewing
-                ? 'Baby is hafte aisi shape aur size mein hota hai'
-                : pregCalc.dueDateCountdownText,
+                ? (isUrdu
+                    ? 'Baby is hafte aisi shape aur size mein hota hai'
+                    : 'Baby has this shape and size this week')
+                : (isUrdu ? pregCalc.dueDateCountdownTextUrdu : pregCalc.dueDateCountdownText),
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
@@ -1535,7 +1544,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Baby size: $fruit',
+                        isUrdu ? 'Baby ka size: $fruit' : 'Baby size: $fruit',
                         style: const TextStyle(
                           fontSize: 13.5,
                           fontWeight: FontWeight.bold,
@@ -1544,7 +1553,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Lambai: $length • Wazan: $weight',
+                        isUrdu ? 'Lambai: $length • Wazan: $weight' : 'Length: $length • Weight: $weight',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -2541,13 +2550,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   // 5. Weekly Baby Development Card in Roman Urdu with Sensory Badges
-  Widget _buildBabyWeeklyInsightCard(PregnancyCalculationResult pregCalc) {
+  Widget _buildBabyWeeklyInsightCard(PregnancyCalculationResult pregCalc, {required bool isUrdu}) {
     final activeWeek = _previewGestationWeek ?? pregCalc.completedWeeks;
     final milestone = PregnancyCalculationService.getMilestoneForWeek(activeWeek);
-    final summaryUrdu = (milestone['summaryUrdu']?.isNotEmpty ?? false)
-        ? milestone['summaryUrdu']!
-        : (pregCalc.weeklyMilestoneSummaryUrdu.isNotEmpty
-            ? pregCalc.weeklyMilestoneSummaryUrdu
+    final summary = isUrdu
+        ? ((milestone['summaryUrdu']?.isNotEmpty ?? false)
+            ? milestone['summaryUrdu']!
+            : (pregCalc.weeklyMilestoneSummaryUrdu.isNotEmpty
+                ? pregCalc.weeklyMilestoneSummaryUrdu
+                : pregCalc.weeklyMilestoneSummary))
+        : ((milestone['summary']?.isNotEmpty ?? false)
+            ? milestone['summary']!
             : pregCalc.weeklyMilestoneSummary);
 
     return ClayCard(
@@ -2573,16 +2586,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Week $activeWeek: Baby Ki Taraqqi & Hawaas',
+                      isUrdu
+                          ? 'Week $activeWeek: Baby Ki Taraqqi & Hawaas'
+                          : 'Week $activeWeek: Baby Development & Senses',
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w900,
                         color: ClayColors.textPrimary,
                       ),
                     ),
-                    const Text(
-                      'Sensory development aur naye marhale',
-                      style: TextStyle(fontSize: 11, color: ClayColors.textSecondary),
+                    Text(
+                      isUrdu
+                          ? 'Sensory development aur naye marhale'
+                          : 'Sensory development and weekly milestones',
+                      style: const TextStyle(fontSize: 11, color: ClayColors.textSecondary),
                     ),
                   ],
                 ),
@@ -2598,7 +2615,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               border: Border.all(color: const Color(0xFFFFE4EC)),
             ),
             child: Text(
-              summaryUrdu,
+              summary,
               style: const TextStyle(
                 fontSize: 12.5,
                 color: Color(0xFF2E1A47),
@@ -2658,6 +2675,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     CycleCalculationResult cycleCalc, {
     bool isPregnancyMode = false,
     PregnancyCalculationResult? pregCalc,
+    bool isUrdu = false,
   }) {
     final hour = DateTime.now().hour;
     final greeting = (hour >= 5 && hour < 12)
@@ -2712,7 +2730,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    'Hamal Hafta $weeks · Trimester ${pregCalc.trimester}',
+                    isUrdu
+                        ? 'Hamal Hafta $weeks · Trimester ${pregCalc.trimester}'
+                        : 'Pregnancy Week $weeks · Trimester ${pregCalc.trimester}',
                     style: const TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
@@ -2724,7 +2744,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              '🍼 Baby Update: Size ~${pregCalc.babyFruitComparison}',
+              isUrdu
+                  ? '🍼 Baby Update: Size ~${pregCalc.babyFruitComparisonUrdu}'
+                  : '🍼 Baby Update: Size ~${pregCalc.babyFruitComparison}',
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w800,

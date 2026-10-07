@@ -5,6 +5,7 @@ import '../../core/widgets/clay_card.dart';
 import '../../core/widgets/disclaimer_badge.dart';
 import '../../core/utils/date_helpers.dart';
 import '../../core/localization/language_provider.dart';
+import '../../core/localization/app_strings.dart';
 import '../../data/models/user_profile.dart';
 import '../../data/services/pregnancy_calculation_service.dart';
 import '../app_providers.dart';
@@ -21,6 +22,8 @@ class InsightsScreen extends ConsumerWidget {
     final pregCalc = ref.watch(pregnancyCalculationProvider);
     final appointments = ref.watch(appointmentsProvider);
     final s = ref.watch(appStringsProvider);
+    final currentLanguage = ref.watch(languageProvider);
+    final isUrdu = currentLanguage == AppLanguage.romanUrdu;
 
     return Scaffold(
       backgroundColor: ClayColors.canvas,
@@ -36,7 +39,7 @@ class InsightsScreen extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      isPregnancyMode ? 'Hamal Ka Hisaab' : s.insightsTitle,
+                      isPregnancyMode ? (isUrdu ? 'Hamal Ka Hisaab' : 'Pregnancy Overview') : s.insightsTitle,
                       style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
@@ -47,14 +50,14 @@ class InsightsScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  DisclaimerBadge(text: isPregnancyMode ? 'Pregnancy Analytics' : s.insightsSubtitle),
+                  DisclaimerBadge(text: isPregnancyMode ? (isUrdu ? 'Hamal Analytics' : 'Pregnancy Analytics') : s.insightsSubtitle),
                 ],
               ),
               const SizedBox(height: 18),
 
               if (isPregnancyMode) ...[
                 // --- PREGNANCY ANALYTICS & HISAAB ---
-                _buildPregnancyAnalytics(context, pregCalc, appointments),
+                _buildPregnancyAnalytics(context, pregCalc, appointments, isUrdu: isUrdu),
               ] else ...[
                 // --- CYCLE ANALYTICS ---
                 _buildCycleAnalytics(context, profile, cycleCalc, history, s),
@@ -72,24 +75,27 @@ class InsightsScreen extends ConsumerWidget {
   Widget _buildPregnancyAnalytics(
     BuildContext context,
     PregnancyCalculationResult? pregCalc,
-    List<dynamic> appointments,
-  ) {
+    List<dynamic> appointments, {
+    required bool isUrdu,
+  }) {
     if (pregCalc == null) {
       return ClayCard(
         padding: const EdgeInsets.all(24),
         child: Column(
-          children: const [
-            Icon(Icons.child_care_rounded, size: 48, color: Color(0xFFE91E63)),
-            SizedBox(height: 12),
+          children: [
+            const Icon(Icons.child_care_rounded, size: 48, color: Color(0xFFE91E63)),
+            const SizedBox(height: 12),
             Text(
-              'Pregnancy Record Setup Required',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              isUrdu ? 'Hamal Record Setup Zaroori Hai' : 'Pregnancy Record Setup Required',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 6),
+            const SizedBox(height: 6),
             Text(
-              'Home screen par ja kar apne hamal ki tareekh confirm karein.',
+              isUrdu
+                  ? 'Home screen par ja kar apne hamal ki tareekh confirm karein.'
+                  : 'Go to the Home screen to confirm your pregnancy due date.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12.5, color: ClayColors.textSecondary),
+              style: const TextStyle(fontSize: 12.5, color: ClayColors.textSecondary),
             ),
           ],
         ),
@@ -135,7 +141,7 @@ class InsightsScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      '$weeks W $days D',
+                      isUrdu ? '$weeks hafte $days din' : '$weeks W $days D',
                       style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
@@ -144,7 +150,9 @@ class InsightsScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Hafta $weeks (Trim ${pregCalc.trimester})',
+                      isUrdu
+                          ? 'Hafta $weeks (Trim ${pregCalc.trimester})'
+                          : 'Week $weeks (Trim ${pregCalc.trimester})',
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
@@ -184,7 +192,7 @@ class InsightsScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      '$daysToEdd Din',
+                      isUrdu ? '$daysToEdd Din' : '$daysToEdd Days',
                       style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
@@ -192,9 +200,9 @@ class InsightsScreen extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 2),
-                    const Text(
-                      'Delivery Tak Baqi',
-                      style: TextStyle(
+                    Text(
+                      isUrdu ? 'Delivery Tak Baqi' : 'Until Due Date',
+                      style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF00796B),
@@ -279,7 +287,9 @@ class InsightsScreen extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Baby Size: ${pregCalc.babyFruitComparison}',
+                      isUrdu
+                          ? 'Baby Size: ${pregCalc.babyFruitComparisonUrdu}'
+                          : 'Baby Size: ${pregCalc.babyFruitComparison}',
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w800,
@@ -288,7 +298,9 @@ class InsightsScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      'Length ~${pregCalc.babyApproximateLength} · Wazan ~${pregCalc.babyApproximateWeight}',
+                      isUrdu
+                          ? 'Lambai ~${pregCalc.babyApproximateLength} · Wazan ~${pregCalc.babyApproximateWeight}'
+                          : 'Length ~${pregCalc.babyApproximateLength} · Weight ~${pregCalc.babyApproximateWeight}',
                       style: const TextStyle(
                         fontSize: 12,
                         color: Color(0xFFAD1457),
