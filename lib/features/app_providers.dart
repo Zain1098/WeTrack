@@ -147,9 +147,15 @@ class PeriodEntriesNotifier extends Notifier<List<PeriodEntry>> {
     final updated = repo.getPeriodEntries();
     state = updated;
 
-    // Automatically recalculate and sync completed/ongoing cycle history
-    final records = CycleCalculationService.generateCycleRecordsFromEntries(updated);
-    await repo.saveCycleRecords(records);
+    // Automatically recalculate and sync completed/ongoing cycle history, merging legacy records safely
+    final existingRecords = repo.getCycleRecords();
+    final derived = CycleCalculationService.generateCycleRecordsFromEntries(updated);
+    final merged = CycleCalculationService.mergeCycleRecords(
+      existingRecords: existingRecords,
+      derivedRecords: derived,
+      entries: updated,
+    );
+    await repo.saveCycleRecords(merged);
     ref.read(cycleHistoryProvider.notifier).refresh();
   }
 
@@ -159,9 +165,15 @@ class PeriodEntriesNotifier extends Notifier<List<PeriodEntry>> {
     final updated = repo.getPeriodEntries();
     state = updated;
 
-    // Automatically recalculate and sync completed/ongoing cycle history
-    final records = CycleCalculationService.generateCycleRecordsFromEntries(updated);
-    await repo.saveCycleRecords(records);
+    // Automatically recalculate and sync completed/ongoing cycle history, merging legacy records safely
+    final existingRecords = repo.getCycleRecords();
+    final derived = CycleCalculationService.generateCycleRecordsFromEntries(updated);
+    final merged = CycleCalculationService.mergeCycleRecords(
+      existingRecords: existingRecords,
+      derivedRecords: derived,
+      entries: updated,
+    );
+    await repo.saveCycleRecords(merged);
     ref.read(cycleHistoryProvider.notifier).refresh();
   }
 }

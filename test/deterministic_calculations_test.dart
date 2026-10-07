@@ -174,6 +174,42 @@ void main() {
       final avg = CycleCalculationService.calculateAverageCycleLength(history: records);
       expect(avg, 30);
     });
+
+    test('mergeCycleRecords preserves legacy CycleRecords when no matching period entries exist', () {
+      final legacyRecord = CycleRecord(
+        id: 'legacy_cycle_nov_2025',
+        startDate: DateTime(2025, 11, 1),
+        endDate: DateTime(2025, 11, 28),
+        cycleLengthDays: 28,
+        periodDurationDays: 5,
+        isAnomalous: false,
+      );
+
+      final entries = [
+        // Only 2026 entries logged; no matching entries for Nov 2025
+        PeriodEntry(id: '1', date: DateTime(2026, 1, 1), flow: FlowIntensity.medium, loggedAt: DateTime.now()),
+        PeriodEntry(id: '2', date: DateTime(2026, 1, 2), flow: FlowIntensity.medium, loggedAt: DateTime.now()),
+        PeriodEntry(id: '3', date: DateTime(2026, 1, 3), flow: FlowIntensity.light, loggedAt: DateTime.now()),
+      ];
+
+      final derived = CycleCalculationService.generateCycleRecordsFromEntries(entries);
+      expect(derived.length, 1);
+      expect(derived.first.startDate, DateTime(2026, 1, 1));
+
+      // Merge existing legacy records with derived records
+      final merged = CycleCalculationService.mergeCycleRecords(
+        existingRecords: [legacyRecord],
+        derivedRecords: derived,
+        entries: entries,
+      );
+
+      // Both the newly derived cycle and the legacy cycle without entries must exist
+      expect(merged.length, 2);
+      expect(merged.any((c) => c.id == 'legacy_cycle_nov_2025'), true);
+      expect(merged.any((c) => c.startDate == DateTime(2025, 11, 1)), true);
+      expect(merged.first.startDate, DateTime(2026, 1, 1)); // Sorted newest first
+      expect(merged.last.startDate, DateTime(2025, 11, 1));
+    });
   });
 
   group('PregnancyCalculationService Tests', () {

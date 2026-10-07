@@ -161,6 +161,43 @@ class CycleCalculationService {
     return records;
   }
 
+  /// Safely merges newly derived [CycleRecord]s with [existingRecords].
+  /// Any existing cycle record that cannot be re-derived from [entries]
+  /// (such as legacy or imported cycle records with no underlying PeriodEntry logs)
+  /// is preserved rather than overwritten.
+  static List<CycleRecord> mergeCycleRecords({
+    required List<CycleRecord> existingRecords,
+    required List<CycleRecord> derivedRecords,
+    required List<PeriodEntry> entries,
+  }) {
+    if (existingRecords.isEmpty) return derivedRecords;
+    if (derivedRecords.isEmpty) return existingRecords;
+
+    final List<CycleRecord> merged = [...derivedRecords];
+
+    for (final legacy in existingRecords) {
+      // Check if any period entry falls within or near this legacy cycle's start date
+      final hasMatchingEntry = entries.any((entry) {
+        final days = DateHelpers.daysBetween(legacy.startDate, entry.date).abs();
+        return days <= 3;
+      });
+
+      // Also check if any derived record already shares this start date
+      final hasMatchingDerived = derivedRecords.any((derived) {
+        return DateHelpers.daysBetween(legacy.startDate, derived.startDate).abs() <= 3;
+      });
+
+      if (!hasMatchingEntry && !hasMatchingDerived) {
+        // No underlying period entries cover this record; keep legacy record
+        merged.add(legacy);
+      }
+    }
+
+    // Sort descending by startDate so newest cycle is first
+    merged.sort((a, b) => b.startDate.compareTo(a.startDate));
+    return merged;
+  }
+
   /// Calculates estimated next period start date
   static DateTime calculateNextPeriod({
     required DateTime lastPeriodStartDate,
