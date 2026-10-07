@@ -30,9 +30,54 @@ class LocalStorageRepository {
 
   LocalStorageRepository(this._prefs);
 
+  String _activeKey(String base) {
+    final uid = _prefs.getString('active_user_id') ?? 'guest';
+    return '${uid}_$base';
+  }
+
+  String? _getString(String base) {
+    final uid = _prefs.getString('active_user_id') ?? 'guest';
+    if (uid == 'guest') {
+      return _prefs.getString(_activeKey(base)) ?? _prefs.getString(base);
+    }
+    return _prefs.getString(_activeKey(base));
+  }
+
+  Future<void> _setString(String base, String value) async {
+    final uid = _prefs.getString('active_user_id') ?? 'guest';
+    await _prefs.setString(_activeKey(base), value);
+    if (uid == 'guest') {
+      await _prefs.setString(base, value);
+    }
+  }
+
+  List<String>? _getStringList(String base) {
+    final uid = _prefs.getString('active_user_id') ?? 'guest';
+    if (uid == 'guest') {
+      return _prefs.getStringList(_activeKey(base)) ?? _prefs.getStringList(base);
+    }
+    return _prefs.getStringList(_activeKey(base));
+  }
+
+  Future<void> _setStringList(String base, List<String> value) async {
+    final uid = _prefs.getString('active_user_id') ?? 'guest';
+    await _prefs.setStringList(_activeKey(base), value);
+    if (uid == 'guest') {
+      await _prefs.setStringList(base, value);
+    }
+  }
+
+  Future<void> _remove(String base) async {
+    final uid = _prefs.getString('active_user_id') ?? 'guest';
+    await _prefs.remove(_activeKey(base));
+    if (uid == 'guest') {
+      await _prefs.remove(base);
+    }
+  }
+
   // User Profile
   UserProfile? getUserProfile() {
-    final raw = _prefs.getString(_kUserProfileKey);
+    final raw = _getString(_kUserProfileKey);
     if (raw == null) return null;
     try {
       return UserProfile.fromJson(jsonDecode(raw) as Map<String, dynamic>);
@@ -42,12 +87,12 @@ class LocalStorageRepository {
   }
 
   Future<void> saveUserProfile(UserProfile profile) async {
-    await _prefs.setString(_kUserProfileKey, jsonEncode(profile.toJson()));
+    await _setString(_kUserProfileKey, jsonEncode(profile.toJson()));
   }
 
   // Period Entries
   List<PeriodEntry> getPeriodEntries() {
-    final list = _prefs.getStringList(_kPeriodEntriesKey) ?? [];
+    final list = _getStringList(_kPeriodEntriesKey) ?? [];
     return list
         .map((str) => PeriodEntry.fromJson(jsonDecode(str) as Map<String, dynamic>))
         .toList()
@@ -60,18 +105,18 @@ class LocalStorageRepository {
     entries.removeWhere((e) => DateHelpers.daysBetween(e.date, entry.date) == 0);
     entries.add(entry);
     final jsonList = entries.map((e) => jsonEncode(e.toJson())).toList();
-    await _prefs.setStringList(_kPeriodEntriesKey, jsonList);
+    await _setStringList(_kPeriodEntriesKey, jsonList);
   }
 
   Future<void> deletePeriodEntry(String id) async {
     final entries = getPeriodEntries()..removeWhere((e) => e.id == id);
     final jsonList = entries.map((e) => jsonEncode(e.toJson())).toList();
-    await _prefs.setStringList(_kPeriodEntriesKey, jsonList);
+    await _setStringList(_kPeriodEntriesKey, jsonList);
   }
 
   // Cycle Records
   List<CycleRecord> getCycleRecords() {
-    final list = _prefs.getStringList(_kCycleRecordsKey) ?? [];
+    final list = _getStringList(_kCycleRecordsKey) ?? [];
     return list
         .map((str) => CycleRecord.fromJson(jsonDecode(str) as Map<String, dynamic>))
         .toList()
@@ -80,12 +125,12 @@ class LocalStorageRepository {
 
   Future<void> saveCycleRecords(List<CycleRecord> records) async {
     final jsonList = records.map((e) => jsonEncode(e.toJson())).toList();
-    await _prefs.setStringList(_kCycleRecordsKey, jsonList);
+    await _setStringList(_kCycleRecordsKey, jsonList);
   }
 
   // Symptom Entries
   List<SymptomEntry> getSymptomEntries() {
-    final list = _prefs.getStringList(_kSymptomEntriesKey) ?? [];
+    final list = _getStringList(_kSymptomEntriesKey) ?? [];
     return list
         .map((str) => SymptomEntry.fromJson(jsonDecode(str) as Map<String, dynamic>))
         .toList()
@@ -97,12 +142,12 @@ class LocalStorageRepository {
     entries.removeWhere((e) => DateHelpers.daysBetween(e.date, entry.date) == 0);
     entries.add(entry);
     final jsonList = entries.map((e) => jsonEncode(e.toJson())).toList();
-    await _prefs.setStringList(_kSymptomEntriesKey, jsonList);
+    await _setStringList(_kSymptomEntriesKey, jsonList);
   }
 
   // Fertility Observations (TTC)
   List<FertilityObservation> getFertilityObservations() {
-    final list = _prefs.getStringList(_kFertilityObsKey) ?? [];
+    final list = _getStringList(_kFertilityObsKey) ?? [];
     return list
         .map((str) =>
             FertilityObservation.fromJson(jsonDecode(str) as Map<String, dynamic>))
@@ -115,12 +160,12 @@ class LocalStorageRepository {
     list.removeWhere((e) => DateHelpers.daysBetween(e.date, obs.date) == 0);
     list.add(obs);
     final jsonList = list.map((e) => jsonEncode(e.toJson())).toList();
-    await _prefs.setStringList(_kFertilityObsKey, jsonList);
+    await _setStringList(_kFertilityObsKey, jsonList);
   }
 
   // Pregnancy Record
   PregnancyRecord? getPregnancyRecord() {
-    final raw = _prefs.getString(_kPregnancyRecordKey);
+    final raw = _getString(_kPregnancyRecordKey);
     if (raw == null) return null;
     try {
       return PregnancyRecord.fromJson(jsonDecode(raw) as Map<String, dynamic>);
@@ -130,16 +175,16 @@ class LocalStorageRepository {
   }
 
   Future<void> savePregnancyRecord(PregnancyRecord record) async {
-    await _prefs.setString(_kPregnancyRecordKey, jsonEncode(record.toJson()));
+    await _setString(_kPregnancyRecordKey, jsonEncode(record.toJson()));
   }
 
   Future<void> clearPregnancyRecord() async {
-    await _prefs.remove(_kPregnancyRecordKey);
+    await _remove(_kPregnancyRecordKey);
   }
 
   // Appointments
   List<Appointment> getAppointments() {
-    final list = _prefs.getStringList(_kAppointmentsKey) ?? [];
+    final list = _getStringList(_kAppointmentsKey) ?? [];
     return list
         .map((str) => Appointment.fromJson(jsonDecode(str) as Map<String, dynamic>))
         .toList()
@@ -151,18 +196,18 @@ class LocalStorageRepository {
     list.removeWhere((e) => e.id == apt.id);
     list.add(apt);
     final jsonList = list.map((e) => jsonEncode(e.toJson())).toList();
-    await _prefs.setStringList(_kAppointmentsKey, jsonList);
+    await _setStringList(_kAppointmentsKey, jsonList);
   }
 
   Future<void> deleteAppointment(String id) async {
     final list = getAppointments()..removeWhere((e) => e.id == id);
     final jsonList = list.map((e) => jsonEncode(e.toJson())).toList();
-    await _prefs.setStringList(_kAppointmentsKey, jsonList);
+    await _setStringList(_kAppointmentsKey, jsonList);
   }
 
   // Partner Share Permission
   PartnerSharePermission getPartnerSharePermission() {
-    final raw = _prefs.getString(_kPartnerKey);
+    final raw = _getString(_kPartnerKey);
     if (raw == null) return const PartnerSharePermission();
     try {
       return PartnerSharePermission.fromJson(
@@ -173,12 +218,12 @@ class LocalStorageRepository {
   }
 
   Future<void> savePartnerSharePermission(PartnerSharePermission p) async {
-    await _prefs.setString(_kPartnerKey, jsonEncode(p.toJson()));
+    await _setString(_kPartnerKey, jsonEncode(p.toJson()));
   }
 
   // Notification Preferences
   NotificationPreferences getNotificationPreferences() {
-    final raw = _prefs.getString(_kNotificationsKey);
+    final raw = _getString(_kNotificationsKey);
     if (raw == null) return const NotificationPreferences();
     try {
       return NotificationPreferences.fromJson(
@@ -189,26 +234,26 @@ class LocalStorageRepository {
   }
 
   Future<void> saveNotificationPreferences(NotificationPreferences p) async {
-    await _prefs.setString(_kNotificationsKey, jsonEncode(p.toJson()));
+    await _setString(_kNotificationsKey, jsonEncode(p.toJson()));
   }
 
   // Clear Only Cycle & Health Logs (Keep Account & Profile)
   Future<void> clearHealthLogsOnly() async {
-    await _prefs.remove(_kPeriodEntriesKey);
-    await _prefs.remove(_kCycleRecordsKey);
-    await _prefs.remove(_kSymptomEntriesKey);
-    await _prefs.remove(_kFertilityObsKey);
-    await _prefs.remove(_kPregnancyRecordKey);
-    await _prefs.remove(_kAppointmentsKey);
+    await _remove(_kPeriodEntriesKey);
+    await _remove(_kCycleRecordsKey);
+    await _remove(_kSymptomEntriesKey);
+    await _remove(_kFertilityObsKey);
+    await _remove(_kPregnancyRecordKey);
+    await _remove(_kAppointmentsKey);
   }
 
   // PIN Lock & Privacy
-  String? getPinCode() => _prefs.getString(_kPinCodeKey);
+  String? getPinCode() => _getString(_kPinCodeKey);
   Future<void> setPinCode(String? pin) async {
     if (pin == null) {
-      await _prefs.remove(_kPinCodeKey);
+      await _remove(_kPinCodeKey);
     } else {
-      await _prefs.setString(_kPinCodeKey, pin);
+      await _setString(_kPinCodeKey, pin);
     }
   }
 
@@ -216,13 +261,13 @@ class LocalStorageRepository {
   Map<String, dynamic> exportAllData() {
     return {
       'exportedAt': DateTime.now().toIso8601String(),
-      'profile': _prefs.getString(_kUserProfileKey),
-      'periods': _prefs.getStringList(_kPeriodEntriesKey),
-      'cycles': _prefs.getStringList(_kCycleRecordsKey),
-      'symptoms': _prefs.getStringList(_kSymptomEntriesKey),
-      'fertility': _prefs.getStringList(_kFertilityObsKey),
-      'pregnancy': _prefs.getString(_kPregnancyRecordKey),
-      'appointments': _prefs.getStringList(_kAppointmentsKey),
+      'profile': _getString(_kUserProfileKey),
+      'periods': _getStringList(_kPeriodEntriesKey),
+      'cycles': _getStringList(_kCycleRecordsKey),
+      'symptoms': _getStringList(_kSymptomEntriesKey),
+      'fertility': _getStringList(_kFertilityObsKey),
+      'pregnancy': _getString(_kPregnancyRecordKey),
+      'appointments': _getStringList(_kAppointmentsKey),
     };
   }
 

@@ -3,6 +3,8 @@ import 'package:wetrack/core/constants/medical_constants.dart';
 import 'package:wetrack/data/models/cycle_record.dart';
 import 'package:wetrack/data/models/period_entry.dart';
 import 'package:wetrack/data/models/pregnancy_record.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:wetrack/data/repositories/local_storage_repository.dart';
 import 'package:wetrack/data/services/cycle_calculation_service.dart';
 import 'package:wetrack/data/services/pregnancy_calculation_service.dart';
 
@@ -319,6 +321,45 @@ void main() {
       final milestone28 = PregnancyCalculationService.getMilestoneForWeek(28);
       expect(milestone28['fruitUrdu'], 'Baingan (Eggplant) 🍆');
       expect(milestone28['summaryUrdu']!.contains('3rd Trimester shuru'), true);
+    });
+  });
+
+  group('User Namespacing & Isolation Tests', () {
+    test('LocalStorageRepository namespaces data between guest and authenticated user', () async {
+      SharedPreferences.setMockInitialValues({'active_user_id': 'guest'});
+      final prefs = await SharedPreferences.getInstance();
+      final repo = LocalStorageRepository(prefs);
+
+      // Save as guest
+      await repo.savePeriodEntry(PeriodEntry(
+        id: 'guest_entry',
+        date: DateTime(2026, 1, 1),
+        flow: FlowIntensity.medium,
+        loggedAt: DateTime.now(),
+      ));
+      expect(repo.getPeriodEntries().length, 1);
+      expect(repo.getPeriodEntries().first.id, 'guest_entry');
+
+      // Switch active user to authenticated user
+      await prefs.setString('active_user_id', 'user_abc_123');
+
+      // Authenticated user should see clean isolated namespace
+      expect(repo.getPeriodEntries(), isEmpty);
+
+      // Save for authenticated user
+      await repo.savePeriodEntry(PeriodEntry(
+        id: 'user_entry',
+        date: DateTime(2026, 2, 1),
+        flow: FlowIntensity.heavy,
+        loggedAt: DateTime.now(),
+      ));
+      expect(repo.getPeriodEntries().length, 1);
+      expect(repo.getPeriodEntries().first.id, 'user_entry');
+
+      // Switch back to guest: guest data is untouched
+      await prefs.setString('active_user_id', 'guest');
+      expect(repo.getPeriodEntries().length, 1);
+      expect(repo.getPeriodEntries().first.id, 'guest_entry');
     });
   });
 }
