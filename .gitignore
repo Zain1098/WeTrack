@@ -65,3 +65,12 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Secrets, keystores, and sensitive configuration
+.env
+*.env
+google-services.json
+key.properties
+*.jks
+*.keystore
+
