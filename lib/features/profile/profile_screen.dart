@@ -193,6 +193,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
         // Optionally upload to remote Supabase Storage and sync public URL (never leak local device path)
         String? remoteAvatarUrl;
+        bool cloudUploadFailed = false;
         final user = ref.read(authServiceProvider).currentUser;
         if (user != null) {
           try {
@@ -210,7 +211,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 .from('avatars')
                 .getPublicUrl(fileName);
           } catch (e) {
-            debugPrint('Note: Remote avatar storage upload skipped ($e)');
+            cloudUploadFailed = true;
+            debugPrint('Note: Remote avatar storage upload failed ($e)');
           }
 
           await ref.read(authServiceProvider).syncUserToDatabase(
@@ -221,14 +223,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         }
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Profile picture permanently saved! ✨'),
-              backgroundColor: const Color(0xFF2E7D32),
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            ),
-          );
+          if (cloudUploadFailed) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Saved locally on device, but cloud sync failed (not synced).'),
+                backgroundColor: const Color(0xFFE65100),
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Profile picture permanently saved! ✨'),
+                backgroundColor: const Color(0xFF2E7D32),
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+            );
+          }
         }
       }
     } catch (e) {
