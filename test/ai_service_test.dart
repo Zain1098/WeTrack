@@ -72,7 +72,14 @@ void main() {
       );
 
       expect(response.text.contains('Main ek educational saathi hoon'), true);
+      expect(response.text.contains('clinical tashkhees (diagnosis) nahi kar sakti'), true);
+      expect(response.text.contains('🌸 **PCOS Kya Hota Hai?**'), true);
+      expect(response.text.contains('Doctor se Poochne Ke Ahem Sawalaat'), true);
+      expect(response.text.contains('hormone tests (LH, FSH, Androgens)'), true);
+      expect(response.text.contains('Pur-sakoon Rahein'), true);
       expect(response.containsDoctorQuestions, true);
+      expect(response.isOfflineFallback, true);
+      expect(response.sourceCitation, 'ASRM Guidelines & Rotterdam PCOS Criteria');
     });
   });
 }

@@ -1,9 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:wetrack/data/models/user_profile.dart';
 import 'package:wetrack/data/repositories/local_storage_repository.dart';
 import 'package:wetrack/data/services/auth_service.dart';
 import 'package:wetrack/features/app_providers.dart';
+import 'package:wetrack/features/home/home_screen.dart';
 import 'package:wetrack/main.dart';
 
 void main() {
@@ -34,6 +36,7 @@ void main() {
     final prefs = await SharedPreferences.getInstance();
     final repo = LocalStorageRepository(prefs);
     final auth = AuthService(prefs);
+    await repo.saveUserProfile(UserProfile.defaultProfile().copyWith(hasCompletedOnboarding: true));
 
     await tester.pumpWidget(
       ProviderScope(
@@ -45,9 +48,12 @@ void main() {
       ),
     );
 
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
 
-    // Verify guest user does not see Login screen
+    // Verify guest user does not see Login screen and positively renders HomeScreen
     expect(find.textContaining('Welcome Back'), findsNothing);
+    expect(find.byType(HomeScreen), findsOneWidget);
+    expect(find.textContaining('Mahwari'), findsWidgets);
   });
 }
