@@ -39,6 +39,10 @@ class _Living3DMascotState extends State<Living3DMascot>
   // 4. Sparkle / Orbit particles animation
   late final AnimationController _sparkleController;
 
+  // 5. Natural Blinking Loop
+  late final AnimationController _blinkController;
+  late final Animation<double> _blinkAnim;
+
   // 3D Perspective Tilt Coordinates (Driven via ValueNotifier to avoid 60fps setState rebuilds)
   final ValueNotifier<Offset> _tiltNotifier = ValueNotifier<Offset>(Offset.zero);
 
@@ -99,6 +103,18 @@ class _Living3DMascotState extends State<Living3DMascot>
       vsync: this,
       duration: const Duration(milliseconds: 4200),
     )..repeat();
+
+    // Natural Blinking Loop (3.5s)
+    _blinkController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 3500),
+    )..repeat();
+
+    _blinkAnim = TweenSequence<double>([
+      TweenSequenceItem(tween: ConstantTween(1.0), weight: 88),
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.08).chain(CurveTween(curve: Curves.easeIn)), weight: 5),
+      TweenSequenceItem(tween: Tween(begin: 0.08, end: 1.0).chain(CurveTween(curve: Curves.easeOut)), weight: 7),
+    ]).animate(_blinkController);
   }
 
   @override
@@ -107,6 +123,7 @@ class _Living3DMascotState extends State<Living3DMascot>
     _heartbeatController.dispose();
     _bounceController.dispose();
     _sparkleController.dispose();
+    _blinkController.dispose();
     _tiltNotifier.dispose();
     super.dispose();
   }
@@ -276,6 +293,7 @@ class _Living3DMascotState extends State<Living3DMascot>
           _heartbeatController,
           _bounceAnim,
           _sparkleController,
+          _blinkAnim,
         ]),
         builder: (context, child) {
           final floatOffset = _floatAnim.value;
@@ -482,20 +500,89 @@ class _Living3DMascotState extends State<Living3DMascot>
                                   ),
                                 ],
                               ),
-                              child: ClipOval(
-                                child: Image.asset(
-                                  assetImage,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (ctx, err, stack) => Center(
-                                    child: Icon(
-                                      widget.isPregnancyMode
-                                          ? Icons.child_care_rounded
-                                          : Icons.face_3_rounded,
-                                      size: 72,
-                                      color: auraColor,
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  ClipOval(
+                                    child: Image.asset(
+                                      assetImage,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (ctx, err, stack) => Center(
+                                        child: Icon(
+                                          widget.isPregnancyMode
+                                              ? Icons.child_care_rounded
+                                              : Icons.face_3_rounded,
+                                          size: 72,
+                                          color: auraColor,
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
+                                  if (!widget.isPregnancyMode) ...[
+                                    // Living Blinking Eyelid Overlay
+                                    Positioned(
+                                      top: 48,
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Transform.scale(
+                                            scaleY: _blinkAnim.value,
+                                            child: Container(
+                                              width: 17,
+                                              height: 17,
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                color: _blinkAnim.value < 0.2
+                                                    ? const Color(0xFF4A148C).withValues(alpha: 0.85)
+                                                    : Colors.transparent,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 32),
+                                          Transform.scale(
+                                            scaleY: _blinkAnim.value,
+                                            child: Container(
+                                              width: 17,
+                                              height: 17,
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                color: _blinkAnim.value < 0.2
+                                                    ? const Color(0xFF4A148C).withValues(alpha: 0.85)
+                                                    : Colors.transparent,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    // Rosy Blushing Cheeks
+                                    Positioned(
+                                      top: 68,
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Container(
+                                            width: 22,
+                                            height: 11,
+                                            decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.circular(10),
+                                              color: const Color(0xFFFF4081).withValues(alpha: 0.30),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 50),
+                                          Container(
+                                            width: 22,
+                                            height: 11,
+                                            decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.circular(10),
+                                              color: const Color(0xFFFF4081).withValues(alpha: 0.30),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ],
                               ),
                             ),
                           ),

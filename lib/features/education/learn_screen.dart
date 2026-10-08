@@ -7,6 +7,7 @@ import '../../core/localization/app_strings.dart';
 import '../../core/localization/language_provider.dart';
 import '../../core/widgets/clay_language_toggle.dart';
 import '../../data/models/user_profile.dart';
+import '../../core/widgets/living_3d_character.dart';
 import '../app_providers.dart';
 
 class LearnArticle {
@@ -239,6 +240,19 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // 3D Motion Health Educator Character
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.only(top: 4, bottom: 2),
+                child: Living3DCharacter(
+                  persona: CharacterPersona.learn,
+                  size: 100,
+                  showSpeechBubble: true,
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+
             // Category Filter Pills with 3D Depth
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,

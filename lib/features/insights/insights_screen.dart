@@ -8,6 +8,7 @@ import '../../core/localization/language_provider.dart';
 import '../../core/localization/app_strings.dart';
 import '../../data/models/user_profile.dart';
 import '../../data/services/pregnancy_calculation_service.dart';
+import '../../core/widgets/living_3d_character.dart';
 import '../app_providers.dart';
 
 class InsightsScreen extends ConsumerWidget {
@@ -53,7 +54,22 @@ class InsightsScreen extends ConsumerWidget {
                   DisclaimerBadge(text: isPregnancyMode ? (isUrdu ? 'Hamal Analytics' : 'Pregnancy Analytics') : s.insightsSubtitle),
                 ],
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 12),
+
+              // 3D Motion Insights Analyst Character
+              Center(
+                child: Living3DCharacter(
+                  persona: isPregnancyMode
+                      ? CharacterPersona.homePregnancy
+                      : CharacterPersona.insights,
+                  pregnancyWeek: isPregnancyMode ? (pregCalc?.completedWeeks ?? 12) : null,
+                  cyclePhase: isPregnancyMode ? null : cycleCalc.currentPhase,
+                  cycleDay: isPregnancyMode ? null : cycleCalc.currentCycleDay,
+                  size: 105,
+                  showSpeechBubble: true,
+                ),
+              ),
+              const SizedBox(height: 14),
 
               if (isPregnancyMode) ...[
                 // --- PREGNANCY ANALYTICS & HISAAB ---

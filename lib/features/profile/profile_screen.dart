@@ -15,6 +15,7 @@ import '../dictionary/health_dictionary_modal.dart';
 import '../insights/insights_screen.dart';
 import '../notifications/notification_center_modal.dart';
 import '../partner/partner_hub_modal.dart';
+import '../../core/widgets/living_3d_character.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -1602,47 +1603,41 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                // Circular Pastel Pink Disc
-                Container(
-                  width: 146,
-                  height: 146,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: const RadialGradient(
-                      colors: [Color(0xFFFFEEF3), Color(0xFFFFD4E2)],
-                      center: Alignment.center,
-                      radius: 0.85,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFF04E78).withValues(alpha: 0.14),
-                        blurRadius: 18,
-                        offset: const Offset(0, 8),
+                // Avatar: Custom Photo OR Animated Living 3D Character
+                if (hasCustomImage)
+                  Container(
+                    width: 146,
+                    height: 146,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: const RadialGradient(
+                        colors: [Color(0xFFFFEEF3), Color(0xFFFFD4E2)],
+                        center: Alignment.center,
+                        radius: 0.85,
                       ),
-                    ],
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFF04E78).withValues(alpha: 0.14),
+                          blurRadius: 18,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: ClipOval(
+                      child: Image.file(
+                        File(profile.profileImagePath!),
+                        width: 146,
+                        height: 146,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  )
+                else
+                  const Living3DCharacter(
+                    persona: CharacterPersona.profile,
+                    size: 130,
+                    showSpeechBubble: true,
                   ),
-                  child: ClipOval(
-                    child: hasCustomImage
-                        ? Image.file(
-                            File(profile.profileImagePath!),
-                            width: 146,
-                            height: 146,
-                            fit: BoxFit.cover,
-                          )
-                        : Image.asset(
-                            'UI/Profile page character.png',
-                            width: 146,
-                            height: 146,
-                            fit: BoxFit.cover,
-                            alignment: Alignment.topCenter,
-                            errorBuilder: (context, error, stackTrace) => const Icon(
-                              Icons.person_rounded,
-                              size: 70,
-                              color: Color(0xFFF04E78),
-                            ),
-                          ),
-                  ),
-                ),
 
                 // Top-Left Pink Verified Badge (as seen in Omostate design)
                 Positioned(

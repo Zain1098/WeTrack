@@ -12,6 +12,7 @@ import '../cycle/log_period_modal.dart';
 import '../cycle/log_symptoms_modal.dart';
 import '../appointments/appointment_modal.dart';
 import '../pregnancy/kick_counter_modal.dart';
+import '../../core/widgets/living_3d_character.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
   const CalendarScreen({super.key});
@@ -79,7 +80,22 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   DisclaimerBadge(text: isPregnancyMode ? 'Clinical Schedule' : s.calendarDisclaimer),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
+
+              // 3D Motion Companion Character
+              Center(
+                child: Living3DCharacter(
+                  persona: isPregnancyMode
+                      ? CharacterPersona.homePregnancy
+                      : CharacterPersona.calendar,
+                  pregnancyWeek: isPregnancyMode ? (pregCalc?.completedWeeks ?? 12) : null,
+                  cyclePhase: isPregnancyMode ? null : cycleCalc.currentPhase,
+                  cycleDay: isPregnancyMode ? null : cycleCalc.currentCycleDay,
+                  size: 105,
+                  showSpeechBubble: true,
+                ),
+              ),
+              const SizedBox(height: 12),
 
               // Calendar Card Container
               ClayCard(
