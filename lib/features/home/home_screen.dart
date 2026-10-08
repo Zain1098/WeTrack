@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/clay_colors.dart';
 import '../../core/widgets/clay_card.dart';
@@ -24,7 +25,7 @@ import '../appointments/appointment_modal.dart';
 import '../safety/emergency_red_flags_modal.dart';
 import '../pregnancy/kick_counter_modal.dart';
 import '../partner/husband_care_card_modal.dart';
-import '../settings/settings_screen.dart';
+import '../partner/partner_hub_modal.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/localization/language_provider.dart';
 import '../../core/widgets/clay_language_toggle.dart';
@@ -977,6 +978,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   // 3D Partner Home Card
   Widget _buildPartnerHomeCard(BuildContext context) {
     final partner = ref.watch(partnerPermissionProvider);
+    final myShareCode = partner.myUniqueCode.isNotEmpty ? partner.myUniqueCode : 'WT-912-748';
     final isAllShared = partner.shareIntimacy &&
         partner.shareCycleDates &&
         partner.shareSymptoms &&
@@ -1003,39 +1005,59 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                   ],
                 ),
-                child: const Text('🧔', style: TextStyle(fontSize: 20)),
+                child: const Text('🧔', style: TextStyle(fontSize: 22)),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Shohar / Partner Mode Active',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: ClayColors.textPrimary,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          partner.isConnected ? (partner.partnerName.isNotEmpty ? partner.partnerName : 'Shohar Mode Active') : 'Shohar / Partner Mode',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: ClayColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: partner.isConnected ? const Color(0xFFE8F5E9) : const Color(0xFFEDE7F6),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            partner.isConnected ? 'Connected' : 'Offline',
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.bold,
+                              color: partner.isConnected ? const Color(0xFF2E7D32) : const Color(0xFF7B1FA2),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      isAllShared ? '🟢 By Default: Tamam Data Shared' : '🟠 Custom Privacy Settings',
+                      partner.isConnected
+                          ? (isAllShared ? '🟢 By Default: Tamam Data Shared' : '🟠 Custom Privacy Settings')
+                          : 'Connect for mutual care & family planning',
                       style: TextStyle(
                         fontSize: 11.5,
                         fontWeight: FontWeight.bold,
-                        color: isAllShared ? const Color(0xFF2E7D32) : const Color(0xFFE65100),
+                        color: partner.isConnected
+                            ? (isAllShared ? const Color(0xFF2E7D32) : const Color(0xFFE65100))
+                            : const Color(0xFF7A6A8D),
                       ),
                     ),
                   ],
                 ),
               ),
               GestureDetector(
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                  );
-                },
+                onTap: () => PartnerHubModal.show(context, initialTab: 1),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
@@ -1051,11 +1073,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          const Text(
-            'Partner ka matlab shohar ke sath mil kar family plan karna hai! Aapka intimacy / taluq, cycle dates, aur alamaat shohar ke sath synced hain taake dono mil kar planning karein. Agar koi cheez private rakhni ho to Settings se easily off kar sakti hain.',
-            style: TextStyle(fontSize: 12, color: ClayColors.textSecondary, height: 1.4),
+          Text(
+            partner.isConnected
+                ? 'Aapka aur shohar ka data synced hai taake mil kar planning aur khayal rakha ja sakay. Agar koi cheez private rakhni ho to Privacy settings se customize karein.'
+                : 'Partner ka matlab shohar ke sath mil kar family plan karna hai! Shohar ko apna secure code dein ya unka code enter kar ke foran connect karein.',
+            style: const TextStyle(fontSize: 12, color: ClayColors.textSecondary, height: 1.4),
           ),
           const SizedBox(height: 12),
+
+          // Last Love Message Alert
+          if (partner.lastCareMessage != null && partner.lastCareMessage!.isNotEmpty) ...[
+            Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF0F5),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFF8BBD0)),
+              ),
+              child: Row(
+                children: [
+                  const Text('💖', style: TextStyle(fontSize: 14)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Shohar Ka Paigham: "${partner.lastCareMessage}"',
+                      style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF880E4F)),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          // Pairing Code Strip
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
@@ -1065,27 +1118,50 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Row(
+                Row(
                   children: [
-                    Icon(Icons.vpn_key_rounded, size: 14, color: ClayColors.secondary),
-                    SizedBox(width: 6),
+                    const Icon(Icons.vpn_key_rounded, size: 14, color: ClayColors.secondary),
+                    const SizedBox(width: 6),
                     Text(
-                      'Code: WT-849-210',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: ClayColors.textPrimary),
+                      'Code: $myShareCode',
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: ClayColors.textPrimary),
                     ),
                   ],
                 ),
-                TextButton(
-                  style: TextButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                    padding: EdgeInsets.zero,
-                  ),
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Shohar pairing code copied to clipboard!')),
-                    );
-                  },
-                  child: const Text('Copy Code', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                Row(
+                  children: [
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                      ),
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: myShareCode));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Shohar pairing code ($myShareCode) copied!'),
+                            behavior: SnackBarBehavior.floating,
+                            backgroundColor: const Color(0xFF2E7D32),
+                          ),
+                        );
+                      },
+                      child: const Text('Copy Code', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                    ),
+                    const SizedBox(width: 4),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6A1B9A),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      onPressed: () => PartnerHubModal.show(context),
+                      child: const Text('Shohar Hub', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
                 ),
               ],
             ),

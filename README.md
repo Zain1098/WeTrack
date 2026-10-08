@@ -52,14 +52,19 @@ WeTrack combines deterministic medical guidelines with a comforting **3D Pastel 
 - **Native Roman Urdu**: Specifically tailored for South Asian cultural resonance and natural phrasing (e.g., *"Hamal Ka Mubarak Safar"*, *"Mahwari Ka Hisaab"*).
 - **1-Tap Dynamic Switcher**: Instantly toggle between English and Roman Urdu from the header or settings without restarting the application.
 
-### 🤝 6. Shohar / Partner Mode with Granular Privacy
-- **Secure Pairing**: Connect with spouse via unique pairing code for family planning.
-- **Granular Field-Level Permissions**: Toggle permissions individually:
-  - Intimacy & Intercourse logs
-  - Cycle & Period dates
-  - Pregnancy & Baby milestones
-  - Daily symptoms, pain & mood logs
-  - Doctor appointments & ultrasound scans
+### 🤝 6. Shohar / Partner Hub with 3D Claymorphism & Love Care Alerts
+- **Dynamic Secure Pairing**: Personal unique pairing code generation with 1-tap copy/share and real partner code validation.
+- **Cycle-Aware & Pregnancy Love & Care Alerts**:
+  - Live guidance tailored to wife's active cycle phase (period cramp relief, fertile window TTC advice, PMS sensitive days, weekly baby development in pregnancy).
+  - Practical Husband Do's & Don'ts checklist.
+- **Husband Quick Love Reactions**:
+  - 1-tap affectionate care buttons (*"❤️ Khayal rakhna apna"*, *"💊 Dawai le li?"*, *"☕ Garam chai laa doon?"*, *"🫂 Rest karo"*).
+  - Triggers instant notifications in the wife's In-App Notification Center.
+- **3-Tier Sharing Presets & Granular Privacy**:
+  - **Full Care**: Complete joint sync for collaborative family planning.
+  - **Essential Only**: Shares cycle dates and doctor appointments; keeps intimacy & symptoms strictly private.
+  - **Custom**: Granular toggles for intimacy, period dates, symptoms, pregnancy, appointments, and private diary notes.
+  - **Safety Disconnect**: 1-tap unpair/disconnect with confirmation dialog.
 
 ### 🛡️ 7. Comprehensive Data Sovereignty & Account Deletion
 - **JSON Data Export**: Download an unencrypted complete export of all local health logs at any time.

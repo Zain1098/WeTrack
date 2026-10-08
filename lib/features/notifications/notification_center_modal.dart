@@ -11,6 +11,7 @@ import '../pregnancy/positive_test_modal.dart';
 import '../pregnancy/kick_counter_modal.dart';
 import '../appointments/appointment_modal.dart';
 import '../cycle/log_symptoms_modal.dart';
+import '../partner/partner_hub_modal.dart';
 
 class NotificationCenterModal extends ConsumerStatefulWidget {
   final int initialTab;
@@ -338,6 +339,8 @@ class _NotificationCenterModalState extends ConsumerState<NotificationCenterModa
       AppointmentModal.show(context);
     } else if (actionType == 'open_symptoms') {
       LogSymptomsModal.show(context);
+    } else if (actionType == 'open_partner_hub') {
+      PartnerHubModal.show(context);
     }
   }
 

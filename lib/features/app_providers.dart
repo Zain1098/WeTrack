@@ -445,13 +445,94 @@ class PartnerPermissionNotifier extends Notifier<PartnerSharePermission> {
   @override
   PartnerSharePermission build() {
     final repo = ref.watch(localStorageRepositoryProvider);
-    return repo.getPartnerSharePermission();
+    var p = repo.getPartnerSharePermission();
+    if (p.myUniqueCode.isEmpty) {
+      final user = ref.read(authServiceProvider).currentUser;
+      final code = user != null && user.id.length >= 6
+          ? 'WT-${user.id.substring(0, 3).toUpperCase()}-${user.id.substring(user.id.length - 3).toUpperCase()}'
+          : 'WT-${DateTime.now().millisecondsSinceEpoch.toRadixString(36).toUpperCase().padRight(6, '0').substring(0, 6)}';
+      p = p.copyWith(myUniqueCode: code);
+      repo.savePartnerSharePermission(p);
+    }
+    return p;
   }
 
   Future<void> update(PartnerSharePermission permission) async {
     final repo = ref.read(localStorageRepositoryProvider);
     state = permission;
     await repo.savePartnerSharePermission(permission);
+  }
+
+  Future<void> connectPartner({
+    required String partnerCode,
+    required String partnerName,
+    String preset = 'full',
+  }) async {
+    final cleanCode = partnerCode.trim().toUpperCase();
+    final cleanName = partnerName.trim().isEmpty ? 'Shohar' : partnerName.trim();
+    final updated = state.copyWith(
+      isConnected: true,
+      partnerCode: cleanCode,
+      partnerName: cleanName,
+      connectedAt: DateTime.now(),
+      sharingPreset: preset,
+      shareCycleDates: true,
+      sharePregnancyMilestones: true,
+      shareAppointments: true,
+      shareSymptoms: preset != 'essential',
+      shareIntimacy: preset != 'essential',
+      sharePersonalNotes: false,
+    );
+    await update(updated);
+  }
+
+  Future<void> disconnectPartner() async {
+    final updated = state.copyWith(
+      isConnected: false,
+      partnerCode: '',
+      connectedAt: null,
+      lastCareMessage: null,
+      lastCareMessageTime: null,
+    );
+    await update(updated);
+    ref.invalidate(inAppNotificationsProvider);
+  }
+
+  Future<void> applyPreset(String preset) async {
+    PartnerSharePermission updated;
+    if (preset == 'full') {
+      updated = state.copyWith(
+        sharingPreset: 'full',
+        shareCycleDates: true,
+        sharePregnancyMilestones: true,
+        shareAppointments: true,
+        shareSymptoms: true,
+        shareIntimacy: true,
+        sharePersonalNotes: false,
+      );
+    } else if (preset == 'essential') {
+      updated = state.copyWith(
+        sharingPreset: 'essential',
+        shareCycleDates: true,
+        sharePregnancyMilestones: true,
+        shareAppointments: true,
+        shareSymptoms: false,
+        shareIntimacy: false,
+        sharePersonalNotes: false,
+      );
+    } else {
+      updated = state.copyWith(sharingPreset: 'custom');
+    }
+    await update(updated);
+  }
+
+  Future<void> sendLoveReaction(String message) async {
+    final updated = state.copyWith(
+      lastCareMessage: message,
+      lastCareMessageTime: DateTime.now(),
+    );
+    await update(updated);
+    ref.invalidate(inAppNotificationsProvider);
   }
 }
 
@@ -522,9 +603,28 @@ class InAppNotificationsNotifier extends Notifier<List<InAppNotificationItem>> {
     final preg = ref.watch(pregnancyCalculationProvider);
     final apts = ref.watch(appointmentsProvider);
     final prefs = ref.watch(notificationPreferencesProvider);
+    final partner = ref.watch(partnerPermissionProvider);
 
     final list = <InAppNotificationItem>[];
     final now = DateTime.now();
+
+    // 0. Partner Care & Love Message
+    if (partner.isConnected && partner.lastCareMessage != null && partner.lastCareMessage!.isNotEmpty) {
+      final msgKey = 'partner_care_${partner.lastCareMessageTime?.millisecondsSinceEpoch ?? 0}';
+      final partnerDisplayName = partner.partnerName.isNotEmpty ? partner.partnerName : 'Shohar';
+      list.add(InAppNotificationItem(
+        id: msgKey,
+        title: '$partnerDisplayName Ka Pyar Bhara Paigham ❤️',
+        message: partner.lastCareMessage!,
+        timestamp: partner.lastCareMessageTime ?? now,
+        icon: '💌',
+        iconColor: const Color(0xFFE91E63),
+        iconBg: const Color(0xFFFCE4EC),
+        isRead: _readIds.contains(msgKey),
+        actionLabel: 'Shohar Hub Dekhein',
+        actionType: 'open_partner_hub',
+      ));
+    }
 
     // 1. Pregnancy Overdue / Positive Test Prompt
     if (profile.goal != AppGoal.alreadyPregnant && cycle.daysUntilNextPeriod <= 0 && prefs.latePeriodAlert) {
