@@ -1,3 +1,4 @@
+import '../../data/models/user_profile.dart';
 import 'ai_service.dart';
 
 /// Local offline-first knowledge engine
@@ -10,18 +11,387 @@ class LocalFallbackAIService implements AIService {
     required String question,
   }) async {
     // Artificial slight delay for realistic conversational feel
-    await Future.delayed(const Duration(milliseconds: 350));
+    await Future.delayed(const Duration(milliseconds: 300));
 
     final q = question.toLowerCase();
     final isRoman = context.isRomanUrdu;
 
-    // 1. Refusal to diagnose PCOS / Endometriosis / Infertility
+    // 0. Red Flag / Urgent Medical Safety Notice (Highest Priority)
+    if (q.contains('severe sudden pain') ||
+        (q.contains('heavy') && q.contains('bleed')) ||
+        q.contains('behoshi') ||
+        q.contains('pani choot') ||
+        q.contains('fluid leak') ||
+        (q.contains('shadeed') && (q.contains('dard') || q.contains('khoon')))) {
+      if (isRoman) {
+        return const AIResponse(
+          text:
+              '🚨 **AHEM TIBBI HIDAYAT (URGENT SAFETY):**\n\n'
+              'Agar aapko darj-zel mein se koi bhi takleef mehsoos ho to foran kisi qareebi hospital ya emergency clinic se rujoo karein:\n\n'
+              '• Bohot shadeed pait ya pelvic dard jo bardasht na ho\n'
+              '• Bohat zyada khoon aana (1 ghante mein poora sanitary pad geela ho jana)\n'
+              '• Chakkar aana ya behoshi mehsoos hona\n'
+              '• Hamal ke doran tez bukhar ya achanak pani choot jana\n\n'
+              'Aisi soorat mein mobile app par waqt zaya na karein aur foran emergency medical care lein.',
+          sourceCitation: 'ACOG Emergency Obstetric Guidance',
+          isOfflineFallback: true,
+          actions: [
+            AIAction(
+              type: AIActionType.openEmergencyModal,
+              label: 'Emergency Khatray Ki Alamaat Dekhein 🚨',
+              icon: '⚠️',
+            ),
+          ],
+        );
+      } else {
+        return const AIResponse(
+          text:
+              'URGENT SAFETY NOTICE:\n'
+              'If you experience sudden severe pelvic pain, heavy bleeding soaking a pad in an hour, fainting, high fever, or fluid leakage during pregnancy, Seek immediate medical evaluation at an emergency clinic.',
+          sourceCitation: 'ACOG Emergency Obstetric Guidance',
+          isOfflineFallback: true,
+          actions: [
+            AIAction(
+              type: AIActionType.openEmergencyModal,
+              label: 'View Emergency Red Flags 🚨',
+              icon: '⚠️',
+            ),
+          ],
+        );
+      }
+    }
+
+    // 1. Pregnancy Confirmation / Positive Test Detection (Top Priority)
+    if (q.contains('pregnant') ||
+        q.contains('pregnancy confirm') ||
+        q.contains('pregnancy ho gai') ||
+        q.contains('pregnancy ho gayi') ||
+        q.contains('pregnancy ho gyi') ||
+        q.contains('test positive') ||
+        q.contains('positive test') ||
+        q.contains('positive aya') ||
+        q.contains('positive aaya') ||
+        q.contains('hamal theher gaya') ||
+        q.contains('hamal thehr gya') ||
+        q.contains('hamal ho gaya') ||
+        q.contains('hamal ho gya') ||
+        q.contains('im pregnant') ||
+        q.contains('i am pregnant') ||
+        (q.contains('good news') && q.contains('hamal'))) {
+      if (isRoman) {
+        return const AIResponse(
+          text:
+              'Mubarak ho! 🌸💖 Bohat bohat mubarak! Allah taala aapko aur bachay ko kamil sehat, aafiyat aur lambi umar ata farmaye.\n\n'
+              '✨ **Ab Agla Marhala Kya Hai?**\n'
+              '• Mahwari ka countdown ab rukh chuka hai kyun ke hamal mein periods nahi aate.\n'
+              '• Rozana 400 mcg Folic Acid zaroor lein taake baby ka dimagh aur reerh ki haddi mehfooz rahay.\n'
+              '• Khoob paani piyein aur bhari wazan uthane se perhez karein.\n'
+              '• Gynecologist se pehla ultrasound (Dating Scan) taqreeban Hafta 6 se 8 ke darmiyan schedule karein.\n\n'
+              'Main ne aapke liye app ka **Hamal (Pregnancy) Mode** tayyar kar diya hai. Neechay diye gaye button se foran apna naya safar active karein:',
+          sourceCitation: 'ACOG & NICE Prenatal Guidelines',
+          isOfflineFallback: true,
+          actions: [
+            AIAction(
+              type: AIActionType.switchToPregnancy,
+              label: 'Hamal Mode Activate Karein 🍼',
+              icon: '🤰',
+            ),
+            AIAction(
+              type: AIActionType.openPositiveTestModal,
+              label: 'LMP / Ultrasound Date Confirm Karein 📅',
+              icon: '✨',
+            ),
+          ],
+        );
+      } else {
+        return const AIResponse(
+          text:
+              'Congratulations! 🌸 Wishing you and your baby good health and happiness.\n\n'
+              'Key Early Steps:\n'
+              '• Start daily 400 mcg Folic Acid immediately to prevent neural tube defects.\n'
+              '• Schedule a dating ultrasound between 6 to 8 weeks with your clinician.\n'
+              '• Menstruation is now suspended. Your tracker is ready to switch to Pregnancy Mode.\n\n'
+              'Tap below to activate Pregnancy Mode:',
+          sourceCitation: 'ACOG Prenatal Care Standards',
+          isOfflineFallback: true,
+          actions: [
+            AIAction(
+              type: AIActionType.switchToPregnancy,
+              label: 'Activate Pregnancy Mode 🍼',
+              icon: '🤰',
+            ),
+            AIAction(
+              type: AIActionType.openPositiveTestModal,
+              label: 'Confirm Due Date / Dating Method 📅',
+              icon: '✨',
+            ),
+          ],
+        );
+      }
+    }
+
+    // 2. Postpartum Delivery / Period Resumed (Switch back to cycle)
+    if (q.contains('baby deliver') ||
+        q.contains('bacha paida') ||
+        q.contains('delivery ho gayi') ||
+        q.contains('delivery ho gai') ||
+        q.contains('period wapas') ||
+        q.contains('period wapis') ||
+        q.contains('period aa gaya') ||
+        q.contains('period shuru')) {
+      if (isRoman) {
+        return const AIResponse(
+          text:
+              'Delivery ke baad ka marhala bohot ahem hota hai! 🌸\n\n'
+              '• Delivery ke baad 4 se 6 haftay tak khoon aana (Lochia) aam hota hai, ye aam mahwari nahi hoti.\n'
+              '• Agar aap breastfeeding karwa rahi hain to periods 6 maah ya saal baad bhi shuru ho sakte hain.\n'
+              '• Jab periods dobara shuru ho jayein to aap dobara Cycle Tracking Mode mein wapas aa sakti hain.\n\n'
+              'Agar aap delivery ke baad cycle tracking dobara active karna chahti hain to tap karein:',
+          sourceCitation: 'ACOG Postpartum Care Standards',
+          isOfflineFallback: true,
+          actions: [
+            AIAction(
+              type: AIActionType.switchToCycle,
+              label: 'Cycle Tracking Mode Me Wapas Aayein 🌸',
+              icon: '🔄',
+            ),
+            AIAction(
+              type: AIActionType.openLogPeriod,
+              label: 'Period Entry Log Karein 🩸',
+              icon: '📝',
+            ),
+          ],
+        );
+      } else {
+        return const AIResponse(
+          text:
+              'Postpartum recovery guidance:\n\n'
+              '• Bleeding for 4-6 weeks after birth is lochia, not true menses.\n'
+              '• If breastfeeding, true periods may resume later.\n'
+              '• You can transition back to cycle tracking whenever ready:',
+          sourceCitation: 'ACOG Postpartum Guidance',
+          isOfflineFallback: true,
+          actions: [
+            AIAction(
+              type: AIActionType.switchToCycle,
+              label: 'Switch Back to Cycle Mode 🌸',
+              icon: '🔄',
+            ),
+          ],
+        );
+      }
+    }
+
+    // 3. Late Period / Missed Period Analysis
+    if (q.contains('late') ||
+        q.contains('chadh gaya') ||
+        q.contains('charh gaya') ||
+        q.contains('missed period') ||
+        q.contains('period nahi aaya') ||
+        q.contains('period nahi aya') ||
+        q.contains('upar ho gaye') ||
+        q.contains('din charh')) {
+      if (isRoman) {
+        return AIResponse(
+          text:
+              'Period late hone ki sab se aam wajuhaat yeh ho sakti hain:\n\n'
+              '1. **Hamal (Pregnancy):** Agar aap married hain aur fertile window mein contact hua tha, to ye sab se pehla imkaan hai.\n'
+              '2. **Tanao (Stress) ya Safar:** Hormone imbalance se ovulation 3–7 din delay ho sakti hai.\n'
+              '3. **Hormonal Fluctuation / PCOS:** Be-qaidagi ki wajah se period late ho sakta hai.\n\n'
+              '🧪 **Aapko Kya Karna Chahiye?**\n'
+              'Subah ke pehle peshab se Urine Pregnancy Test (strip) karein. Agar result positive aaye to foran Hamal Mode mein switch karein:',
+          sourceCitation: 'ASRM & NHS Clinical Guidelines',
+          isOfflineFallback: true,
+          actions: [
+            AIAction(
+              type: AIActionType.openPositiveTestModal,
+              label: 'Pregnancy Test Confirm / Log Karein 🧪',
+              icon: '✨',
+            ),
+            AIAction(
+              type: AIActionType.openLogSymptoms,
+              label: 'Aaj Ke Symptoms Log Karein 📝',
+              icon: '🩹',
+            ),
+          ],
+        );
+      } else {
+        return const AIResponse(
+          text:
+              'Common reasons for a delayed or missed period:\n\n'
+              '• Pregnancy: Test with first-morning urine if you had intercourse in your fertile window.\n'
+              '• Stress, travel, or illness: Can delay ovulation and prolong cycle length.\n'
+              '• Hormonal changes: Natural cycle variability.',
+          sourceCitation: 'ASRM Guidance',
+          isOfflineFallback: true,
+          actions: [
+            AIAction(
+              type: AIActionType.openPositiveTestModal,
+              label: 'Confirm / Log Pregnancy Test 🧪',
+              icon: '✨',
+            ),
+          ],
+        );
+      }
+    }
+
+    // 4. Baby Kicks & Movement (Cardiff Count to 10)
+    if (q.contains('kick') ||
+        q.contains('harkat') ||
+        q.contains('movement') ||
+        q.contains('bacha hil') ||
+        q.contains('halchal')) {
+      if (isRoman) {
+        return const AIResponse(
+          text:
+              'Baby ki harkat (kicks) bache ki sehat aur vitality ka sab se behtareen saboot hai! 👣\n\n'
+              '🍼 **Harkat Kab Mehsoos Hoti Hai?**\n'
+              'Aam tor par Hafta 18 se 24 ke darmiyan pehli halchal (quickening) mehsoos hoti hai.\n\n'
+              '⏱️ **Cardiff Count-to-10 Rule (NHS & ACOG):**\n'
+              '• Khana khane ke baad baanyi karwat (left side) par aaram se lait jayein.\n'
+              '• 2 ghante ke andar baby ki kam az kam 10 harkatain (kicks, rolls ya flutter) ginni chahiyein.\n'
+              '• Agar baby sota mehsoos ho to thanda paani piyein ya halka meetha snack lein.',
+          sourceCitation: 'NHS & ACOG Fetal Movement Monitoring',
+          isOfflineFallback: true,
+          actions: [
+            AIAction(
+              type: AIActionType.openKickCounter,
+              label: '3D Baby Kicks Counter Kholein 👣',
+              icon: '👶',
+            ),
+          ],
+        );
+      } else {
+        return const AIResponse(
+          text:
+              'Fetal kick counts assess your baby\'s well-being:\n\n'
+              '• Noticeable movement typically begins between 18–24 weeks.\n'
+              '• Count to 10: Lie on your left side after a meal; expect 10 movements within 2 hours.\n'
+              '• If movement is reduced, drink cold water and contact your clinician.',
+          sourceCitation: 'ACOG Fetal Well-being Standards',
+          isOfflineFallback: true,
+          actions: [
+            AIAction(
+              type: AIActionType.openKickCounter,
+              label: 'Open Kick Counter 👣',
+              icon: '👶',
+            ),
+          ],
+        );
+      }
+    }
+
+    // 5. Ultrasound, Sonogram, Scans & Doctor Checkups
+    if (q.contains('ultrasound') ||
+        q.contains('scan') ||
+        q.contains('afi') ||
+        q.contains('fhr') ||
+        q.contains('placenta') ||
+        q.contains('heart rate') ||
+        q.contains('sonogram') ||
+        q.contains('doctor visit') ||
+        q.contains('checkup')) {
+      if (isRoman) {
+        return const AIResponse(
+          text:
+              'Ultrasound reports baby ki nashonuma samajhne ke liye bohot zaroori hain 🩺\n\n'
+              '📋 **Ahem Ultrasound Marhale:**\n'
+              '1. **Dating Scan (6–8 Weeks):** Dil ki dharkan (FHR 120–160 bpm) aur bache ka theek judna confirm karta hai.\n'
+              '2. **Anomaly Scan (18–22 Weeks):** Poore jism ke aaza (brain, heart, limbs, kidneys) ka mukammal scan.\n'
+              '3. **Growth & Fluid Scan (28–36 Weeks):** Bache ka wazan, placenta position, aur amniotic fluid (AFI paani 8–18 cm normal).\n\n'
+              'Aap WeTrack app mein apna agla checkup schedule kar sakti hain:',
+          sourceCitation: 'ISUOG Practice Guidelines for Obstetric Ultrasound',
+          isOfflineFallback: true,
+          actions: [
+            AIAction(
+              type: AIActionType.openAppointmentModal,
+              label: 'Doctor Appointment Note Karein 🩺',
+              icon: '🏥',
+            ),
+          ],
+        );
+      } else {
+        return const AIResponse(
+          text:
+              'Obstetric Ultrasound Milestones:\n\n'
+              '• Dating Scan (6–8 Wks): Confirms cardiac activity (120–160 bpm) and gestational sac.\n'
+              '• Anomaly Scan (18–22 Wks): Detailed anatomy survey.\n'
+              '• Growth Scan (28–36 Wks): Evaluates AFI fluid (8–18 cm normal), fetal growth, and placenta.',
+          sourceCitation: 'ISUOG Guidelines',
+          isOfflineFallback: true,
+          actions: [
+            AIAction(
+              type: AIActionType.openAppointmentModal,
+              label: 'Add Doctor Appointment 🩺',
+              icon: '🏥',
+            ),
+          ],
+        );
+      }
+    }
+
+    // 6. Morning Sickness / Ulti & Nausea / Pregnancy Symptoms
+    if (q.contains('ulti') ||
+        q.contains('vomit') ||
+        q.contains('nausea') ||
+        q.contains('matli') ||
+        q.contains('ghabrahat') ||
+        q.contains('chakkar') ||
+        q.contains('thakan') ||
+        q.contains('cramp') ||
+        q.contains('dard') ||
+        q.contains('pain') ||
+        q.contains('bleed') ||
+        q.contains('khoon') ||
+        q.contains('emergency') ||
+        q.contains('khatra')) {
+      if (isRoman) {
+        return const AIResponse(
+          text:
+              'Hamal ke shuruati 12 hafton mein ulti aur matli (Morning Sickness) aam hoti hai jo pregnancy hormones (hCG aur estrogen) ki wajah se hoti hai.\n\n'
+              '🍋 **Aasan Rahat Ke Tareeqay:**\n'
+              '• Subah bistar se uthne se pehle halka sookha rusk ya biscuit khayein.\n'
+              '• Din bhar thora thora khana khayein, pait ko bilkul khali na hone dein.\n'
+              '• Lemon water (neemboo paani) ya adrak (ginger) ka halka qehwa matli ko kam karta hai.\n'
+              '• Tali hui aur bohot masalay-daar cheezon se parhez karein.\n\n'
+              'Agar paani bhi pait mein na rukay aur wazan kam hone lage to doctor se safe anti-nausea dawai likhwayein.',
+          sourceCitation: 'ACOG Clinical Guidance on Nausea and Vomiting in Pregnancy',
+          isOfflineFallback: true,
+          actions: [
+            AIAction(
+              type: AIActionType.openLogSymptoms,
+              label: 'Aaj Ke Symptoms Log Karein 📝',
+              icon: '🩹',
+            ),
+          ],
+        );
+      } else {
+        return const AIResponse(
+          text:
+              'Morning sickness affects many individuals in early pregnancy:\n\n'
+              '• Keep bland crackers at your bedside and eat before getting up.\n'
+              '• Eat small, frequent meals throughout the day.\n'
+              '• Ginger, lemon water, and adequate hydration help relieve nausea.\n'
+              '• Contact your doctor if you cannot retain fluids.',
+          sourceCitation: 'ACOG Clinical Guidance',
+          isOfflineFallback: true,
+          actions: [
+            AIAction(
+              type: AIActionType.openLogSymptoms,
+              label: 'Log Today\'s Symptoms 📝',
+              icon: '🩹',
+            ),
+          ],
+        );
+      }
+    }
+
+    // 7. Refusal to diagnose PCOS / Endometriosis / Infertility
     if (q.contains('pcos') ||
         q.contains('polycystic') ||
         q.contains('endometriosis') ||
         q.contains('irregular') ||
         q.contains('be-qaida') ||
-        q.contains('late period') ||
         q.contains('do i have')) {
       if (isRoman) {
         return const AIResponse(
@@ -54,7 +424,7 @@ class LocalFallbackAIService implements AIService {
       }
     }
 
-    // 2. Explaining Cycle Days & Current Phase
+    // 8. Explaining Cycle Days & Current Phase
     if (q.contains('cycle day') ||
         q.contains('aaj ka din') ||
         q.contains('marhala') ||
@@ -87,9 +457,8 @@ class LocalFallbackAIService implements AIService {
       }
     }
 
-    // 3. Fertile Window & Conception / Milap
+    // 9. Fertile Window & Conception / Milap
     if (q.contains('fertile') ||
-        q.contains('hamal') ||
         q.contains('conceive') ||
         q.contains('bacha') ||
         q.contains('milap') ||
@@ -123,11 +492,9 @@ class LocalFallbackAIService implements AIService {
       }
     }
 
-    // 4. Pregnancy Test Timing
+    // 10. Pregnancy Test Timing & Strip
     if (q.contains('test') ||
         q.contains('strip') ||
-        q.contains('positive') ||
-        q.contains('negative') ||
         q.contains('faint line') ||
         q.contains('kab karoon')) {
       if (isRoman) {
@@ -141,6 +508,13 @@ class LocalFallbackAIService implements AIService {
               'Agar test strip par doosri line halki si bhi nazar aaye to ye aksar positive shumar hoti hai, bas hCG hormone abhi kam hota hai. 2 din baad dobara test karein ya clinic se Serum Beta hCG blood test karwayein.',
           sourceCitation: 'ACOG Clinical Laboratory Standards',
           isOfflineFallback: true,
+          actions: [
+            AIAction(
+              type: AIActionType.openPositiveTestModal,
+              label: 'Pregnancy Test Confirm / Log Karein 🧪',
+              icon: '✨',
+            ),
+          ],
         );
       } else {
         return const AIResponse(
@@ -151,141 +525,78 @@ class LocalFallbackAIService implements AIService {
               '• A faint second line generally indicates early pregnancy; repeat in 48 hours to confirm progression.',
           sourceCitation: 'ACOG Laboratory Guidance',
           isOfflineFallback: true,
+          actions: [
+            AIAction(
+              type: AIActionType.openPositiveTestModal,
+              label: 'Confirm Pregnancy Test 🧪',
+              icon: '✨',
+            ),
+          ],
         );
       }
     }
 
-    // 5. Folic Acid & Vitamins
+    // 11. Folic Acid & Vitamins
     if (q.contains('folic') ||
         q.contains('vitamin') ||
         q.contains('supplement') ||
-        q.contains('dawai') ||
-        q.contains('iron')) {
+        q.contains('iron') ||
+        q.contains('goli')) {
       if (isRoman) {
         return const AIResponse(
           text:
-              'Folic Acid har us larki ke liye nihayat zaroori hai jo pregnancy plan kar rahi ho ya pregnant ho.\n\n'
+              'Hamal ki planning aur early pregnancy mein Folic Acid sab se ahem vitamin hai.\n\n'
               '💊 **Folic Acid Kyun Zaroori Hai?**\n'
-              '• Ye baby ke dimagh aur reedh ki haddi ke ahem naqs (Neural Tube Defects) se hifazat karti hai.\n'
-              '• Hamal theherne se kam az kam **1 maah pehle** rozana 400 mcg lena standard recommendation hai.\n'
-              '• Pehle teen mahine (First Trimester) iska rozana istemal jari rakhna chahiye.\n\n'
-              '🥗 **Ghiza:** Palak, daalein, anday aur sabziyan bhi khorak mein shamil karein aur doctor se regular prenatal multi-vitamin likhwayein.',
-          sourceCitation: 'CDC & ASRM Nutritional Guidelines',
+              '• Rozana **400 mcg** Folic Acid lene se bache ke dimagh aur reerh ki haddi ke nuqs (Neural Tube Defects) se 70% hifazat hoti hai.\n'
+              '• Ise conceive karne se kam az kam 1 maah pehle shuru karna chahiye aur hamal ke pehle 12 hafte lazmi jari rakhna chahiye.\n\n'
+              '🥦 **Qudrati Ghizayein:**\n'
+              'Palak, daalein, malte (oranges), aur andon mein bhi qudrati folate paya jata hai.',
+          sourceCitation: 'CDC & WHO Guideline on Daily Iron and Folic Acid Supplementation',
           isOfflineFallback: true,
         );
       } else {
         return const AIResponse(
           text:
-              'Daily supplementation with 400 mcg of folic acid is strongly recommended prior to conception and through the first trimester to prevent neural tube defects.\n\n'
-              'Consult your physician for personalized prenatal multi-vitamin requirements.',
-          sourceCitation: 'CDC & ASRM Nutritional Guidance',
+              'Folic acid supplementation guidelines:\n\n'
+              '• Take 400 mcg daily before conception through the first 12 weeks of pregnancy.\n'
+              '• Reduces neural tube defect risks by up to 70%.\n'
+              '• Dietary sources: spinach, lentils, fortified cereals, and citrus.',
+          sourceCitation: 'CDC Guidelines',
           isOfflineFallback: true,
         );
       }
     }
 
-    // 6. Cervical Mucus / Safed Pani
-    if (q.contains('pani') ||
-        q.contains('discharge') ||
-        q.contains('white') ||
-        q.contains('safed') ||
+    // 12. Cervical Mucus / Safed Pani
+    if (q.contains('discharge') ||
+        q.contains('safed pani') ||
         q.contains('mucus') ||
-        q.contains('khujli')) {
+        q.contains('pani')) {
       if (isRoman) {
         return const AIResponse(
           text:
-              'Aurat ke jism mein discharge aana ek qudrati aur sehatmand amal hai jo cycle ke sath tabdeel hota hai.\n\n'
-              '💧 **Ovulation Ka Pani (Fertile Window):**\n'
-              'Ovulation ke qareeb pani anday ki safedi ki tarah shafaf, phisalne wala aur kheenchnay wala (stretchy) ho jata hai. Ye sperm ko tezi se beza tak pohnchanay mein madad deta hai.\n\n'
+              'Harmones ki tabdeeli se mahwari ke mukhtalif dino mein discharge ki noiyat badalti rehti hai.\n\n'
+              '💧 **Ovulation Ke Din (Egg White):**\n'
+              'Jab safed pani anday ki safedi ki tarah shafaf aur kheenchne wala (stretchy) ho jaye to ye sab se ziyada fertile din hotay hain.\n\n'
               '⚠️ **Infection Ki Alamat:**\n'
               'Agar discharge mein shadeed badboo ho, rang peela ya sabz ho, ya khujli aur jalan mehsoos ho to ye infection (jaise yeast ya BV) ho sakta hai. Is soorat mein gynecologist ko zaroor check karwayein.',
           sourceCitation: 'Clinical Cervical Mucus Monitoring Standards',
           isOfflineFallback: true,
         );
-      }
-    }
-
-    // 7. Red Flag / Emergency Symptoms
-    if (q.contains('pain') ||
-        q.contains('bleed') ||
-        q.contains('cramp') ||
-        q.contains('dard') ||
-        q.contains('khoon') ||
-        q.contains('emergency') ||
-        q.contains('danger') ||
-        q.contains('khatra') ||
-        q.contains('urgent')) {
-      if (isRoman) {
-        return const AIResponse(
-          text:
-              '🚨 **AHEM TIBBI HIDAYAT (URGENT SAFETY):**\n\n'
-              'Agar aapko darj-zel mein se koi bhi takleef mehsoos ho to foran kisi qareebi hospital ya gynecologist se rujoo karein:\n\n'
-              '• Bohot shadeed pait ya pelvic dard jo bardasht na ho\n'
-              '• Bohat zyada khoon aana (1 ghante mein poora sanitary pad geela ho jana)\n'
-              '• Chakkar aana ya behoshi mehsoos hona\n'
-              '• Hamal ke doran tez bukhar ya achanak pani choot jana\n\n'
-              'Aisi soorat mein mobile app par waqt zaya na karein aur foran emergency medical care lein.',
-          sourceCitation: 'ACOG Emergency Obstetric Guidance',
-          isOfflineFallback: true,
-        );
       } else {
         return const AIResponse(
           text:
-              'URGENT SAFETY NOTICE:\n'
-              'If you experience sudden severe pelvic pain, heavy bleeding soaking a pad in an hour, fainting, high fever, or fluid leakage during pregnancy, Seek immediate medical evaluation at an emergency clinic.',
-          sourceCitation: 'ACOG Emergency Obstetric Guidance',
+              'Cervical fluid changes across the cycle:\n\n'
+              '• Fertile window: Clear, slippery, stretchy (raw egg-white consistency).\n'
+              '• Non-fertile: Dry or sticky/creamy.\n'
+              '• Consult a doctor if you notice malodor, itching, or green/yellow discoloration.',
+          sourceCitation: 'Cervical Fluid Clinical Standards',
           isOfflineFallback: true,
         );
       }
     }
 
-    // 8. Morning Sickness / Ulti & Nausea
-    if (q.contains('ulti') ||
-        q.contains('vomit') ||
-        q.contains('nausea') ||
-        q.contains('matli') ||
-        q.contains('ghabrahat') ||
-        q.contains('chakkar')) {
-      if (isRoman) {
-        return const AIResponse(
-          text:
-              'Hamal ke shuruati 12 hafton mein ulti aur matli (Morning Sickness) aam hoti hai jo pregnancy hormones (hCG aur estrogen) ki wajah se hoti hai.\n\n'
-              '🍋 **Aasan Rahat Ke Tareeqay:**\n'
-              '• Subah bistar se uthne se pehle halka sookha rusk ya biscuit khayein.\n'
-              '• Din bhar thora thora khana khayein, pait ko bilkul khali na hone dein.\n'
-              '• Lemon water (neemboo paani) ya adrak (ginger) ka halka qehwa matli ko kam karta hai.\n'
-              '• Tali hui aur bohot masalay-daar cheezon se parhez karein.\n\n'
-              'Agar paani bhi pait mein na rukay aur wazan kam hone lage to doctor se safe anti-nausea dawai likhwayein.',
-          sourceCitation: 'ACOG Clinical Guidance on Nausea and Vomiting in Pregnancy',
-          isOfflineFallback: true,
-        );
-      }
-    }
-
-    // 9. Questions for Doctor
-    if (q.contains('doctor') ||
-        q.contains('sawal') ||
-        q.contains('checkup') ||
-        q.contains('gynecologist') ||
-        q.contains('hospital')) {
-      if (isRoman) {
-        return const AIResponse(
-          text:
-              'Doctor ke paas jaane se pehle tayyari karna bohot faidamand rehta hai.\n\n'
-              '📋 **Doctor se Poochne Ke Ahem Sawalaat:**\n'
-              '1. "Meri pichli cycles ka record ye hai, kya meri ovulation regular chal rahi hai?"\n'
-              '2. "Hamal plan karne ke liye kaun se khoon ke test (Hb, Thyroid, Blood Group, Rubella) karwana zaroori hain?"\n'
-              '3. "Kya mujhe Folic Acid ke sath koi iron ya multi-vitamin shuru karni chahiye?"\n'
-              '4. "Agar cycle mein spotting ya dard ho to kis waqt doctor ko dikhana zaroori hai?"\n\n'
-              'Aap WeTrack app ka **Cycle Hisaab** page doctor ko dikha sakti hain taake unhein aapki cycle history asaani se samajh aa sakay.',
-          sourceCitation: 'WeTrack Clinical Preparation Checklist',
-          containsDoctorQuestions: true,
-          isOfflineFallback: true,
-        );
-      }
-    }
-
-    // 10. Shohar / Husband Guidance
+    // 13. Shohar / Husband Guidance
     if (q.contains('shohar') ||
         q.contains('husband') ||
         q.contains('partner') ||
@@ -302,10 +613,19 @@ class LocalFallbackAIService implements AIService {
           sourceCitation: 'WeTrack Couple Reproductive Health Protocol',
           isOfflineFallback: true,
         );
+      } else {
+        return const AIResponse(
+          text:
+              'Partner support guidance:\n\n'
+              '• Conception is a shared journey; minimize pressure and stress.\n'
+              '• Share the Husband Care guide from the app to keep your partner informed.',
+          sourceCitation: 'WeTrack Partner Health Protocol',
+          isOfflineFallback: true,
+        );
       }
     }
 
-    // 11. Pregnancy Gestational Age & Milestones
+    // 14. Pregnancy Gestational Age & Milestones
     if (context.pregnancyGestationalAge != null &&
         (q.contains('pregnancy') ||
             q.contains('week') ||
@@ -335,17 +655,17 @@ class LocalFallbackAIService implements AIService {
       }
     }
 
-    // 12. General Educational Response in Roman Urdu
+    // Default Fallback
     if (isRoman) {
       final nameStr = context.userName.isNotEmpty ? context.userName : 'Piyari Behan';
       return AIResponse(
         text:
             'Assalam-o-Alaikum $nameStr! 🌸\n\n'
-            'Main aapki WeTrack Saathi hoon. Aap mujh se mahwari ke marhalon, ovulation, bacha theherne ke ahem dinon, ya pregnancy ke baray mein be-jhijhak pooch sakti hain.\n\n'
+            'Main aapki WeTrack Saathi hoon. Aap mujh se mahwari ke marhalon, ovulation, pregnancy confirmation, baby growth, ya doctor ke mashwaron ke baray mein be-jhijhak pooch sakti hain.\n\n'
             '💡 **Aapka Aaj Ka Status:**\n'
-            '• Cycle Day: **Day ${context.currentCycleDay}** (${context.cyclePhaseName})\n'
+            '• Status: ${context.goal == AppGoal.alreadyPregnant ? "Hamal (Pregnancy) Active" : "Cycle Day ${context.currentCycleDay} (${context.cyclePhaseName})"}\n'
             '• Aam Cycle Length: **${context.cycleLength} din**\n\n'
-            'Aap kis mozu par janna chahti hain? Neechay diye gaye topics par tap karein ya apna sawaal likhein.',
+            'Aap kis mozu par janna chahti hain? Apna sawaal likhein ya neechay topic choose karein.',
         sourceCitation: 'WeTrack Tibbi Rahnumai Knowledgebase',
         isOfflineFallback: true,
       );
@@ -353,9 +673,9 @@ class LocalFallbackAIService implements AIService {
       return AIResponse(
         text:
             'Hello! I am your WeTrack AI Assistant.\n\n'
-            '• Current Status: Day ${context.currentCycleDay} (${context.cyclePhaseName})\n'
+            '• Current Status: ${context.goal == AppGoal.alreadyPregnant ? "Pregnancy Mode Active" : "Day ${context.currentCycleDay} (${context.cyclePhaseName})"}\n'
             '• Estimated Cycle Length: ${context.cycleLength} days\n\n'
-            'Ask me anything about your cycle, fertile window, or doctor preparations.',
+            'Ask me anything about your cycle, pregnancy milestones, or preparing questions for your doctor.',
         sourceCitation: 'WeTrack Clinical Education Knowledgebase',
         isOfflineFallback: true,
       );

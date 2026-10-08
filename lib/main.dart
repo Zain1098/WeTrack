@@ -6,6 +6,7 @@ import 'core/theme/clay_theme.dart';
 import 'data/repositories/local_storage_repository.dart';
 import 'data/models/user_profile.dart';
 import 'data/services/auth_service.dart';
+import 'data/services/notification_service.dart';
 import 'features/app_providers.dart';
 import 'features/auth/login_screen.dart';
 import 'features/main_navigation_shell.dart';
@@ -25,6 +26,12 @@ void main() async {
     );
   } catch (e) {
     debugPrint('Supabase init note: $e');
+  }
+
+  try {
+    await NotificationService().initialize();
+  } catch (e) {
+    debugPrint('NotificationService init note: $e');
   }
 
   // Load existing profile or prepare initial default

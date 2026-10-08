@@ -332,6 +332,9 @@ class AuthService {
     double? heightCm,
     double? weightKg,
     String? goal,
+    int? usualCycleLength,
+    int? usualPeriodDuration,
+    DateTime? lastPeriodDate,
   }) async {
     try {
       final payload = <String, dynamic>{
@@ -352,10 +355,40 @@ class AuthService {
       if (heightCm != null) payload['height_cm'] = heightCm;
       if (weightKg != null) payload['weight_kg'] = weightKg;
       if (goal != null) payload['goal'] = goal;
+      if (usualCycleLength != null) payload['usual_cycle_length'] = usualCycleLength;
+      if (usualPeriodDuration != null) payload['usual_period_duration'] = usualPeriodDuration;
+      if (lastPeriodDate != null) payload['last_period_date'] = lastPeriodDate.toIso8601String();
 
       await Supabase.instance.client.from('profiles').upsert(payload);
     } catch (e) {
       debugPrint('Note: Supabase profiles sync skipped ($e)');
+    }
+  }
+
+  /// Fetches cloud profile data if available for a returning user
+  Future<Map<String, dynamic>?> fetchUserProfileFromDatabase(String userId) async {
+    try {
+      final data = await Supabase.instance.client
+          .from('profiles')
+          .select()
+          .eq('id', userId)
+          .maybeSingle();
+      return data;
+    } catch (e) {
+      debugPrint('Note: Supabase fetch profile skipped ($e)');
+      return null;
+    }
+  }
+
+  /// Permanently deletes the user record from the remote Supabase profiles database
+  Future<void> deleteAccountFromDatabase() async {
+    final user = currentUser;
+    if (user != null) {
+      try {
+        await Supabase.instance.client.from('profiles').delete().eq('id', user.id);
+      } catch (e) {
+        debugPrint('Note: Supabase profiles delete note ($e)');
+      }
     }
   }
 

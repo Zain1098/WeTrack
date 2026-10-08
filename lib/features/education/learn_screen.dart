@@ -6,6 +6,8 @@ import '../../core/widgets/clay_pill.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/localization/language_provider.dart';
 import '../../core/widgets/clay_language_toggle.dart';
+import '../../data/models/user_profile.dart';
+import '../app_providers.dart';
 
 class LearnArticle {
   final String id;
@@ -46,6 +48,19 @@ class LearnScreen extends ConsumerStatefulWidget {
 
 class _LearnScreenState extends ConsumerState<LearnScreen> {
   String _selectedCategoryKey = 'all';
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final isPregnancy = ref.read(userProfileProvider).goal == AppGoal.alreadyPregnant;
+      if (isPregnancy && mounted) {
+        setState(() {
+          _selectedCategoryKey = 'pregnancy';
+        });
+      }
+    });
+  }
 
   static const List<LearnArticle> _articles = [
     // 1. Desi Myths vs Facts (Top Priority)

@@ -5,6 +5,7 @@
   <img src="https://img.shields.io/badge/Dart-3.x-0175C2?logo=dart&logoColor=white" alt="Dart" />
   <img src="https://img.shields.io/badge/State_Management-Riverpod_3.x-4B32C3" alt="Riverpod" />
   <img src="https://img.shields.io/badge/Backend-Supabase-3ECF8E?logo=supabase&logoColor=white" alt="Supabase" />
+  <img src="https://img.shields.io/badge/Language-English_%26_Roman_Urdu-E91E63" alt="Localization" />
   <img src="https://img.shields.io/badge/UI_Style-Pastel_Claymorphism-E8DEF8" alt="Claymorphism" />
   <img src="https://img.shields.io/badge/License-Private-red" alt="License" />
 </p>
@@ -13,89 +14,109 @@
 
 ## 📖 Overview
 
-**WeTrack** is a modern, privacy-focused women's health companion designed to empower individuals throughout every stage of their reproductive journey — from cycle tracking and ovulation prediction to pregnancy milestones. Built with Flutter, WeTrack combines medical-grade calculation accuracy with a comforting, warm **Pastel 3D Claymorphism** design aesthetic.
+**WeTrack** is a modern, privacy-first women's reproductive health companion built with Flutter. Designed for individuals and couples, WeTrack supports every phase of the reproductive journey:
+- **Menstrual Cycle Tracking** (ACOG-aligned follicular, ovulation & luteal predictions)
+- **Conception & Fertility Planning** (TTC mode, fertile window, biomarker tracking)
+- **Pregnancy Journey** (Automatic trimester transitions, weekly baby growth, ultrasound EDD countdown, and kick counter)
+
+WeTrack combines deterministic medical guidelines with a comforting **3D Pastel Claymorphism** aesthetic, bilingual support (**English & Roman Urdu**), offline-first resilience, and cloud backup via **Supabase**.
 
 ---
 
-## ✨ Key Features
+## ✨ Key Features & Architectural Highlights
 
-### 🎨 1. Pastel Claymorphism Aesthetic
-- **Warm & Comforting Design**: Soft 3D clay cards, embossed pill-shaped inputs, and subtle pastel shadows designed to minimize stress and clinical anxiety.
-- **Friendly Mascot**: Integrated 3D clay companion seamlessly resting atop interactive cards.
-- **Micro-Animations**: Tactile button presses, smooth mode transitions, and gentle elevation changes.
+### 🔄 1. Intelligent Dual Dashboard & Mode Switching
+- **Auto-Switching Architecture**: When pregnancy is confirmed (via a positive test modal or gestational input), the app automatically switches to **Hamal (Pregnancy) Mode** across all screens.
+- **Zero Conflicting States**: Shuts down period countdowns and cycle alarms while in pregnancy mode, preventing confusing or distressing notifications.
+- **Seamless Return**: Safely switch back to Cycle Tracking at any time with complete data integrity.
 
-### 🔐 2. Authentication & Data Security
-- **Cloud Database Integration**: Secure user registration, login, and profile synchronization powered by **Supabase**.
-- **Unified Auth Experience**: Seamless transition between **Login**, **Sign Up**, and **Forgot Password** screens without layout shifts.
-- **Strict Privacy**: Data stored securely with no guest bypass; user accounts ensure cross-device consistency and personal data protection.
-- **PIN App Lock**: Built-in 4-digit PIN security to safeguard sensitive health logs on the device.
+### ⚙️ 2. Interactive Cycle & Period Settings
+- **Direct & Reactive Controls**: Located in both **Settings** and **Profile** screens.
+- **Sliders & Circular Steppers**: Easily configure average cycle length (21–45 days) and period bleeding duration (2–10 days).
+- **One-Tap Quick Presets**: Instant selection chips (`24 d`, `28 d (Normal)`, `30 d`, `32 d`, `35 d`).
+- **Instant Recalculation**: Adjusting values immediately recalculates ovulation dates, fertile windows, and future period predictions across all providers and saves to both local cache and Supabase.
 
-### 🌸 3. Menstrual Cycle & Period Tracking
-- **Deterministic Cycle Predictions**: ACOG-aligned cycle calculations tracking Follicular, Ovulation, and Luteal phases.
-- **Daily Symptom & Mood Logging**: Record flow intensity, cramps, mood shifts, cravings, and customized notes.
-- **Smart History**: Dynamically calculates averages from past cycles while gracefully handling anomalous or irregular lengths.
+### 🔔 3. Notification Center & Exact Alarms
+- **Cross-Platform Delivery**: Powered by `flutter_local_notifications` with Android exact alarm scheduling (`SCHEDULE_EXACT_ALARM`, `USE_EXACT_ALARM`) and web compatibility.
+- **Interactive In-App Notification Center**: Accessible via top header bell icon with live unread badge. Features a dedicated **Inbox** with action buttons and clear-all capabilities.
+- **Customizable Schedules**: Time pickers for morning & evening alerts, plus custom reminder items (medications, water, vitamins).
+- **Instant Test Trigger**: Send a test notification at any time to verify system notifications.
 
-### 🌿 4. Fertility & Conception (TTC Mode)
-- **Fertile Window Detection**: Pinpoint estimated ovulation days with high-probability conception indicators.
-- **Biomarker Logs**: Track LH ovulation test strips, cervical mucus texture, basal body temperature (BBT), and intimate days.
+### 🤖 4. Clinical AI Health Assistant (with Safety Guardrails)
+- **Clinical Ethics First**: Refuses to deliver definitive medical diagnoses (such as PCOS) and instead equips users with clinician discussion questions.
+- **Urgent Red-Flag Triage**: Immediately detects acute symptoms (e.g., severe unilateral pelvic pain, heavy hemorrhaging, fever > 38.5°C) and issues prominent urgent medical warnings.
+- **Deterministic Context Awareness**: Seamlessly incorporates current cycle day, phase, and user goal without leaking raw personal information.
+- **Dual Engine**: Google Gemini API powered, with an offline deterministic fallback engine (`LocalFallbackAIService`).
 
-### 🤰 5. Pregnancy Tracking & Milestones
-- **Gestational Age & EDD**: Accurate countdown and weekly gestational calculations based on LMP (Last Menstrual Period).
-- **Clinician Override**: Supports ultrasound and clinician date overrides for precise medical alignment.
-- **Trimester Navigation**: Clear transitions between 1st, 2nd, and 3rd trimesters.
-- **Appointments & Healthcare**: Schedule and monitor prenatal visits, clinician contacts, and clinic locations.
+### 🌸 5. Bilingual Localization (English & Roman Urdu)
+- **Native Roman Urdu**: Specifically tailored for South Asian cultural resonance and natural phrasing (e.g., *"Hamal Ka Mubarak Safar"*, *"Mahwari Ka Hisaab"*).
+- **1-Tap Dynamic Switcher**: Instantly toggle between English and Roman Urdu from the header or settings without restarting the application.
 
-### 🤝 6. Granular Partner Sharing
-- **Secure Code Pairing**: Generate private pairing codes to share milestones with partners.
-- **Field-by-Field Control**: Enable or disable cycle dates, pregnancy updates, or symptom logs with individual privacy switches.
+### 🤝 6. Shohar / Partner Mode with Granular Privacy
+- **Secure Pairing**: Connect with spouse via unique pairing code for family planning.
+- **Granular Field-Level Permissions**: Toggle permissions individually:
+  - Intimacy & Intercourse logs
+  - Cycle & Period dates
+  - Pregnancy & Baby milestones
+  - Daily symptoms, pain & mood logs
+  - Doctor appointments & ultrasound scans
 
-### 💾 7. Offline-First & Data Sovereignty
-- **Instant Responsiveness**: Full offline accessibility backed by fast local storage.
-- **Complete JSON Export**: Download a full unencrypted JSON backup of all personal health records at any time.
-- **Total Erasure**: Complete, permanent data wipeout functionality with a single tap.
+### 🛡️ 7. Comprehensive Data Sovereignty & Account Deletion
+- **JSON Data Export**: Download an unencrypted complete export of all local health logs at any time.
+- **Tier 1 — Clear Health Logs Only**: Wipes period entries, cycle records, symptoms, and appointments while preserving the user account and profile.
+- **Tier 2 — Delete Account & All Data**: Complete, permanent wipe:
+  - Deletes profile row from remote Supabase cloud database
+  - Wipes all device storage and cached preferences
+  - Signs out of Supabase Auth
+  - Invalidates all in-memory Riverpod state and redirects cleanly to the login screen.
 
 ---
 
 ## 🛠️ Technology Stack
 
-| Layer | Technology |
-| :--- | :--- |
-| **Framework** | [Flutter](https://flutter.dev) (iOS, Android, Web, Desktop) |
-| **Language** | [Dart](https://dart.dev) (Null Safety) |
-| **State Management** | [Flutter Riverpod](https://riverpod.dev) |
-| **Backend & Auth** | [Supabase](https://supabase.com) (Auth, PostgreSQL DB) |
-| **Local Persistence** | `shared_preferences` (Offline-first local cache) |
-| **Typography** | [Google Fonts](https://pub.dev/packages/google_fonts) (`Nunito`, `Fredoka`, `Outfit`) |
-| **Vector Graphics** | [flutter_svg](https://pub.dev/packages/flutter_svg) |
+| Layer | Technology | Purpose |
+| :--- | :--- | :--- |
+| **Framework** | [Flutter](https://flutter.dev) (3.x) | Cross-platform UI (Android, Web, iOS, Desktop) |
+| **Language** | [Dart](https://dart.dev) (3.x) | Sound null-safety, async/await |
+| **State Management** | [Flutter Riverpod](https://riverpod.dev) | Reactive, testable dependency injection |
+| **Backend & Cloud** | [Supabase](https://supabase.com) | Authentication, PostgreSQL database sync |
+| **Notifications** | `flutter_local_notifications` + `timezone` | Exact background alarms and scheduled push |
+| **Local Storage** | `shared_preferences` | Resilient offline-first persistence |
+| **Design System** | Custom Pastel 3D Claymorphism | Stress-reducing tactile UI with soft shadows |
+| **Typography** | `GoogleFonts` (`Plus Jakarta Sans`) | Clean, accessible typography |
 
 ---
 
-## 📁 Project Structure
+## 📁 Project Architecture
 
 ```text
 lib/
 ├── core/
-│   ├── constants/       # Medical guidelines and disclaimers
-│   ├── theme/           # Pastel clay color palettes, typography, and ClayTheme
-│   ├── utils/           # Date calculations and formatting helpers
-│   └── widgets/         # Reusable 3D clay cards, pills, buttons, and dials
+│   ├── constants/       # Clinical guidelines, disclaimers, and constants
+│   ├── localization/    # AppStrings & language provider (English / Roman Urdu)
+│   ├── theme/           # Pastel clay color palette, ClayTheme, and design tokens
+│   ├── utils/           # Date calculations, formatting, and mathematical helpers
+│   └── widgets/         # Reusable 3D clay cards, buttons, dials, and language toggles
 ├── data/
-│   ├── models/          # Cycle, period, symptom, appointment, and profile models
+│   ├── models/          # Cycle, period, symptom, appointment, notification & profile models
 │   ├── repositories/    # Offline-first LocalStorageRepository
-│   └── services/        # Supabase AuthService and deterministic calculation engines
+│   └── services/        # Supabase AuthService, NotificationService & calculation engines
 ├── features/
-│   ├── ai/              # Medical safety guardrails and health AI assistant
-│   ├── auth/            # Clay pastel Login, Sign Up, and Forgot Password screens
-│   ├── calendar/        # Interactive cycle calendar
+│   ├── ai/              # Clinical AI service, Gemini API, and offline fallback
+│   ├── appointments/    # Doctor appointment scheduling & reminders
+│   ├── auth/            # Clay pastel Login, Sign Up, and OTP recovery screens
+│   ├── calendar/        # Interactive cycle calendar with fertile phase highlights
 │   ├── cycle/           # Period and symptom logging bottom sheets
-│   ├── education/       # Women's health articles and reproductive guidance
+│   ├── education/       # Women's health articles and reproductive guidance (Learn)
 │   ├── fertility/       # Ovulation and fertility observation modals
-│   ├── home/            # Dynamic home dashboard adapted to user goals
-│   ├── insights/        # Historical trend charts and cycle statistics
-│   ├── onboarding/      # Initial onboarding questions and goal selection
-│   ├── pregnancy/       # Prenatal logs, milestones, and EDD management
-│   └── settings/        # Privacy controls, PIN lock, partner sharing, and export
-└── main.dart            # App entry point, Supabase initialization & route resolver
+│   ├── home/            # Adaptive home dashboard (Cycle vs. Pregnancy modes)
+│   ├── insights/        # Trend charts, cycle variability, and health summaries
+│   ├── notifications/   # In-app notification center modal and reminder settings
+│   ├── onboarding/      # 4-step onboarding flow with cycle and metric sliders
+│   ├── pregnancy/       # Trimester cards, baby growth milestones, and kick counter
+│   ├── profile/         # Profile management, body metrics, and cycle settings modal
+│   └── settings/        # App settings, PIN lock, partner sharing, cycle & delete options
+└── main.dart            # App entry point, Supabase initialization & route resolution
 ```
 
 ---
@@ -104,10 +125,9 @@ lib/
 
 ### Prerequisites
 - [Flutter SDK](https://docs.flutter.dev/get-started/install) (`^3.12.2` or later)
-- Android Studio / VS Code with Flutter extension
-- A device or emulator (Android / iOS / Desktop)
+- Chrome browser (for web testing) or Android device/emulator with Android 8.0+ (API 26+)
 
-### Installation
+### Installation & Run
 
 1. **Clone the repository**:
    ```bash
@@ -120,21 +140,31 @@ lib/
    flutter pub get
    ```
 
-3. **Run the application**:
+3. **Run on Chrome (Web)**:
    ```bash
-   flutter run
+   flutter run -d chrome
    ```
 
-4. **Execute test suite**:
+4. **Run on Android device**:
+   ```bash
+   flutter run -d android
+   ```
+
+5. **Run test suite**:
    ```bash
    flutter test
    ```
 
+6. **Analyze code**:
+   ```bash
+   flutter analyze
+   ```
+
 ---
 
-## ⚕️ Medical Disclaimer
+## ⚕️ Medical Guidance Notice
 
-> **Important**: *WeTrack is designed as an informational tracking and lifestyle companion tool. It is not a certified diagnostic medical device, nor does it provide medical treatment or clinical diagnoses. Calculations for fertile windows, ovulation, and period predictions are statistical estimates. Users should consult a licensed healthcare professional or physician for any reproductive health concerns or medical guidance.*
+> **Important**: *WeTrack is designed as an informational health tracking and lifestyle companion tool. It is not a certified diagnostic medical device, nor does it provide clinical diagnoses or replace professional medical care. Calculations for fertile windows, ovulation, and period predictions are statistical estimates. Users should consult a qualified healthcare professional or physician for any reproductive health concerns, medical conditions, or pregnancy complications.*
 
 ---
 

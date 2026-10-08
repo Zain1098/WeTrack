@@ -5,6 +5,12 @@ import '../../core/localization/app_strings.dart';
 import '../../core/localization/language_provider.dart';
 import '../../core/widgets/clay_language_toggle.dart';
 import '../app_providers.dart';
+import '../pregnancy/positive_test_modal.dart';
+import '../pregnancy/kick_counter_modal.dart';
+import '../safety/emergency_red_flags_modal.dart';
+import '../cycle/log_symptoms_modal.dart';
+import '../cycle/log_period_modal.dart';
+import '../appointments/appointment_modal.dart';
 import 'ai_service.dart';
 import 'gemini_ai_service.dart';
 
@@ -13,12 +19,14 @@ class ChatMessage {
   final bool isUser;
   final String? citation;
   final bool isOffline;
+  final List<AIAction> actions;
 
   const ChatMessage({
     required this.text,
     required this.isUser,
     this.citation,
     this.isOffline = false,
+    this.actions = const [],
   });
 }
 
@@ -164,10 +172,95 @@ class _AIAssistantSheetState extends ConsumerState<AIAssistantSheet> {
             isUser: false,
             citation: response.sourceCitation,
             isOffline: response.isOfflineFallback,
+            actions: response.actions,
           ),
         );
       });
       _scrollToBottom();
+    }
+  }
+
+  void _executeAction(AIAction action) async {
+    switch (action.type) {
+      case AIActionType.switchToPregnancy:
+        await ref.read(userProfileProvider.notifier).switchToPregnancyMode();
+        if (mounted) {
+          setState(() {
+            _messages.add(
+              const ChatMessage(
+                text: '🎉 Mubarak! WeTrack ab mukammal taur par Hamal (Pregnancy) Mode mein active ho chuka hai. Period predictions pause kar di gayi hain aur weekly baby tracker shuru ho gaya hai 🍼✨',
+                isUser: false,
+                citation: 'WeTrack Mode Updated',
+              ),
+            );
+          });
+          _scrollToBottom();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              backgroundColor: Color(0xFFC2185B),
+              content: Text(
+                'Mubarak! Hamal Mode Active Ho Gaya Hai 🍼✨',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+          );
+        }
+        break;
+
+      case AIActionType.switchToCycle:
+        await ref.read(userProfileProvider.notifier).switchToCycleMode();
+        if (mounted) {
+          setState(() {
+            _messages.add(
+              const ChatMessage(
+                text: '🌸 WeTrack ab Mahwari (Cycle Tracking) Mode mein wapas aa chuka hai.',
+                isUser: false,
+                citation: 'WeTrack Mode Updated',
+              ),
+            );
+          });
+          _scrollToBottom();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              backgroundColor: Color(0xFF9C27B0),
+              content: Text(
+                'Mahwari (Cycle Tracking) Mode Active Hua 🌸',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+          );
+        }
+        break;
+
+      case AIActionType.openEmergencyModal:
+        Navigator.pop(context);
+        EmergencyRedFlagsModal.show(context);
+        break;
+
+      case AIActionType.openPositiveTestModal:
+        Navigator.pop(context);
+        PositivePregnancyTestModal.show(context);
+        break;
+
+      case AIActionType.openLogSymptoms:
+        Navigator.pop(context);
+        LogSymptomsModal.show(context);
+        break;
+
+      case AIActionType.openKickCounter:
+        Navigator.pop(context);
+        KickCounterModal.show(context);
+        break;
+
+      case AIActionType.openAppointmentModal:
+        Navigator.pop(context);
+        AppointmentModal.show(context);
+        break;
+
+      case AIActionType.openLogPeriod:
+        Navigator.pop(context);
+        LogPeriodModal.show(context);
+        break;
     }
   }
 
@@ -562,6 +655,54 @@ class _AIAssistantSheetState extends ConsumerState<AIAssistantSheet> {
                     ),
                   ],
                 ),
+              ),
+            ],
+            if (msg.actions.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: msg.actions.map((act) {
+                  return GestureDetector(
+                    onTap: () => _executeAction(act),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFFF0F5), Color(0xFFFFE0EB)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFFFB6C1), width: 1.3),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFE91E63).withValues(alpha: 0.15),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(act.icon, style: const TextStyle(fontSize: 14)),
+                          const SizedBox(width: 7),
+                          Text(
+                            act.label,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFFC2185B),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(Icons.arrow_forward_ios_rounded, size: 10, color: Color(0xFFC2185B)),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
               ),
             ],
           ],

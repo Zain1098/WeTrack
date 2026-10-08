@@ -62,12 +62,53 @@ class GeminiAIService implements AIService {
           final parts = content['parts'] as List?;
           if (parts != null && parts.isNotEmpty) {
             final text = parts[0]['text'] as String;
+            final lower = '${text.toLowerCase()} ${question.toLowerCase()}';
+            final actions = <AIAction>[];
+
+            if (lower.contains('pregnant') || lower.contains('hamal') && (lower.contains('mubarak') || lower.contains('positive'))) {
+              actions.add(const AIAction(
+                type: AIActionType.switchToPregnancy,
+                label: 'Hamal Mode Activate Karein 🍼',
+                icon: '🤰',
+              ));
+              actions.add(const AIAction(
+                type: AIActionType.openPositiveTestModal,
+                label: 'Confirm Due Date 📅',
+                icon: '✨',
+              ));
+            } else if (lower.contains('red flag') || lower.contains('emergency') || lower.contains('heavy bleed') || lower.contains('severe pain')) {
+              actions.add(const AIAction(
+                type: AIActionType.openEmergencyModal,
+                label: 'Emergency Red Flags 🚨',
+                icon: '⚠️',
+              ));
+            } else if (lower.contains('kick') || lower.contains('movement')) {
+              actions.add(const AIAction(
+                type: AIActionType.openKickCounter,
+                label: 'Baby Kicks Counter 👣',
+                icon: '👶',
+              ));
+            } else if (lower.contains('doctor') || lower.contains('scan') || lower.contains('ultrasound')) {
+              actions.add(const AIAction(
+                type: AIActionType.openAppointmentModal,
+                label: 'Schedule Appointment 🩺',
+                icon: '🏥',
+              ));
+            } else if (lower.contains('symptom') || lower.contains('nausea') || lower.contains('ulti') || lower.contains('cramp')) {
+              actions.add(const AIAction(
+                type: AIActionType.openLogSymptoms,
+                label: 'Log Symptoms 📝',
+                icon: '🩹',
+              ));
+            }
+
             return AIResponse(
               text: text,
               sourceCitation: context.isRomanUrdu
                   ? 'WeTrack Tibbi Rahnumai • ASRM & Clinical Standards'
                   : 'Grounded in ASRM Guidelines & Gemini 1.5 Medical Filter',
               isOfflineFallback: false,
+              actions: actions,
             );
           }
         }

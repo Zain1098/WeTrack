@@ -1,3 +1,52 @@
+class CustomReminderItem {
+  final String id;
+  final String title;
+  final String time; // e.g. "09:00 AM"
+  final bool isEnabled;
+  final String category; // 'medicine', 'water', 'appointment', 'other'
+
+  const CustomReminderItem({
+    required this.id,
+    required this.title,
+    required this.time,
+    this.isEnabled = true,
+    this.category = 'medicine',
+  });
+
+  CustomReminderItem copyWith({
+    String? id,
+    String? title,
+    String? time,
+    bool? isEnabled,
+    String? category,
+  }) {
+    return CustomReminderItem(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      time: time ?? this.time,
+      isEnabled: isEnabled ?? this.isEnabled,
+      category: category ?? this.category,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'title': title,
+        'time': time,
+        'isEnabled': isEnabled,
+        'category': category,
+      };
+
+  factory CustomReminderItem.fromJson(Map<String, dynamic> json) =>
+      CustomReminderItem(
+        id: json['id'] as String? ?? '',
+        title: json['title'] as String? ?? 'Dawayi Reminder',
+        time: json['time'] as String? ?? '10:00 AM',
+        isEnabled: json['isEnabled'] as bool? ?? true,
+        category: json['category'] as String? ?? 'medicine',
+      );
+}
+
 class NotificationPreferences {
   // Cycle & Period
   final bool periodPredictionReminder;
@@ -29,6 +78,9 @@ class NotificationPreferences {
   final bool soundEnabled;
   final bool vibrationEnabled;
 
+  // Custom User-Created Reminders (Medicines, Hydration, Checkups)
+  final List<CustomReminderItem> customReminders;
+
   const NotificationPreferences({
     this.periodPredictionReminder = true,
     this.periodPredictionDaysBefore = 2,
@@ -48,6 +100,7 @@ class NotificationPreferences {
     this.partnerSyncAlert = true,
     this.soundEnabled = true,
     this.vibrationEnabled = true,
+    this.customReminders = const [],
   });
 
   NotificationPreferences copyWith({
@@ -69,6 +122,7 @@ class NotificationPreferences {
     bool? partnerSyncAlert,
     bool? soundEnabled,
     bool? vibrationEnabled,
+    List<CustomReminderItem>? customReminders,
   }) {
     return NotificationPreferences(
       periodPredictionReminder:
@@ -96,6 +150,7 @@ class NotificationPreferences {
       partnerSyncAlert: partnerSyncAlert ?? this.partnerSyncAlert,
       soundEnabled: soundEnabled ?? this.soundEnabled,
       vibrationEnabled: vibrationEnabled ?? this.vibrationEnabled,
+      customReminders: customReminders ?? this.customReminders,
     );
   }
 
@@ -118,6 +173,7 @@ class NotificationPreferences {
         'partnerSyncAlert': partnerSyncAlert,
         'soundEnabled': soundEnabled,
         'vibrationEnabled': vibrationEnabled,
+        'customReminders': customReminders.map((e) => e.toJson()).toList(),
       };
 
   factory NotificationPreferences.fromJson(Map<String, dynamic> json) =>
@@ -145,5 +201,10 @@ class NotificationPreferences {
         partnerSyncAlert: json['partnerSyncAlert'] as bool? ?? true,
         soundEnabled: json['soundEnabled'] as bool? ?? true,
         vibrationEnabled: json['vibrationEnabled'] as bool? ?? true,
+        customReminders: (json['customReminders'] as List<dynamic>?)
+                ?.map((e) => CustomReminderItem.fromJson(e as Map<String, dynamic>))
+                .toList() ??
+            const [],
       );
 }
+

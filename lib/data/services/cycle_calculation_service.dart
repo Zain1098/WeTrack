@@ -51,6 +51,7 @@ class CycleCalculationResult {
   final DateTime fertileWindowEnd;
   final CyclePhase currentPhase;
   final bool isUsingFallbackEstimate;
+  final bool isPregnancySuspended;
 
   const CycleCalculationResult({
     required this.currentCycleDay,
@@ -62,6 +63,7 @@ class CycleCalculationResult {
     required this.fertileWindowEnd,
     required this.currentPhase,
     required this.isUsingFallbackEstimate,
+    this.isPregnancySuspended = false,
   });
 }
 

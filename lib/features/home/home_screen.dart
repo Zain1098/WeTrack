@@ -18,6 +18,7 @@ import '../fertility/log_fertility_modal.dart';
 import '../pregnancy/positive_test_modal.dart';
 import '../ai/ai_assistant_sheet.dart';
 import '../dictionary/health_dictionary_modal.dart';
+import '../notifications/notification_center_modal.dart';
 import '../profile/profile_screen.dart';
 import '../appointments/appointment_modal.dart';
 import '../safety/emergency_red_flags_modal.dart';
@@ -79,11 +80,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               _buildTopBar(context, profile, s),
               const SizedBox(height: 14),
 
-              // Segmented Journey Switcher: [ 🌸 Mahwari ] [ 🤰 Hamal ]
-              _buildJourneySwitcher(isPregnancyMode, s),
+              // Contextual Intelligent Journey Header: Dynamic Pregnancy Status or Smart Cycle Status
+              _buildSmartJourneyBanner(context, isPregnancyMode, profile, cycleCalc, pregCalc, isUrdu),
               const SizedBox(height: 12),
 
-              // Clean 3-Tab Section Switcher: [ 🌸 Aaj Ka Din ] [ 🌿 Sehat & Plan ] [ 🧔 Shohar & Madad ]
+              // Clean 3-Tab Section Switcher: [ 🌸 Aaj Ka Din / 👶 Baby Care ] [ 🌿 Sehat & Plan / 🩺 Doctor Scan ] [ 🧔 Shohar & Madad ]
               _buildSectionSwitcher(isPregnancyMode),
               const SizedBox(height: 16),
 
@@ -188,6 +189,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   _buildPregnancySetupCard(context),
                 ] else ...[
                   if (_selectedSection == 0) ...[
+                    // Contextual Daily Briefing for Pregnancy
+                    _buildDailyBriefingCard(
+                      profile,
+                      cycleCalc,
+                      isPregnancyMode: true,
+                      pregCalc: pregCalc,
+                      isUrdu: isUrdu,
+                    ),
+                    const SizedBox(height: 14),
+
                     // 1. Hero 3D Baby Milestone Card with Completed/Remaining tags & Time-Machine
                     _buildBabyHeroCard(context, pregCalc, isUrdu: isUrdu),
                     const SizedBox(height: 14),
@@ -419,6 +430,47 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               const SizedBox(width: 4),
 
+              // Notification Bell & Reminders Center
+              GestureDetector(
+                onTap: () => NotificationCenterModal.show(context),
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFFFFD5E2)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFE91E63).withValues(alpha: 0.1),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      const Icon(Icons.notifications_none_rounded, size: 16, color: Color(0xFFC2185B)),
+                      if (ref.watch(unreadNotificationsCountProvider) > 0)
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: Container(
+                            width: 7,
+                            height: 7,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFF04E78),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
+
               // AI Companion Button
               GestureDetector(
                 onTap: () => AIAssistantSheet.show(context),
@@ -452,96 +504,379 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // Segmented Journey Switcher
-  Widget _buildJourneySwitcher(bool isPregnancyMode, AppStrings s) {
+  // Smart Contextual Journey Header
+  Widget _buildSmartJourneyBanner(
+    BuildContext context,
+    bool isPregnancyMode,
+    UserProfile profile,
+    CycleCalculationResult cycleCalc,
+    PregnancyCalculationResult? pregCalc,
+    bool isUrdu,
+  ) {
+    if (isPregnancyMode) {
+      return _buildActivePregnancyHeader(context, pregCalc, isUrdu);
+    } else {
+      return _buildSmartCycleHeader(context, cycleCalc, isUrdu);
+    }
+  }
+
+  // Active Pregnancy Status Header with Options
+  Widget _buildActivePregnancyHeader(BuildContext context, PregnancyCalculationResult? pregCalc, bool isUrdu) {
+    final weeks = pregCalc?.completedWeeks ?? 1;
+    final trimester = pregCalc?.trimester ?? 1;
+    final eddStr = pregCalc != null ? DateHelpers.formatFriendly(pregCalc.estimatedDueDate) : 'Ultrasound / LMP';
+
     return Container(
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF0F5),
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: const Color(0xFFFFD2E2)),
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFFF0F5), Color(0xFFFFE0EB)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFFFB6C1), width: 1.2),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0C2E1065),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
       ),
       child: Row(
         children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+            ),
+            child: const Text('🤰', style: TextStyle(fontSize: 20)),
+          ),
+          const SizedBox(width: 10),
           Expanded(
-            child: GestureDetector(
-              onTap: () {
-                if (isPregnancyMode) {
-                  ref.read(userProfileProvider.notifier).updateGoal(AppGoal.trackCycle);
-                }
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 9),
-                decoration: BoxDecoration(
-                  color: !isPregnancyMode ? Colors.white : Colors.transparent,
-                  borderRadius: BorderRadius.circular(26),
-                  boxShadow: !isPregnancyMode
-                      ? [
-                          BoxShadow(
-                            color: const Color(0xFFF04E78).withValues(alpha: 0.12),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Text('🌸', style: TextStyle(fontSize: !isPregnancyMode ? 15 : 13)),
-                    const SizedBox(width: 6),
                     Text(
-                      s.journeyCycle,
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.bold,
-                        color: !isPregnancyMode ? const Color(0xFFF04E78) : ClayColors.textSecondary,
+                      isUrdu ? 'Hamal Ka Mubarak Safar' : 'Pregnancy Journey Active',
+                      style: const TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF880E4F),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFC2185B),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'Hafta $weeks',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ),
+                const SizedBox(height: 2),
+                Text(
+                  isUrdu
+                      ? 'Trimester $trimester · Expected Delivery: $eddStr'
+                      : 'Trimester $trimester · EDD: $eddStr',
+                  style: const TextStyle(fontSize: 11, color: Color(0xFFC2185B)),
+                ),
+              ],
             ),
           ),
-          Expanded(
-            child: GestureDetector(
-              onTap: () {
-                if (!isPregnancyMode) {
-                  ref.read(userProfileProvider.notifier).updateGoal(AppGoal.alreadyPregnant);
-                }
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 9),
-                decoration: BoxDecoration(
-                  color: isPregnancyMode ? Colors.white : Colors.transparent,
-                  borderRadius: BorderRadius.circular(26),
-                  boxShadow: isPregnancyMode
-                      ? [
+          GestureDetector(
+            onTap: () => _showPregnancyJourneyOptions(context),
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.85),
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFFFFCDD2)),
+              ),
+              child: const Icon(Icons.more_horiz_rounded, size: 18, color: Color(0xFFC2185B)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Smart Cycle Header with Automated Late Period Detection
+  Widget _buildSmartCycleHeader(BuildContext context, CycleCalculationResult cycleCalc, bool isUrdu) {
+    final isOverdue = cycleCalc.daysUntilNextPeriod <= 0;
+    final daysOverdue = cycleCalc.daysUntilNextPeriod.abs();
+
+    if (isOverdue) {
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFFFF3E0), Color(0xFFFFEBEE)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: const Color(0xFFFFCC80), width: 1.3),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x0CE65100),
+              blurRadius: 10,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFF9800),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Text('⚡', style: TextStyle(fontSize: 14)),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    daysOverdue == 0
+                        ? (isUrdu ? 'Period Aaj Expected Hai!' : 'Period Expected Today!')
+                        : (isUrdu ? 'Period $daysOverdue Din Late Hai! 🧪' : 'Period $daysOverdue Days Late! 🧪'),
+                    style: const TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFFBF360C),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              isUrdu
+                  ? 'Kya aapka period miss ho gaya hai? Agar pregnancy test positive aaya hai to aik tap mein Hamal Mode shuru karein:'
+                  : 'Missed your expected period? If your pregnancy test is positive, switch to Pregnancy Mode with one tap:',
+              style: const TextStyle(fontSize: 11.5, color: Color(0xFF5D4037), height: 1.3),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => PositivePregnancyTestModal.show(context),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFE91E63), Color(0xFFC2185B)],
+                        ),
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFF04E78).withValues(alpha: 0.12),
-                            blurRadius: 8,
+                            color: const Color(0xFFE91E63).withValues(alpha: 0.25),
+                            blurRadius: 6,
                             offset: const Offset(0, 2),
                           ),
-                        ]
-                      : null,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text('🤰', style: TextStyle(fontSize: isPregnancyMode ? 15 : 13)),
-                    const SizedBox(width: 6),
-                    Text(
-                      s.journeyPregnancy,
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.bold,
-                        color: isPregnancyMode ? const Color(0xFFF04E78) : ClayColors.textSecondary,
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          isUrdu ? '👶 Positive Test Confirm' : '👶 Confirm Positive Test',
+                          style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold),
+                        ),
                       ),
                     ),
-                  ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () => AIAssistantSheet.show(context),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFFFB74D)),
+                    ),
+                    child: Center(
+                      child: Text(
+                        isUrdu ? '🤖 AI Mashwara' : '🤖 Ask AI',
+                        style: const TextStyle(color: Color(0xFFE65100), fontSize: 11.5, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFBF8FE),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFEDE7F6)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              const Text('🌸', style: TextStyle(fontSize: 13)),
+              const SizedBox(width: 6),
+              Text(
+                isUrdu
+                    ? 'Mahwari Safar • Day ${cycleCalc.currentCycleDay}'
+                    : 'Cycle Mode • Day ${cycleCalc.currentCycleDay}',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF4A3B60),
                 ),
               ),
+            ],
+          ),
+          GestureDetector(
+            onTap: () => PositivePregnancyTestModal.show(context),
+            child: Row(
+              children: [
+                Text(
+                  isUrdu ? 'Hamal Hua? Tap Karein 🤰' : 'Pregnant? Tap here 🤰',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFFE91E63),
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPregnancyJourneyOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Material(
+        color: Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE2D9EC),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              const Text(
+                'Hamal (Pregnancy) Safar Settings',
+                style: TextStyle(
+                  fontSize: 16.5,
+                  fontWeight: FontWeight.w900,
+                  color: ClayColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: const BoxDecoration(color: Color(0xFFFCE4EC), shape: BoxShape.circle),
+                  child: const Text('📅', style: TextStyle(fontSize: 18)),
+                ),
+                title: const Text('Due Date Ya Gestational Hafta Adjust Karein', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold)),
+                subtitle: const Text('Ultrasound report ya LMP ke mutabiq tareekh update karein', style: TextStyle(fontSize: 11)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  PositivePregnancyTestModal.show(context);
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: const BoxDecoration(color: Color(0xFFF3E5F5), shape: BoxShape.circle),
+                  child: const Text('🔄', style: TextStyle(fontSize: 18)),
+                ),
+                title: const Text('Mahwari (Cycle Tracking) Mode Me Wapas Aayein', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF7B1FA2))),
+                subtitle: const Text('Delivery mukammal hone par ya period dobara shuru hone par', style: TextStyle(fontSize: 11)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _confirmSwitchToCycleDialog();
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _confirmSwitchToCycleDialog() {
+    final messenger = ScaffoldMessenger.of(context);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text('Cycle Mode Mein Wapsi? 🌸'),
+        content: const Text(
+          'Kya aapki delivery mukammal ho chuki hai ya period dobara shuru ho gaya hai? Is se app wapas menstrual cycle tracking mode mein chali jayegi.',
+          style: TextStyle(fontSize: 13, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Rehne Dein (Cancel)'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFC2185B),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await ref.read(userProfileProvider.notifier).switchToCycleMode();
+              if (mounted) {
+                messenger.showSnackBar(
+                  const SnackBar(
+                    content: Text('Mahwari (Cycle Tracking) Mode Active Hua 🌸'),
+                  ),
+                );
+              }
+            },
+            child: const Text('Haan, Switch Karein'),
           ),
         ],
       ),

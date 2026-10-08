@@ -8,12 +8,12 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models/user_profile.dart';
-import '../../data/models/notification_preferences.dart';
 import '../../data/services/auth_service.dart';
 import '../app_providers.dart';
 import '../auth/login_screen.dart';
 import '../dictionary/health_dictionary_modal.dart';
 import '../insights/insights_screen.dart';
+import '../notifications/notification_center_modal.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -441,104 +441,361 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   /// Cycle Settings Dialog
   void _editCycleSettings(BuildContext context, UserProfile profile) {
-    int cycleLen = profile.usualCycleLength;
-    int periodLen = profile.usualPeriodDuration;
+    int cycleLen = profile.usualCycleLength > 0 ? profile.usualCycleLength : 28;
+    int periodLen = profile.usualPeriodDuration > 0 ? profile.usualPeriodDuration : 5;
 
-    showDialog(
+    showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: Text(
-            'Cycle & Health Preferences',
-            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
+        builder: (ctx, setSheetState) => Container(
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            top: 24,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 28,
           ),
-          content: Column(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+          ),
+          child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+              ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Average Cycle Length:',
-                    style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
-                  ),
                   Row(
                     children: [
-                      IconButton(
-                        icon: const Icon(Icons.remove_circle_outline, color: Color(0xFF7E60E4)),
-                        onPressed: cycleLen > 21 ? () => setDialogState(() => cycleLen--) : null,
-                      ),
-                      Text(
-                        '$cycleLen d',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 16,
-                          color: const Color(0xFF7E60E4),
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF3E5F5),
+                          borderRadius: BorderRadius.circular(14),
                         ),
+                        child: const Icon(Icons.water_drop_rounded, color: Color(0xFF7E60E4), size: 22),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.add_circle_outline, color: Color(0xFF7E60E4)),
-                        onPressed: cycleLen < 45 ? () => setDialogState(() => cycleLen++) : null,
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Cycle & Health Preferences',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              color: const Color(0xFF1E1A29),
+                            ),
+                          ),
+                          const Text(
+                            'Mahwari aur cycle ke din set karein',
+                            style: TextStyle(fontSize: 11.5, color: Color(0xFF718096)),
+                          ),
+                        ],
                       ),
                     ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () => Navigator.pop(ctx),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Period Duration:',
-                    style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
-                  ),
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.remove_circle_outline, color: Color(0xFFF04E78)),
-                        onPressed: periodLen > 2 ? () => setDialogState(() => periodLen--) : null,
-                      ),
-                      Text(
-                        '$periodLen d',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 16,
-                          color: const Color(0xFFF04E78),
+              const SizedBox(height: 20),
+
+              // Average Cycle Length
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF9F6FF),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFEDE7F6)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Average Cycle Length',
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF1E1A29)),
+                            ),
+                            Text(
+                              'Pichli period se agli period tak ka faasla',
+                              style: TextStyle(fontSize: 11, color: Color(0xFF718096)),
+                            ),
+                          ],
                         ),
+                        Row(
+                          children: [
+                            InkWell(
+                              onTap: cycleLen > 21 ? () => setSheetState(() => cycleLen--) : null,
+                              borderRadius: BorderRadius.circular(999),
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: cycleLen > 21 ? const Color(0xFFEDE7F6) : Colors.grey.shade200,
+                                ),
+                                child: Icon(
+                                  Icons.remove,
+                                  size: 18,
+                                  color: cycleLen > 21 ? const Color(0xFF7E60E4) : Colors.grey.shade400,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 10),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF7E60E4),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                '$cycleLen Din',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 14,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            InkWell(
+                              onTap: cycleLen < 45 ? () => setSheetState(() => cycleLen++) : null,
+                              borderRadius: BorderRadius.circular(999),
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: cycleLen < 45 ? const Color(0xFFEDE7F6) : Colors.grey.shade200,
+                                ),
+                                child: Icon(
+                                  Icons.add,
+                                  size: 18,
+                                  color: cycleLen < 45 ? const Color(0xFF7E60E4) : Colors.grey.shade400,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    SliderTheme(
+                      data: SliderTheme.of(ctx).copyWith(
+                        activeTrackColor: const Color(0xFF7E60E4),
+                        thumbColor: const Color(0xFF7E60E4),
+                        inactiveTrackColor: const Color(0xFFD1C4E9),
+                        trackHeight: 4,
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.add_circle_outline, color: Color(0xFFF04E78)),
-                        onPressed: periodLen < 10 ? () => setDialogState(() => periodLen++) : null,
+                      child: Slider(
+                        value: cycleLen.clamp(21, 45).toDouble(),
+                        min: 21,
+                        max: 45,
+                        divisions: 24,
+                        onChanged: (val) => setSheetState(() => cycleLen = val.round()),
                       ),
-                    ],
+                    ),
+                    Wrap(
+                      spacing: 6,
+                      children: [24, 28, 30, 32, 35].map((val) {
+                        final isSel = cycleLen == val;
+                        return ChoiceChip(
+                          label: Text(
+                            val == 28 ? '28 d (Normal)' : '$val d',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
+                              color: isSel ? Colors.white : const Color(0xFF1E1A29),
+                            ),
+                          ),
+                          selected: isSel,
+                          selectedColor: const Color(0xFF7E60E4),
+                          backgroundColor: Colors.white,
+                          onSelected: (_) => setSheetState(() => cycleLen = val),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Period Duration
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF0F3),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFFFD1DC)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Period Duration (Bleeding)',
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF1E1A29)),
+                            ),
+                            Text(
+                              'Mahwari ka khoon kitne din rehta hai',
+                              style: TextStyle(fontSize: 11, color: Color(0xFF718096)),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            InkWell(
+                              onTap: periodLen > 2 ? () => setSheetState(() => periodLen--) : null,
+                              borderRadius: BorderRadius.circular(999),
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: periodLen > 2 ? const Color(0xFFFFD1DC) : Colors.grey.shade200,
+                                ),
+                                child: Icon(
+                                  Icons.remove,
+                                  size: 18,
+                                  color: periodLen > 2 ? const Color(0xFFF04E78) : Colors.grey.shade400,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 10),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF04E78),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                '$periodLen Din',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 14,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            InkWell(
+                              onTap: periodLen < 10 ? () => setSheetState(() => periodLen++) : null,
+                              borderRadius: BorderRadius.circular(999),
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: periodLen < 10 ? const Color(0xFFFFD1DC) : Colors.grey.shade200,
+                                ),
+                                child: Icon(
+                                  Icons.add,
+                                  size: 18,
+                                  color: periodLen < 10 ? const Color(0xFFF04E78) : Colors.grey.shade400,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    SliderTheme(
+                      data: SliderTheme.of(ctx).copyWith(
+                        activeTrackColor: const Color(0xFFF04E78),
+                        thumbColor: const Color(0xFFF04E78),
+                        inactiveTrackColor: const Color(0xFFFFCDD2),
+                        trackHeight: 4,
+                      ),
+                      child: Slider(
+                        value: periodLen.clamp(2, 10).toDouble(),
+                        min: 2,
+                        max: 10,
+                        divisions: 8,
+                        onChanged: (val) => setSheetState(() => periodLen = val.round()),
+                      ),
+                    ),
+                    Wrap(
+                      spacing: 6,
+                      children: [3, 4, 5, 6, 7].map((val) {
+                        final isSel = periodLen == val;
+                        return ChoiceChip(
+                          label: Text(
+                            val == 5 ? '5 d (Normal)' : '$val d',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
+                              color: isSel ? Colors.white : const Color(0xFF1E1A29),
+                            ),
+                          ),
+                          selected: isSel,
+                          selectedColor: const Color(0xFFF04E78),
+                          backgroundColor: Colors.white,
+                          onSelected: (_) => setSheetState(() => periodLen = val),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1E1A29),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                    elevation: 3,
                   ),
-                ],
+                  onPressed: () async {
+                    await ref.read(userProfileProvider.notifier).updateProfile(
+                          usualCycleLength: cycleLen,
+                          usualPeriodDuration: periodLen,
+                        );
+                    ref.invalidate(cycleHistoryProvider);
+                    if (ctx.mounted) Navigator.pop(ctx);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Cycle preferences update ho gayi: $cycleLen din cycle, $periodLen din bleeding ✨'),
+                          backgroundColor: const Color(0xFF7E60E4),
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                      );
+                    }
+                  },
+                  child: const Text(
+                    'Save Settings / Mehfooz Karein',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+                  ),
+                ),
               ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1E1A29),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              ),
-              onPressed: () async {
-                await ref.read(userProfileProvider.notifier).updateProfile(
-                      usualCycleLength: cycleLen,
-                      usualPeriodDuration: periodLen,
-                    );
-                if (ctx.mounted) Navigator.pop(ctx);
-              },
-              child: const Text('Save'),
-            ),
-          ],
         ),
       ),
     );
@@ -629,271 +886,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (p.usualCycleLength > 0 && p.usualPeriodDuration > 0) score += 15;
     if (p.pinCode != null && p.pinCode!.isNotEmpty) score += 10;
     return score.clamp(0, 100);
-  }
-
-  /// In-Depth Notifications Modal
-  void _showNotificationsSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Consumer(
-        builder: (ctx, ref, _) {
-          final notifs = ref.watch(notificationPreferencesProvider);
-
-          void updateNotifs(NotificationPreferences updated) {
-            ref.read(notificationPreferencesProvider.notifier).update(updated);
-          }
-
-          return Material(
-            color: Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.88,
-              ),
-              child: SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Center(
-                          child: Container(
-                            width: 44,
-                            height: 5,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFE2DCF0),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Reminders & Alerts 🔔',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800,
-                                color: const Color(0xFF1E1A29),
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.close_rounded),
-                              onPressed: () => Navigator.pop(ctx),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'Ahem cycle dates, fertility aur sehat ke reminders customize karein taake koi zaroori din miss na ho.',
-                          style: TextStyle(fontSize: 12.5, color: Color(0xFF7E768E)),
-                        ),
-                        const SizedBox(height: 18),
-
-                        // Section 1: Cycle & Period
-                        _buildNotificationCategoryHeader('🌸 Mahwari & Cycle Alerts'),
-                        SwitchListTile.adaptive(
-                          contentPadding: EdgeInsets.zero,
-                          title: Text('Period Prediction Alert (2 din pehle)', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14)),
-                          subtitle: const Text('Cycle shuru hone se pehle tayyari ka notification', style: TextStyle(fontSize: 12)),
-                          activeTrackColor: const Color(0xFFF04E78),
-                          value: notifs.periodPredictionReminder,
-                          onChanged: (val) => updateNotifs(notifs.copyWith(periodPredictionReminder: val)),
-                        ),
-                        SwitchListTile.adaptive(
-                          contentPadding: EdgeInsets.zero,
-                          title: Text('Period Late Hone Ka Alert (3 din baad)', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14)),
-                          subtitle: const Text('Agar period late ho jaye to check karne ki hidayat', style: TextStyle(fontSize: 12)),
-                          activeTrackColor: const Color(0xFFF04E78),
-                          value: notifs.latePeriodAlert,
-                          onChanged: (val) => updateNotifs(notifs.copyWith(latePeriodAlert: val)),
-                        ),
-                        SwitchListTile.adaptive(
-                          contentPadding: EdgeInsets.zero,
-                          title: Text('Daily Morning Cycle Advice', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14)),
-                          subtitle: const Text('Rozana subah energy aur phase mutabiq tips', style: TextStyle(fontSize: 12)),
-                          activeTrackColor: const Color(0xFFF04E78),
-                          value: notifs.dailyCycleTip,
-                          onChanged: (val) => updateNotifs(notifs.copyWith(dailyCycleTip: val)),
-                        ),
-
-                        const SizedBox(height: 14),
-                        // Section 2: Fertility & Planning (TTC)
-                        _buildNotificationCategoryHeader('🥚 Hamal Koshish (TTC) & Ovulation'),
-                        SwitchListTile.adaptive(
-                          contentPadding: EdgeInsets.zero,
-                          title: Text('Fertile Window Alerts', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14)),
-                          subtitle: const Text('Bacha theherne ke ahem din shuru hone par alert', style: TextStyle(fontSize: 12)),
-                          activeTrackColor: const Color(0xFFF57C00),
-                          value: notifs.fertileWindowAlert,
-                          onChanged: (val) => updateNotifs(notifs.copyWith(fertileWindowAlert: val)),
-                        ),
-                        SwitchListTile.adaptive(
-                          contentPadding: EdgeInsets.zero,
-                          title: Text('Ovulation Peak Day Alert', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14)),
-                          subtitle: const Text('Sab se zyada pregnancy chance wala din', style: TextStyle(fontSize: 12)),
-                          activeTrackColor: const Color(0xFFF57C00),
-                          value: notifs.ovulationPeakAlert,
-                          onChanged: (val) => updateNotifs(notifs.copyWith(ovulationPeakAlert: val)),
-                        ),
-                        SwitchListTile.adaptive(
-                          contentPadding: EdgeInsets.zero,
-                          title: Text('Pregnancy Test Ka Sahi Din', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14)),
-                          subtitle: const Text('Period miss hone ke baad test reminder', style: TextStyle(fontSize: 12)),
-                          activeTrackColor: const Color(0xFFF57C00),
-                          value: notifs.pregnancyTestReminder,
-                          onChanged: (val) => updateNotifs(notifs.copyWith(pregnancyTestReminder: val)),
-                        ),
-
-                        const SizedBox(height: 14),
-                        // Section 3: Pregnancy Mode
-                        _buildNotificationCategoryHeader('🤰 Hamal (Pregnancy) Updates'),
-                        SwitchListTile.adaptive(
-                          contentPadding: EdgeInsets.zero,
-                          title: Text('Weekly Baby Development', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14)),
-                          subtitle: const Text('Har naye hafte baby ki growth aur size card', style: TextStyle(fontSize: 12)),
-                          activeTrackColor: const Color(0xFF00897B),
-                          value: notifs.weeklyBabyGrowthAlert,
-                          onChanged: (val) => updateNotifs(notifs.copyWith(weeklyBabyGrowthAlert: val)),
-                        ),
-                        SwitchListTile.adaptive(
-                          contentPadding: EdgeInsets.zero,
-                          title: Text('Daily Kick Counter Reminder', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14)),
-                          subtitle: const Text('Baby ki harkat note karne ka shaam ka waqt', style: TextStyle(fontSize: 12)),
-                          activeTrackColor: const Color(0xFF00897B),
-                          value: notifs.kickCounterReminder,
-                          onChanged: (val) => updateNotifs(notifs.copyWith(kickCounterReminder: val)),
-                        ),
-                        SwitchListTile.adaptive(
-                          contentPadding: EdgeInsets.zero,
-                          title: Text('Doctor & Ultrasound Reminders', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14)),
-                          subtitle: const Text('Doctor appointment se 1 din pehle reminder', style: TextStyle(fontSize: 12)),
-                          activeTrackColor: const Color(0xFF00897B),
-                          value: notifs.doctorAppointmentReminder,
-                          onChanged: (val) => updateNotifs(notifs.copyWith(doctorAppointmentReminder: val)),
-                        ),
-
-                        const SizedBox(height: 14),
-                        // Section 4: Daily Health, Vitamins & Water
-                        _buildNotificationCategoryHeader('💊 Sehat, Dawayi & Routine'),
-                        SwitchListTile.adaptive(
-                          contentPadding: EdgeInsets.zero,
-                          title: Text('Folic Acid / Prenatal Vitamins (${notifs.folicAcidTime})', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14)),
-                          subtitle: const Text('Rozana subah dawayi lene ka reminder', style: TextStyle(fontSize: 12)),
-                          activeTrackColor: const Color(0xFF7E60E4),
-                          value: notifs.folicAcidReminder,
-                          onChanged: (val) => updateNotifs(notifs.copyWith(folicAcidReminder: val)),
-                        ),
-                        SwitchListTile.adaptive(
-                          contentPadding: EdgeInsets.zero,
-                          title: Text('Water & Hydration Nudges', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14)),
-                          subtitle: const Text('Din bhar taza paani peenay ki yaad dahani', style: TextStyle(fontSize: 12)),
-                          activeTrackColor: const Color(0xFF7E60E4),
-                          value: notifs.waterHydrationReminder,
-                          onChanged: (val) => updateNotifs(notifs.copyWith(waterHydrationReminder: val)),
-                        ),
-                        SwitchListTile.adaptive(
-                          contentPadding: EdgeInsets.zero,
-                          title: Text('Evening Symptoms & Mood Check-in (${notifs.eveningCheckinTime})', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14)),
-                          subtitle: const Text('Shaam ko aaj ki takleef aur mood note karna', style: TextStyle(fontSize: 12)),
-                          activeTrackColor: const Color(0xFF7E60E4),
-                          value: notifs.eveningCheckinReminder,
-                          onChanged: (val) => updateNotifs(notifs.copyWith(eveningCheckinReminder: val)),
-                        ),
-
-                        const SizedBox(height: 14),
-                        // Section 5: Partner Notifications
-                        _buildNotificationCategoryHeader('🧔 Shohar / Partner Alerts'),
-                        SwitchListTile.adaptive(
-                          contentPadding: EdgeInsets.zero,
-                          title: Text('Shohar Care & Mood Updates', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14)),
-                          subtitle: const Text('Aapke mood aur cycle ke mutabiq shohar ko khayal rakhne ki hidayat', style: TextStyle(fontSize: 12)),
-                          activeTrackColor: const Color(0xFF3949AB),
-                          value: notifs.partnerSyncAlert,
-                          onChanged: (val) => updateNotifs(notifs.copyWith(partnerSyncAlert: val)),
-                        ),
-
-                        const SizedBox(height: 14),
-                        // Section 6: Sound & Vibration
-                        _buildNotificationCategoryHeader('🔔 Sound & Vibration'),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: SwitchListTile.adaptive(
-                                contentPadding: EdgeInsets.zero,
-                                title: const Text('Sound', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                                activeTrackColor: const Color(0xFF1E1A29),
-                                value: notifs.soundEnabled,
-                                onChanged: (val) => updateNotifs(notifs.copyWith(soundEnabled: val)),
-                              ),
-                            ),
-                            Expanded(
-                              child: SwitchListTile.adaptive(
-                                contentPadding: EdgeInsets.zero,
-                                title: const Text('Vibration', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                                activeTrackColor: const Color(0xFF1E1A29),
-                                value: notifs.vibrationEnabled,
-                                onChanged: (val) => updateNotifs(notifs.copyWith(vibrationEnabled: val)),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-
-                        // Close button
-                        SizedBox(
-                          width: double.infinity,
-                          height: 48,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF1E1A29),
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                            ),
-                            onPressed: () {
-                              Navigator.pop(ctx);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: const Text('Reminders saved successfully! ✨'),
-                                  behavior: SnackBarBehavior.floating,
-                                  backgroundColor: const Color(0xFF9E8CE7),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                ),
-                              );
-                            },
-                            child: const Text('Save & Close', style: TextStyle(fontWeight: FontWeight.bold)),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildNotificationCategoryHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 8, bottom: 4),
-      child: Text(
-        title,
-        style: GoogleFonts.plusJakartaSans(
-          fontSize: 13.5,
-          fontWeight: FontWeight.w800,
-          color: const Color(0xFF3E364C),
-        ),
-      ),
-    );
   }
 
   /// Full Partner Sharing & Sync Modal
@@ -1922,7 +1914,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
         // Notification Bell with Pink Unread Dot
         GestureDetector(
-          onTap: () => _showNotificationsSheet(context),
+          onTap: () => NotificationCenterModal.show(context),
           child: Container(
             width: 42,
             height: 42,
@@ -1947,18 +1939,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   color: Color(0xFF1E1A29),
                 ),
                 // Pink Unread Dot
-                Positioned(
-                  top: 9,
-                  right: 10,
-                  child: Container(
-                    width: 7,
-                    height: 7,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFF04E78),
-                      shape: BoxShape.circle,
+                if (ref.watch(unreadNotificationsCountProvider) > 0)
+                  Positioned(
+                    top: 9,
+                    right: 10,
+                    child: Container(
+                      width: 7,
+                      height: 7,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFF04E78),
+                        shape: BoxShape.circle,
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
           ),
@@ -2512,7 +2505,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           icon: Icons.notifications_none_rounded,
           title: 'Notifications & Reminders',
           subtitle: 'Period prediction, ovulation, vitamins & baby updates',
-          onTap: () => _showNotificationsSheet(context),
+          onTap: () => NotificationCenterModal.show(context, initialTab: 1),
         ),
         const SizedBox(height: 10),
 

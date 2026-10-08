@@ -40,17 +40,44 @@ class AIRequestContext {
   }
 }
 
+enum AIActionType {
+  switchToPregnancy,
+  switchToCycle,
+  openEmergencyModal,
+  openLogSymptoms,
+  openLogPeriod,
+  openKickCounter,
+  openAppointmentModal,
+  openPositiveTestModal,
+}
+
+class AIAction {
+  final AIActionType type;
+  final String label;
+  final String icon;
+  final Map<String, dynamic>? data;
+
+  const AIAction({
+    required this.type,
+    required this.label,
+    required this.icon,
+    this.data,
+  });
+}
+
 class AIResponse {
   final String text;
   final String? sourceCitation;
   final bool containsDoctorQuestions;
   final bool isOfflineFallback;
+  final List<AIAction> actions;
 
   const AIResponse({
     required this.text,
     this.sourceCitation,
     this.containsDoctorQuestions = false,
     this.isOfflineFallback = false,
+    this.actions = const [],
   });
 }
 

@@ -4,7 +4,6 @@ import '../../core/theme/clay_colors.dart';
 import '../../core/widgets/clay_button.dart';
 import '../../core/widgets/clay_card.dart';
 import '../../core/utils/date_helpers.dart';
-import '../../data/models/user_profile.dart';
 import '../app_providers.dart';
 
 class PositivePregnancyTestModal extends ConsumerStatefulWidget {
@@ -47,20 +46,11 @@ class _PositivePregnancyTestModalState
       lmp = edd.subtract(const Duration(days: 280));
     }
 
-    // Start pregnancy with LMP
-    await ref.read(pregnancyRecordProvider.notifier).startPregnancyFromLmp(lmp);
-
-    // If ultrasound due date provided, override
-    if (_datingMode == 2 && _ultrasoundDueDate != null) {
-      await ref
-          .read(pregnancyRecordProvider.notifier)
-          .setClinicianDueDate(_ultrasoundDueDate!);
-    }
-
-    // Switch active goal to alreadyPregnant
-    await ref
-        .read(userProfileProvider.notifier)
-        .updateGoal(AppGoal.alreadyPregnant);
+    // Start pregnancy and switch active mode automatically
+    await ref.read(userProfileProvider.notifier).switchToPregnancyMode(
+      lmp: lmp,
+      ultrasoundEdd: (_datingMode == 2) ? _ultrasoundDueDate : null,
+    );
 
     if (mounted) {
       Navigator.pop(context);
