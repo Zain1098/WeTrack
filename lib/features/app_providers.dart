@@ -809,3 +809,21 @@ class AppLockNotifier extends Notifier<bool> {
 
 final appLockProvider =
     NotifierProvider<AppLockNotifier, bool>(AppLockNotifier.new);
+
+// Gemini API Key Notifier
+class GeminiApiKeyNotifier extends Notifier<String> {
+  @override
+  String build() {
+    final repo = ref.watch(localStorageRepositoryProvider);
+    return repo.getGeminiApiKey() ?? '';
+  }
+
+  Future<void> setApiKey(String key) async {
+    final repo = ref.read(localStorageRepositoryProvider);
+    await repo.saveGeminiApiKey(key);
+    state = key.trim();
+  }
+}
+
+final geminiApiKeyProvider =
+    NotifierProvider<GeminiApiKeyNotifier, String>(GeminiApiKeyNotifier.new);

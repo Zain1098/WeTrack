@@ -23,6 +23,9 @@ import '../notifications/notification_center_modal.dart';
 import '../profile/profile_screen.dart';
 import '../appointments/appointment_modal.dart';
 import '../safety/emergency_red_flags_modal.dart';
+import '../fertility/intimacy_log_modal.dart';
+import '../cycle/past_date_log_modal.dart';
+import '../../core/widgets/pregnancy_due_live_ticker.dart';
 import '../pregnancy/kick_counter_modal.dart';
 import '../partner/husband_care_card_modal.dart';
 import '../partner/partner_hub_modal.dart';
@@ -197,6 +200,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       isPregnancyMode: true,
                       pregCalc: pregCalc,
                       isUrdu: isUrdu,
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Live Ticking Due Date Countdown
+                    PregnancyDueLiveTicker(
+                      dueDate: pregCalc.estimatedDueDate,
+                      currentWeek: pregCalc.completedWeeks,
                     ),
                     const SizedBox(height: 14),
 
@@ -1414,47 +1424,127 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // 6. Visual Quick Action Tiles
+  // 6. Visual Quick Action Tiles with Past Date & Intimacy Logging
   Widget _buildCycleQuickActions(BuildContext context, AppStrings s) {
-    return Row(
+    return Column(
       children: [
-        Expanded(
-          child: _buildActionTile(
-            icon: Icons.water_drop_rounded,
-            color: const Color(0xFFFF5252),
-            bgColor: const Color(0xFFFFEBEE),
-            label: s.logBleedingTile,
-            onTap: () => LogPeriodModal.show(context),
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: _buildActionTile(
+                icon: Icons.water_drop_rounded,
+                color: const Color(0xFFFF5252),
+                bgColor: const Color(0xFFFFEBEE),
+                label: 'Mahwari',
+                onTap: () => LogPeriodModal.show(context),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildActionTile(
+                icon: Icons.favorite_rounded,
+                color: const Color(0xFFE91E63),
+                bgColor: const Color(0xFFFFF0F5),
+                label: 'Intimacy',
+                onTap: () => IntimacyLogModal.show(context),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildActionTile(
+                icon: Icons.healing_rounded,
+                color: const Color(0xFF26A69A),
+                bgColor: const Color(0xFFE0F2F1),
+                label: 'Dard/Mood',
+                onTap: () => LogSymptomsModal.show(context),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildActionTile(
+                icon: Icons.device_thermostat_rounded,
+                color: const Color(0xFFFFA726),
+                bgColor: const Color(0xFFFFF3E0),
+                label: 'Fertility',
+                onTap: () => LogFertilityModal.show(context),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _buildActionTile(
-            icon: Icons.sentiment_satisfied_alt_rounded,
-            color: const Color(0xFFAB47BC),
-            bgColor: const Color(0xFFF3E5F5),
-            label: s.logMoodTile,
-            onTap: () => LogSymptomsModal.show(context),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _buildActionTile(
-            icon: Icons.healing_rounded,
-            color: const Color(0xFF26A69A),
-            bgColor: const Color(0xFFE0F2F1),
-            label: s.logPainTile,
-            onTap: () => LogSymptomsModal.show(context),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _buildActionTile(
-            icon: Icons.device_thermostat_rounded,
-            color: const Color(0xFFFFA726),
-            bgColor: const Color(0xFFFFF3E0),
-            label: 'Fertility',
-            onTap: () => LogFertilityModal.show(context),
+        const SizedBox(height: 10),
+
+        // Prominent Past Date Quick Action Card
+        GestureDetector(
+          onTap: () => PastDateLogModal.show(context),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFFE9DFF7), width: 1.2),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF7E60E4).withValues(alpha: 0.08),
+                  blurRadius: 14,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3EEFC),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.history_toggle_off_rounded,
+                    color: Color(0xFF7E60E4),
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Pichli Tareekh Ka Data (Past Date Log) 📅',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF1E1A29),
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        'Kal ya parso ka chhoota hua record darj karein',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF7E768E),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF7E60E4),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text(
+                    'Log Date',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ],

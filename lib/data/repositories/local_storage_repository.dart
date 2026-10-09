@@ -282,6 +282,13 @@ class LocalStorageRepository {
     await _prefs.setString(_kLanguageKey, language.name);
   }
 
+  // Gemini AI Key
+  String? getGeminiApiKey() => _getString('wt_gemini_api_key');
+
+  Future<void> saveGeminiApiKey(String key) async {
+    await _setString('wt_gemini_api_key', key.trim());
+  }
+
   // Permanent Wipe Out
   Future<void> deleteAllData() async {
     await _prefs.clear();

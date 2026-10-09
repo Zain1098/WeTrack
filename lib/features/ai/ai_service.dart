@@ -49,6 +49,7 @@ enum AIActionType {
   openKickCounter,
   openAppointmentModal,
   openPositiveTestModal,
+  openIntimacyLog,
 }
 
 class AIAction {

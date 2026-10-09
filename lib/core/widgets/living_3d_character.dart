@@ -17,6 +17,8 @@ class Living3DCharacter extends StatefulWidget {
   final CyclePhase? cyclePhase;
   final int? cycleDay;
   final int? pregnancyWeek;
+  final String? todayMood;
+  final String? todaySymptom;
   final String? customSpeech;
   final double size;
   final bool showSpeechBubble;
@@ -28,6 +30,8 @@ class Living3DCharacter extends StatefulWidget {
     this.cyclePhase,
     this.cycleDay,
     this.pregnancyWeek,
+    this.todayMood,
+    this.todaySymptom,
     this.customSpeech,
     this.size = 140,
     this.showSpeechBubble = true,
@@ -158,6 +162,45 @@ class _Living3DCharacterState extends State<Living3DCharacter>
   List<String> _getDialogues() {
     if (widget.customSpeech != null) return [widget.customSpeech!];
 
+    // Reactive Mood & Symptom Dialogue
+    if (widget.todayMood != null && widget.todayMood!.isNotEmpty) {
+      final m = widget.todayMood!.toLowerCase();
+      if (m.contains('sad') || m.contains('udaas') || m.contains('emotional') || m.contains('crying')) {
+        return [
+          'Dil udaas na karein, hormonal tabdeeli aam hai 🫂❤️',
+          'Aap akele nahi hain, WeTrack hamesha sath hai 🌸',
+          'Thora waqt apne liye nikalein aur aaram karein ☕',
+        ];
+      } else if (m.contains('cramp') || m.contains('pain') || m.contains('dard')) {
+        return [
+          'Dard mehsoos ho to garam patti ya kahwah aaram dega ☕🌸',
+          'Deep breaths lein aur comfortable let jayein 🫂',
+          'Agar dard shadeed ho to doctor se zaroor mashwara karein 🩺',
+        ];
+      } else if (m.contains('happy') || m.contains('energetic') || m.contains('khush')) {
+        return [
+          'Aapki khushi dekh kar dil baagh baagh ho gaya! ✨🎉',
+          'Shandar energy! Aaj ka din khubsurat guzre 🌸',
+          'Positive vibes ko enjoy karein 💖',
+        ];
+      }
+    }
+
+    if (widget.todaySymptom != null && widget.todaySymptom!.isNotEmpty) {
+      final s = widget.todaySymptom!.toLowerCase();
+      if (s.contains('nausea') || s.contains('ulti') || s.contains('vomit')) {
+        return [
+          'Nausea ke liye chota chota paani aur lemon ginger tea lein 🍋💧',
+          'Khali pet na rahein, crackers ya dry biscuit chabayen 🍪',
+        ];
+      } else if (s.contains('headache') || s.contains('sar dard')) {
+        return [
+          'Room ki lights halki karein aur thanda paani piyein 🌙💧',
+          'Screen time kam karein aur aaraam karein 🌸',
+        ];
+      }
+    }
+
     switch (widget.persona) {
       case CharacterPersona.homeCycle:
         final phase = widget.cyclePhase ?? CyclePhase.follicular;
@@ -188,11 +231,25 @@ class _Living3DCharacterState extends State<Living3DCharacter>
 
       case CharacterPersona.homePregnancy:
         final week = widget.pregnancyWeek ?? 12;
-        return [
-          'Hafta $week Mubarak! Baby barh raha hai 🍼',
-          'Vitamins aur pani lena na bhoolein 💧',
-          'Biwi aur baby dono ka shohar sath de rahe hain ❤️',
-        ];
+        if (week <= 12) {
+          return [
+            'Hafta $week: Nanna sa embryo maze se barh raha hai 🌱🍼',
+            'Folic Acid aur pani lena bilkul na bhoolein 💊💧',
+            'Subah ulti ya thakan ho to aaram karein 🌸',
+          ];
+        } else if (week <= 27) {
+          return [
+            'Hafta $week: Golden Trimester! Baby active ho raha hai 👣✨',
+            'Baby ki movement par tawajjo dein ❤️',
+            'Healthy protein aur fruits khana na bhoolein 🍎',
+          ];
+        } else {
+          return [
+            'Hafta $week: Baby jald duniya me aane wala hai! 👶🎒',
+            'Daily 10 kicks count karein aur delivery bag tayyar rakhein 🦶',
+            'Shohar aur doctor ka rabta tayyar rakhein 🩺❤️',
+          ];
+        }
 
       case CharacterPersona.calendar:
         return [

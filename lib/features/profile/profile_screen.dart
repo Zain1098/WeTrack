@@ -16,6 +16,7 @@ import '../insights/insights_screen.dart';
 import '../notifications/notification_center_modal.dart';
 import '../partner/partner_hub_modal.dart';
 import '../../core/widgets/living_3d_character.dart';
+import '../../core/utils/date_helpers.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -445,6 +446,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   void _editCycleSettings(BuildContext context, UserProfile profile) {
     int cycleLen = profile.usualCycleLength > 0 ? profile.usualCycleLength : 28;
     int periodLen = profile.usualPeriodDuration > 0 ? profile.usualPeriodDuration : 5;
+    DateTime lastPeriod = profile.lastPeriodDate;
 
     showModalBottomSheet(
       context: context,
@@ -516,7 +518,97 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 18),
+
+              // 0. Last Period Date (Aakhri Mahwari Ki Tareekh)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF0F5),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFFFB6C1), width: 1.2),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Aakhri Mahwari (Last Period)',
+                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF1E1A29)),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                'Aakhri baar period kis din shuru hua tha?',
+                                style: TextStyle(fontSize: 11, color: Color(0xFF718096)),
+                              ),
+                            ],
+                          ),
+                        ),
+                        InkWell(
+                          onTap: () async {
+                            final picked = await showDatePicker(
+                              context: ctx,
+                              initialDate: lastPeriod,
+                              firstDate: DateTime.now().subtract(const Duration(days: 120)),
+                              lastDate: DateTime.now(),
+                              helpText: 'Aakhri period ki tareekh chunein',
+                            );
+                            if (picked != null) {
+                              setSheetState(() => lastPeriod = picked);
+                            }
+                          },
+                          borderRadius: BorderRadius.circular(14),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF04E78),
+                              borderRadius: BorderRadius.circular(14),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFFF04E78).withValues(alpha: 0.25),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.edit_calendar_rounded, color: Colors.white, size: 16),
+                                const SizedBox(width: 6),
+                                Text(
+                                  DateHelpers.formatFriendly(lastPeriod),
+                                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Colors.white),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFFFD4DF)),
+                      ),
+                      child: Text(
+                        '💡 ${DateHelpers.daysBetween(lastPeriod, DateTime.now())} din pehle period shuru hua tha (Day ${DateHelpers.daysBetween(lastPeriod, DateTime.now()) + 1})',
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFFC2185B)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
 
               // Average Cycle Length
               Container(
@@ -776,14 +868,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     await ref.read(userProfileProvider.notifier).updateProfile(
                           usualCycleLength: cycleLen,
                           usualPeriodDuration: periodLen,
+                          lastPeriodDate: lastPeriod,
                         );
+                    ref.invalidate(cycleCalculationProvider);
                     ref.invalidate(cycleHistoryProvider);
+                    ref.invalidate(pregnancyCalculationProvider);
                     if (ctx.mounted) Navigator.pop(ctx);
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Cycle preferences update ho gayi: $cycleLen din cycle, $periodLen din bleeding ✨'),
-                          backgroundColor: const Color(0xFF7E60E4),
+                          content: Text(
+                            'Cycle & Last Period update ho gayi: ${DateHelpers.formatFriendly(lastPeriod)} (Cycle: $cycleLen din) ✨',
+                          ),
+                          backgroundColor: const Color(0xFFF04E78),
                           behavior: SnackBarBehavior.floating,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         ),
@@ -982,6 +1079,34 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 const SizedBox(height: 6),
 
+                // Gemini AI API Key Settings
+                ListTile(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFCE4EC),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.vpn_key_rounded, color: Color(0xFFE91E63)),
+                  ),
+                  title: Text(
+                    'Gemini AI API Key Settings',
+                    style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14),
+                  ),
+                  subtitle: Text(
+                    ref.watch(geminiApiKeyProvider).isNotEmpty
+                        ? 'Active Key: •••••••••• (Tap to edit)'
+                        : 'Personal Gemini key enter karein live AI ke liye',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _showApiKeyDialog();
+                  },
+                ),
+                const SizedBox(height: 6),
+
                 // 2. Clear Health & Cycle Logs Only (Keep Account)
                 ListTile(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -1151,6 +1276,71 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  void _showApiKeyDialog() {
+    final currentKey = ref.read(geminiApiKeyProvider);
+    final keyController = TextEditingController(text: currentKey);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Row(
+          children: [
+            Icon(Icons.vpn_key_rounded, color: Color(0xFFF04E78)),
+            SizedBox(width: 8),
+            Text('Gemini AI Settings', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Apni personal Google Gemini API key enter karein taake real-time live AI answers milein. Agar key na ho to WeTrack offline brain bilkul muft kaam karega.',
+              style: TextStyle(fontSize: 12.5, color: Color(0xFF6B7280), height: 1.4),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: keyController,
+              decoration: InputDecoration(
+                labelText: 'Google Gemini API Key',
+                hintText: 'AIzaSy...',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFF04E78),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () async {
+              await ref.read(geminiApiKeyProvider.notifier).setApiKey(keyController.text);
+              if (ctx.mounted) Navigator.pop(ctx);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Gemini API Key Mehfooz Kar Li Gayi! ✨'),
+                    backgroundColor: Color(0xFF10B981),
+                  ),
+                );
+              }
+            },
+            child: const Text('Save Key'),
+          ),
+        ],
       ),
     );
   }

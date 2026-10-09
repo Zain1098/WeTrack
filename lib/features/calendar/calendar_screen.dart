@@ -7,11 +7,13 @@ import '../../core/utils/date_helpers.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/localization/language_provider.dart';
 import '../../data/models/user_profile.dart';
+import '../../data/models/fertility_observation.dart';
 import '../app_providers.dart';
 import '../cycle/log_period_modal.dart';
 import '../cycle/log_symptoms_modal.dart';
 import '../appointments/appointment_modal.dart';
 import '../pregnancy/kick_counter_modal.dart';
+import '../fertility/intimacy_log_modal.dart';
 import '../../core/widgets/living_3d_character.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
@@ -46,6 +48,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final periodEntries = ref.watch(periodEntriesProvider);
     final symptomEntries = ref.watch(symptomEntriesProvider);
     final appointments = ref.watch(appointmentsProvider);
+    final fertilityObservations = ref.watch(fertilityObservationsProvider);
     final s = ref.watch(appStringsProvider);
 
     // Days in current month
@@ -91,6 +94,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   pregnancyWeek: isPregnancyMode ? (pregCalc?.completedWeeks ?? 12) : null,
                   cyclePhase: isPregnancyMode ? null : cycleCalc.currentPhase,
                   cycleDay: isPregnancyMode ? null : cycleCalc.currentCycleDay,
+                  todayMood: symptomEntries.isNotEmpty && symptomEntries.first.moods.isNotEmpty
+                      ? symptomEntries.first.moods.first
+                      : null,
+                  todaySymptom: symptomEntries.isNotEmpty && symptomEntries.first.symptoms.isNotEmpty
+                      ? symptomEntries.first.symptoms.first
+                      : null,
                   size: 105,
                   showSpeechBubble: true,
                 ),
@@ -161,6 +170,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       isPregnancyMode: isPregnancyMode,
                       pregCalc: pregCalc,
                       appointments: appointments,
+                      fertilityObservations: fertilityObservations,
                     ),
                   ],
                 ),
@@ -168,7 +178,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
               const SizedBox(height: 16),
 
-              // Calendar Color Legend
+              // Calendar Color Legend (Pakistani Roman Urdu)
               _buildLegend(s, isPregnancyMode),
 
               const SizedBox(height: 18),
@@ -180,6 +190,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 isPregnancyMode: isPregnancyMode,
                 pregCalc: pregCalc,
                 appointments: appointments,
+                fertilityObservations: fertilityObservations,
+                profile: profile,
+                cycleCalc: cycleCalc,
               ),
 
               const SizedBox(height: 30),
@@ -198,6 +211,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     required bool isPregnancyMode,
     required dynamic pregCalc,
     required List<dynamic> appointments,
+    required List<FertilityObservation> fertilityObservations,
   }) {
     final List<Widget> dayWidgets = [];
 
@@ -228,6 +242,16 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
       final isOvulationDay = !isPregnancyMode &&
           DateHelpers.daysBetween(date, cycleCalc.estimatedOvulationDate) == 0;
+
+      final isSafeDay = !isPregnancyMode &&
+          !hasConfirmedPeriod &&
+          !isPredictedPeriod &&
+          !isFertileWindow;
+
+      // Intimacy logged on this date
+      final hasIntimacy = fertilityObservations.any(
+        (f) => DateHelpers.daysBetween(f.date, date) == 0 && f.hadIntimacy,
+      );
 
       // Pregnancy Mode Highlights
       final hasAppointment = isPregnancyMode &&
@@ -269,6 +293,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               offset: const Offset(0, 2),
             ),
           ];
+        } else if (hasIntimacy) {
+          bg = const Color(0xFFFFF0F5);
+          textColor = const Color(0xFFC2185B);
+          miniIndicator = const Text('💕', style: TextStyle(fontSize: 8));
         } else if (isToday) {
           border = Border.all(color: const Color(0xFFC2185B), width: 2);
           shadows = [
@@ -283,6 +311,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         if (hasConfirmedPeriod) {
           bg = ClayColors.secondary;
           textColor = Colors.white;
+          miniIndicator = const Text('🩸', style: TextStyle(fontSize: 8));
           shadows = [
             BoxShadow(
               color: ClayColors.secondary.withValues(alpha: 0.4),
@@ -299,6 +328,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           bg = ClayColors.secondaryContainer;
           textColor = ClayColors.secondary;
           border = Border.all(color: ClayColors.secondary, width: 1.2);
+          miniIndicator = const Text('🩸', style: TextStyle(fontSize: 7));
           shadows = [
             BoxShadow(
               color: ClayColors.secondary.withValues(alpha: 0.15),
@@ -309,6 +339,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         } else if (isOvulationDay) {
           bg = const Color(0xFFF59E0B);
           textColor = Colors.white;
+          miniIndicator = const Text('⭐', style: TextStyle(fontSize: 8));
           shadows = [
             BoxShadow(
               color: const Color(0xFFF59E0B).withValues(alpha: 0.45),
@@ -324,6 +355,14 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         } else if (isFertileWindow) {
           bg = ClayColors.sunnyContainer;
           textColor = const Color(0xFFB45309);
+          miniIndicator = Text(hasIntimacy ? '💕' : '💖', style: const TextStyle(fontSize: 8));
+        } else if (hasIntimacy) {
+          bg = const Color(0xFFFFF0F5);
+          textColor = const Color(0xFFAD1457);
+          miniIndicator = const Text('💕', style: TextStyle(fontSize: 8));
+        } else if (isSafeDay) {
+          bg = const Color(0xFFF1F8F5);
+          miniIndicator = const Text('🌿', style: TextStyle(fontSize: 7));
         } else if (isToday) {
           border = Border.all(color: ClayColors.primary, width: 2);
           shadows = [
@@ -403,14 +442,14 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   Widget _buildLegend(AppStrings s, bool isPregnancyMode) {
     if (isPregnancyMode) {
       return ClayCard(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Row(
               children: [
-                Text('🩺', style: TextStyle(fontSize: 14)),
-                SizedBox(width: 6),
+                Text('🩺', style: TextStyle(fontSize: 16)),
+                SizedBox(width: 8),
                 Text(
                   'Hamal (Pregnancy) Calendar Guide',
                   style: TextStyle(
@@ -421,30 +460,16 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 12,
+              runSpacing: 8,
               children: [
-                _buildLegendItem(const Color(0xFF00897B), 'Doctor Scan / Checkup'),
-                _buildLegendItem(
-                  const Color(0xFFE91E63),
-                  'Delivery Tareekh (EDD)',
-                  isOutline: true,
-                  borderColor: const Color(0xFFE91E63),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildLegendItem(ClayColors.secondary, 'Hamal Symptoms / Mood'),
-                _buildLegendItem(
-                  const Color(0xFFC2185B),
-                  'Aaj Ka Din',
-                  isOutline: true,
-                  borderColor: const Color(0xFFC2185B),
-                ),
+                _buildLegendItem(const Color(0xFF00897B), '🩺 Doctor Checkup / Ultrasound'),
+                _buildLegendItem(const Color(0xFFE91E63), '👶 Delivery Tareekh (EDD)'),
+                _buildLegendItem(const Color(0xFFC2185B), '💕 Mehfooz Mubashrat (Intimacy)'),
+                _buildLegendItem(ClayColors.secondary, '🌸 Alamaat / Symptoms'),
+                _buildLegendItem(const Color(0xFFC2185B), '⭕ Aaj Ka Din', isOutline: true, borderColor: const Color(0xFFC2185B)),
               ],
             ),
           ],
@@ -453,37 +478,35 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     }
 
     return ClayCard(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Legend',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
-              color: ClayColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          const Row(
             children: [
-              _buildLegendItem(ClayColors.secondary, s.legendConfirmedPeriod),
-              _buildLegendItem(
-                ClayColors.secondaryContainer,
-                s.legendPredictedPeriod,
-                isOutline: true,
-                borderColor: ClayColors.secondary,
+              Text('📅', style: TextStyle(fontSize: 16)),
+              SizedBox(width: 8),
+              Text(
+                'Calendar Guide & Hamal / Sex Ke Din',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: ClayColors.textPrimary,
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 12,
+            runSpacing: 8,
             children: [
-              _buildLegendItem(ClayColors.sunnyContainer, s.legendFertileWindow),
-              _buildLegendItem(const Color(0xFFF59E0B), s.legendOvulationDay),
+              _buildLegendItem(ClayColors.secondary, '🩸 Mahwari Ka Din (Period)'),
+              _buildLegendItem(ClayColors.secondaryContainer, '🩸 Mutawaqqa Mahwari (Expected)', isOutline: true, borderColor: ClayColors.secondary),
+              _buildLegendItem(const Color(0xFFF59E0B), '⭐ Baiza Kharij (Peak Ovulation)'),
+              _buildLegendItem(ClayColors.sunnyContainer, '💖 Hamal / Sex Ka Best Waqt (Fertile Window)'),
+              _buildLegendItem(const Color(0xFFFFF0F5), '💕 Mubashrat Record (Sex Logged)'),
+              _buildLegendItem(const Color(0xFFF1F8F5), '🌿 Mehfooz Din (Safe Days - Kam Imkaan)'),
             ],
           ),
         ],
@@ -522,6 +545,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     required bool isPregnancyMode,
     required dynamic pregCalc,
     required List<dynamic> appointments,
+    required List<FertilityObservation> fertilityObservations,
+    required UserProfile profile,
+    required dynamic cycleCalc,
   }) {
     final periodsOnDay = !isPregnancyMode
         ? periodEntries.where((p) => DateHelpers.daysBetween(p.date, _selectedDay) == 0).toList()
@@ -534,6 +560,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             .where((a) => DateHelpers.daysBetween(a.dateTime, _selectedDay) == 0)
             .toList()
         : [];
+    final intimacyOnDay = fertilityObservations
+        .where((f) => DateHelpers.daysBetween(f.date, _selectedDay) == 0 && f.hadIntimacy)
+        .firstOrNull;
 
     // Calculate approximate gestational week for selected day
     int? gestWeek;
@@ -591,6 +620,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     LogPeriodModal.show(context, initialDate: _selectedDay);
                   } else if (val == 'symptom') {
                     LogSymptomsModal.show(context, initialDate: _selectedDay);
+                  } else if (val == 'intimacy') {
+                    IntimacyLogModal.show(context, initialDate: _selectedDay);
                   } else if (val == 'appointment') {
                     AppointmentModal.show(context);
                   } else if (val == 'kick') {
@@ -601,8 +632,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   if (!isPregnancyMode)
                     const PopupMenuItem(
                       value: 'period',
-                      child: Text('Log Period Day'),
+                      child: Text('🩸 Log Period Day'),
                     ),
+                  const PopupMenuItem(
+                    value: 'intimacy',
+                    child: Text('💕 Log Intimacy / Mubashrat'),
+                  ),
                   if (isPregnancyMode) ...[
                     const PopupMenuItem(
                       value: 'appointment',
@@ -615,13 +650,70 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   ],
                   const PopupMenuItem(
                     value: 'symptom',
-                    child: Text('Log Symptoms & Mood'),
+                    child: Text('🌸 Log Symptoms & Mood'),
                   ),
                 ],
               ),
             ],
           ),
           const SizedBox(height: 12),
+
+          // Intimacy / Sex Record on selected day with Clinical Calculation
+          if (intimacyOnDay != null) ...[
+            Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF0F5),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFFFB6C1), width: 1.2),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Text('💕', style: TextStyle(fontSize: 18)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Mubashrat: ${_getIntimacyLabel(intimacyOnDay.intimacyType)}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: Color(0xFF880E4F),
+                          ),
+                        ),
+                      ),
+                      if (intimacyOnDay.intimacyTiming != null)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            _getTimingLabel(intimacyOnDay.intimacyTiming!),
+                            style: const TextStyle(fontSize: 10, color: Color(0xFF880E4F), fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _getIntimacyAnalysisText(
+                      intimacy: intimacyOnDay,
+                      selectedDate: _selectedDay,
+                      isPregnancyMode: isPregnancyMode,
+                      cycleCalc: cycleCalc,
+                      profile: profile,
+                    ),
+                    style: const TextStyle(fontSize: 11.5, color: Color(0xFF4A148C), height: 1.3),
+                  ),
+                ],
+              ),
+            ),
+          ],
 
           // Pregnancy Appointments on selected day
           if (isPregnancyMode && aptsOnDay.isNotEmpty) ...[
@@ -668,28 +760,30 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           ],
 
           if (isPregnancyMode) ...[
-            if (aptsOnDay.isEmpty && symptomsOnDay.isEmpty) ...[
+            if (aptsOnDay.isEmpty && symptomsOnDay.isEmpty && intimacyOnDay == null) ...[
               const Text(
-                'Is tareekh ka koi clinical log nahi hai. Doctor checkup ya hamal ke symptoms record karein.',
+                'Is tareekh ka koi record nahi hai. Doctor checkup, symptoms ya intimacy record karein.',
                 style: TextStyle(fontSize: 12.5, color: ClayColors.textSecondary),
               ),
               const SizedBox(height: 12),
-              Row(
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
                 children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      icon: const Icon(Icons.medical_services_rounded, size: 16, color: Color(0xFF00796B)),
-                      label: const Text('Doctor Visit', style: TextStyle(fontSize: 12, color: Color(0xFF00796B))),
-                      onPressed: () => AppointmentModal.show(context),
-                    ),
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.favorite_rounded, size: 16, color: Color(0xFFE91E63)),
+                    label: const Text('💕 Mubashrat', style: TextStyle(fontSize: 12, color: Color(0xFFE91E63))),
+                    onPressed: () => IntimacyLogModal.show(context, initialDate: _selectedDay),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      icon: const Icon(Icons.healing, size: 16, color: Color(0xFFC2185B)),
-                      label: const Text('Symptoms', style: TextStyle(fontSize: 12, color: Color(0xFFC2185B))),
-                      onPressed: () => LogSymptomsModal.show(context, initialDate: _selectedDay),
-                    ),
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.medical_services_rounded, size: 16, color: Color(0xFF00796B)),
+                    label: const Text('Doctor Visit', style: TextStyle(fontSize: 12, color: Color(0xFF00796B))),
+                    onPressed: () => AppointmentModal.show(context),
+                  ),
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.healing, size: 16, color: Color(0xFFC2185B)),
+                    label: const Text('Symptoms', style: TextStyle(fontSize: 12, color: Color(0xFFC2185B))),
+                    onPressed: () => LogSymptomsModal.show(context, initialDate: _selectedDay),
                   ),
                 ],
               ),
@@ -734,28 +828,30 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               ),
             ),
           ] else ...[
-            if (periodsOnDay.isEmpty && symptomsOnDay.isEmpty) ...[
+            if (periodsOnDay.isEmpty && symptomsOnDay.isEmpty && intimacyOnDay == null) ...[
               const Text(
-                'No logs for this date. Tap actions to record flow or symptoms.',
+                'Is tareekh ka koi log nahi hai. Mahwari, mubashrat ya symptoms record karein.',
                 style: TextStyle(fontSize: 13, color: ClayColors.textSecondary),
               ),
               const SizedBox(height: 12),
-              Row(
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
                 children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      icon: const Icon(Icons.water_drop, size: 16),
-                      label: const Text('Add Period'),
-                      onPressed: () => LogPeriodModal.show(context, initialDate: _selectedDay),
-                    ),
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.water_drop, size: 16),
+                    label: const Text('Add Period'),
+                    onPressed: () => LogPeriodModal.show(context, initialDate: _selectedDay),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      icon: const Icon(Icons.healing, size: 16),
-                      label: const Text('Add Symptoms'),
-                      onPressed: () => LogSymptomsModal.show(context, initialDate: _selectedDay),
-                    ),
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.favorite_rounded, size: 16, color: Color(0xFFE91E63)),
+                    label: const Text('💕 Mubashrat', style: TextStyle(color: Color(0xFFE91E63))),
+                    onPressed: () => IntimacyLogModal.show(context, initialDate: _selectedDay),
+                  ),
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.healing, size: 16),
+                    label: const Text('Add Symptoms'),
+                    onPressed: () => LogSymptomsModal.show(context, initialDate: _selectedDay),
                   ),
                 ],
               ),
@@ -798,5 +894,65 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         ],
       ),
     );
+  }
+
+  String _getIntimacyLabel(IntimacyType type) {
+    switch (type) {
+      case IntimacyType.unprotectedInside:
+        return 'Sperm / Mani Andar Gayi (Unprotected)';
+      case IntimacyType.protected:
+        return 'Mehfooz / Condom (Protected)';
+      case IntimacyType.withdrawal:
+        return 'Azal / Bahir Nikala (Withdrawal)';
+      case IntimacyType.none:
+        return 'Mubashrat';
+    }
+  }
+
+  String _getTimingLabel(IntimacyTiming timing) {
+    switch (timing) {
+      case IntimacyTiming.morning:
+        return '🌅 Subah';
+      case IntimacyTiming.afternoon:
+        return '☀️ Dopehar';
+      case IntimacyTiming.night:
+        return '🌙 Raat';
+    }
+  }
+
+  String _getIntimacyAnalysisText({
+    required FertilityObservation intimacy,
+    required DateTime selectedDate,
+    required bool isPregnancyMode,
+    required dynamic cycleCalc,
+    required UserProfile profile,
+  }) {
+    if (isPregnancyMode) {
+      return '🤰 Hamal ke dauran mubashrat aam tor par mehfooz hoti hai. Agar kisi qism ka dard, cramping ya spotting ho to aaraam karein aur doctor se raabta karein.';
+    }
+
+    final isFertile = selectedDate.isAfter(cycleCalc.fertileWindowStart.subtract(const Duration(days: 1))) &&
+        selectedDate.isBefore(cycleCalc.fertileWindowEnd.add(const Duration(days: 1)));
+
+    if (isFertile) {
+      if (intimacy.intimacyType == IntimacyType.unprotectedInside) {
+        if (profile.goal == AppGoal.tryToConceive) {
+          return '🎯 Zabardast Timing! Yeh baiza kharij hone (ovulation window) ka waqt tha aur sperm andar gaya hai. Hamal theherne ke 85% behtareen chances hain. Agli mahwari miss hone par subah pehlay peshab se pregnancy test karein.';
+        } else {
+          return '⚠️ INTEHAI AHEM ALERT! Yeh din fertile window me tha aur sperm andar gaya hai. Hamal theherne ka bohat ziyada khatra hai! Agar aap hamal nahi chahteen to foran 72 ghanton ke andar Emergency Contraceptive Pill (ECP / Postinor-2 / Famila) ka istemaal karein.';
+        }
+      } else if (intimacy.intimacyType == IntimacyType.protected) {
+        return '🛡️ Condom istemaal hua hai, isliye hamal ka khatra intehai kam hai (98% mehfooz).';
+      } else if (intimacy.intimacyType == IntimacyType.withdrawal) {
+        return '⚠️ Azal (Withdrawal) kiya gaya hai. Pre-ejaculatory fluid (mazi) me bhi sperm ho sakte hain, isliye fertile dino me 20% tak pregnancy ka khatra rehta hai.';
+      }
+    } else {
+      if (intimacy.intimacyType == IntimacyType.unprotectedInside) {
+        return '🌿 Mehfooz Din (Safe Day). Yeh baiza kharij hone ka waqt nahi tha, isliye hamal theherne ke imkanaat bohat hi kam hain.';
+      } else {
+        return '🌿 Mehfooz din aur protection ke sath mubashrat hui hai. Hamal ka koi imkaan nahi.';
+      }
+    }
+    return 'Mubashrat ka record mehfooz kar liya gaya hai.';
   }
 }

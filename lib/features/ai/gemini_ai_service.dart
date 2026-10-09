@@ -35,7 +35,7 @@ class GeminiAIService implements AIService {
                 'text': '${AIService.systemSafetyPrompt}\n\n'
                     'USER STRUCTURED CONTEXT: ${jsonEncode(context.toStructuredPromptData())}\n\n'
                     'USER QUESTION: $question\n\n'
-                    'INSTRUCTION: Respond in ${context.isRomanUrdu ? "conversational, sweet, natural Roman Urdu / Roman English (e.g. Assalam-o-Alaikum, Hamal ke ahem din, ovulation, doctor se mashwara)" : "gentle, compassionate English"}. Zero diagnostic claims, compassionate tone, and clear bullet points.',
+                    'INSTRUCTION: Respond in ${context.isRomanUrdu ? "conversational, sweet, respectful, natural Roman Urdu / Roman English (e.g. Assalam-o-Alaikum, Mubashrat/sex timing, fertile window, sperm andar gaya, emergency contraception ECP/Postinor-2, hamal theherne ke imkanaat)" : "gentle, compassionate English"}. Zero diagnostic claims, compassionate tone, and clear bullet points. If user asks about intimacy/sex, sperm inside, or pregnancy risk: calculate likelihood based on fertile window vs safe days, explain emergency contraception (ECP within 72h) if avoiding pregnancy, or conception positions & timing if planning a baby.',
               }
             ]
           }
@@ -64,6 +64,14 @@ class GeminiAIService implements AIService {
             final text = parts[0]['text'] as String;
             final lower = '${text.toLowerCase()} ${question.toLowerCase()}';
             final actions = <AIAction>[];
+
+            if (lower.contains('sex') || lower.contains('mubashrat') || lower.contains('sperm') || lower.contains('intimacy') || lower.contains('condom') || lower.contains('ecp')) {
+              actions.add(const AIAction(
+                type: AIActionType.openIntimacyLog,
+                label: 'Mubashrat / Sex Log Karein 💕',
+                icon: '💖',
+              ));
+            }
 
             if (lower.contains('pregnant') || lower.contains('hamal') && (lower.contains('mubarak') || lower.contains('positive'))) {
               actions.add(const AIAction(

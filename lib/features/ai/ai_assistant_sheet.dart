@@ -11,6 +11,7 @@ import '../safety/emergency_red_flags_modal.dart';
 import '../cycle/log_symptoms_modal.dart';
 import '../cycle/log_period_modal.dart';
 import '../appointments/appointment_modal.dart';
+import '../fertility/intimacy_log_modal.dart';
 import 'ai_service.dart';
 import 'gemini_ai_service.dart';
 
@@ -55,6 +56,9 @@ class _AIAssistantSheetState extends ConsumerState<AIAssistantSheet> {
   List<ChatMessage> _messages = [];
 
   static const List<(String, String)> _romanSuggestions = [
+    ('💕', 'Sperm andar gaya hai, kya pregnancy theher sakti hai?'),
+    ('💊', 'Emergency Contraceptive Pill (ECP) kab aur kaise lein?'),
+    ('🤰', 'Hamal me mubashrat / sex kab mehfooz hai?'),
     ('🌸', 'Cycle Day ka kya matlab hai?'),
     ('🥚', 'Hamal theherne ke best din kab hain?'),
     ('🧪', 'Pregnancy test kab karna chahiye?'),
@@ -67,6 +71,9 @@ class _AIAssistantSheetState extends ConsumerState<AIAssistantSheet> {
   ];
 
   static const List<(String, String)> _englishSuggestions = [
+    ('💕', 'Unprotected sex & sperm inside risk?'),
+    ('💊', 'Emergency contraception (ECP) guidance?'),
+    ('🤰', 'Is intercourse safe during pregnancy?'),
     ('🌸', 'What does cycle day mean?'),
     ('🥚', 'Best days for conception?'),
     ('🧪', 'When to take pregnancy test?'),
@@ -158,7 +165,9 @@ class _AIAssistantSheetState extends ConsumerState<AIAssistantSheet> {
       isRomanUrdu: lang == AppLanguage.romanUrdu,
     );
 
-    final response = await _aiService.askQuestion(
+    final savedKey = ref.read(geminiApiKeyProvider);
+    final activeService = savedKey.isNotEmpty ? GeminiAIService(apiKey: savedKey) : _aiService;
+    final response = await activeService.askQuestion(
       context: reqContext,
       question: query,
     );
@@ -182,6 +191,11 @@ class _AIAssistantSheetState extends ConsumerState<AIAssistantSheet> {
 
   void _executeAction(AIAction action) async {
     switch (action.type) {
+      case AIActionType.openIntimacyLog:
+        Navigator.pop(context);
+        IntimacyLogModal.show(context);
+        break;
+
       case AIActionType.switchToPregnancy:
         await ref.read(userProfileProvider.notifier).switchToPregnancyMode();
         if (mounted) {
@@ -262,6 +276,71 @@ class _AIAssistantSheetState extends ConsumerState<AIAssistantSheet> {
         LogPeriodModal.show(context);
         break;
     }
+  }
+
+  void _showApiKeyDialog() {
+    final currentKey = ref.read(geminiApiKeyProvider);
+    final keyController = TextEditingController(text: currentKey);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Row(
+          children: [
+            Icon(Icons.vpn_key_rounded, color: Color(0xFFF04E78)),
+            SizedBox(width: 8),
+            Text('Gemini AI Settings', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Apni Google Gemini API key enter karein taake real-time live AI answers milein. Agar key na ho to WeTrack offline brain bilkul muft kaam karega.',
+              style: TextStyle(fontSize: 12.5, color: Color(0xFF6B7280), height: 1.4),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: keyController,
+              decoration: InputDecoration(
+                labelText: 'Google Gemini API Key',
+                hintText: 'AIzaSy...',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFF04E78),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () async {
+              await ref.read(geminiApiKeyProvider.notifier).setApiKey(keyController.text);
+              if (ctx.mounted) Navigator.pop(ctx);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Gemini API Key Mehfooz Kar Li Gayi! ✨'),
+                    backgroundColor: Color(0xFF10B981),
+                  ),
+                );
+              }
+            },
+            child: const Text('Save Key'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -375,6 +454,11 @@ class _AIAssistantSheetState extends ConsumerState<AIAssistantSheet> {
               ),
               Row(
                 children: [
+                  IconButton(
+                    icon: const Icon(Icons.vpn_key_rounded, size: 20, color: Color(0xFFF04E78)),
+                    tooltip: 'AI API Key',
+                    onPressed: _showApiKeyDialog,
+                  ),
                   const ClayLanguageToggle(isCompact: true),
                   const SizedBox(width: 4),
                   IconButton(
